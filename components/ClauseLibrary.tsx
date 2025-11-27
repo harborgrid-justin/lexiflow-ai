@@ -1,0 +1,72 @@
+
+import React, { useState } from 'react';
+import { Clause } from '../types';
+import { Search, BarChart2, ShieldAlert, FileText, History } from 'lucide-react';
+import { ClauseHistoryModal } from './ClauseHistoryModal';
+import { MOCK_CLAUSES } from '../data/mockClauses';
+
+export const ClauseLibrary: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClause, setSelectedClause] = useState<Clause | null>(null);
+
+  const clauses = MOCK_CLAUSES;
+
+  const filtered = clauses.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.category.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  return (
+    <div className="h-full flex flex-col space-y-6 relative">
+      {selectedClause && (
+        <ClauseHistoryModal clause={selectedClause} onClose={() => setSelectedClause(null)} />
+      )}
+
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Clause Library</h2>
+        <p className="text-slate-500 mb-4">Manage standard clauses, track versions, and monitor usage statistics.</p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <input 
+            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="Search clauses by name or category..."
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pb-10">
+        {filtered.map(clause => (
+          <div key={clause.id} className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col hover:shadow-md transition-shadow">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-lg">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{clause.category}</span>
+                <h3 className="text-lg font-bold text-slate-900 mt-2">{clause.name}</h3>
+              </div>
+              {clause.riskRating === 'High' && (
+                <div title="High Risk">
+                  <ShieldAlert className="h-5 w-5 text-red-500" />
+                </div>
+              )}
+            </div>
+            <div className="p-4 flex-1">
+              <p className="text-sm text-slate-600 line-clamp-3 font-serif bg-slate-50 p-3 rounded italic border border-slate-100 mb-4">
+                "{clause.content}"
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                <div className="flex items-center"><FileText className="h-3 w-3 mr-1"/> Ver: {clause.version}</div>
+                <div className="flex items-center"><BarChart2 className="h-3 w-3 mr-1"/> Used: {clause.usageCount}x</div>
+                <div className="col-span-2">Updated: {clause.lastUpdated}</div>
+              </div>
+            </div>
+            <div className="p-3 border-t border-slate-100 bg-slate-50 rounded-b-lg flex justify-end">
+              <button 
+                onClick={() => setSelectedClause(clause)}
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
+              >
+                <History className="h-3 w-3 mr-1"/> View History
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,107 @@
+
+import React, { useState } from 'react';
+import { Activity, Shield, Link, Database } from 'lucide-react';
+import { MOCK_AUDIT_LOGS } from '../data/mockAdmin';
+import { AdminAuditLog } from './admin/AdminAuditLog';
+import { AdminDataRegistry } from './admin/AdminDataRegistry';
+import { PageHeader } from './common/PageHeader';
+
+export const AdminPanel: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('logs');
+
+  const logs = MOCK_AUDIT_LOGS;
+
+  const dataFiles = [
+    { name: 'mockUsers.ts', type: 'Users Registry', records: 4, size: '2.4 KB' },
+    { name: 'mockCases.ts', type: 'Matter Database', records: 4, size: '5.1 KB' },
+    { name: 'mockDocuments.ts', type: 'Document Index', records: 4, size: '8.3 KB' },
+    { name: 'mockWorkflow.ts', type: 'Task & Workflow', records: 6, size: '4.2 KB' },
+    { name: 'mockBilling.ts', type: 'Financial Ledger', records: 3, size: '3.1 KB' },
+    { name: 'mockClients.ts', type: 'Client CRM', records: 2, size: '1.8 KB' },
+    { name: 'mockClauses.ts', type: 'Clause Library', records: 3, size: '6.7 KB' },
+    { name: 'mockAnalytics.ts', type: 'AI Training Data', records: 2, size: '12.4 KB' },
+    { name: 'mockCompliance.ts', type: 'Risk Registry', records: 4, size: '2.9 KB' },
+  ];
+
+  return (
+    <div className="h-full flex flex-col space-y-4 animate-fade-in">
+      <PageHeader 
+        title="Admin Console" 
+        subtitle="System settings, security audits, and data management."
+      />
+      
+      <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
+        <div className="w-full md:w-64 flex flex-col space-y-2 shrink-0">
+            <button onClick={() => setActiveTab('logs')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'logs' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Activity className="h-4 w-4 mr-3"/> Audit Logs
+            </button>
+            <button onClick={() => setActiveTab('security')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'security' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Shield className="h-4 w-4 mr-3"/> Security & Roles
+            </button>
+            <button onClick={() => setActiveTab('integrations')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'integrations' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Link className="h-4 w-4 mr-3"/> Integrations
+            </button>
+            <button onClick={() => setActiveTab('data')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'data' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Database className="h-4 w-4 mr-3"/> Data Management
+            </button>
+        </div>
+
+        <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            {activeTab === 'logs' && <AdminAuditLog logs={logs} />}
+            {activeTab === 'data' && <AdminDataRegistry dataFiles={dataFiles} />}
+
+            {activeTab === 'integrations' && (
+            <div className="p-8 space-y-6 overflow-auto">
+                <h3 className="font-bold text-lg mb-4">Connected Platforms</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border p-4 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-blue-600 rounded flex items-center justify-center text-white font-bold">O</div>
+                        <div><h4 className="font-bold">Outlook / Exchange</h4><p className="text-xs text-green-600">Connected (Sync Active)</p></div>
+                    </div>
+                    <button className="text-xs border px-2 py-1 rounded">Config</button>
+                </div>
+                <div className="border p-4 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-orange-500 rounded flex items-center justify-center text-white font-bold">iM</div>
+                        <div><h4 className="font-bold">iManage</h4><p className="text-xs text-green-600">Connected (DMS)</p></div>
+                    </div>
+                    <button className="text-xs border px-2 py-1 rounded">Config</button>
+                </div>
+                <div className="border p-4 rounded-lg flex items-center justify-between opacity-60">
+                    <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-blue-400 rounded flex items-center justify-center text-white font-bold">Doc</div>
+                        <div><h4 className="font-bold">DocuSign</h4><p className="text-xs text-slate-500">Not Connected</p></div>
+                    </div>
+                    <button className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Connect</button>
+                </div>
+                </div>
+            </div>
+            )}
+
+            {activeTab === 'security' && (
+                <div className="p-8 overflow-auto">
+                    <h3 className="font-bold text-lg mb-6">Policy Enforcement</h3>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border rounded bg-slate-50">
+                            <div>
+                                <h4 className="font-bold text-sm">Two-Factor Authentication (2FA)</h4>
+                                <p className="text-xs text-slate-500">Enforce for all roles except 'Guest'</p>
+                            </div>
+                            <div className="h-6 w-11 bg-green-500 rounded-full relative"><div className="absolute right-1 top-1 h-4 w-4 bg-white rounded-full"></div></div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 border rounded bg-slate-50">
+                            <div>
+                                <h4 className="font-bold text-sm">Data Loss Prevention (DLP)</h4>
+                                <p className="text-xs text-slate-500">Block downloads of documents tagged 'Strict Confidential' on mobile</p>
+                            </div>
+                            <div className="h-6 w-11 bg-green-500 rounded-full relative"><div className="absolute right-1 top-1 h-4 w-4 bg-white rounded-full"></div></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+};
