@@ -3,25 +3,13 @@ import React, { useState } from 'react';
 import { Activity, Shield, Link, Database } from 'lucide-react';
 import { MOCK_AUDIT_LOGS } from '../data/mockAdmin';
 import { AdminAuditLog } from './admin/AdminAuditLog';
-import { AdminDataRegistry } from './admin/AdminDataRegistry';
+import { AdminPlatformManager } from './admin/AdminPlatformManager';
 import { PageHeader } from './common/PageHeader';
 
 export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('logs');
 
   const logs = MOCK_AUDIT_LOGS;
-
-  const dataFiles = [
-    { name: 'mockUsers.ts', type: 'Users Registry', records: 4, size: '2.4 KB' },
-    { name: 'mockCases.ts', type: 'Matter Database', records: 4, size: '5.1 KB' },
-    { name: 'mockDocuments.ts', type: 'Document Index', records: 4, size: '8.3 KB' },
-    { name: 'mockWorkflow.ts', type: 'Task & Workflow', records: 6, size: '4.2 KB' },
-    { name: 'mockBilling.ts', type: 'Financial Ledger', records: 3, size: '3.1 KB' },
-    { name: 'mockClients.ts', type: 'Client CRM', records: 2, size: '1.8 KB' },
-    { name: 'mockClauses.ts', type: 'Clause Library', records: 3, size: '6.7 KB' },
-    { name: 'mockAnalytics.ts', type: 'AI Training Data', records: 2, size: '12.4 KB' },
-    { name: 'mockCompliance.ts', type: 'Risk Registry', records: 4, size: '2.9 KB' },
-  ];
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
@@ -42,13 +30,13 @@ export const AdminPanel: React.FC = () => {
             <Link className="h-4 w-4 mr-3"/> Integrations
             </button>
             <button onClick={() => setActiveTab('data')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'data' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Database className="h-4 w-4 mr-3"/> Data Management
+            <Database className="h-4 w-4 mr-3"/> Platform Data
             </button>
         </div>
 
         <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
             {activeTab === 'logs' && <AdminAuditLog logs={logs} />}
-            {activeTab === 'data' && <AdminDataRegistry dataFiles={dataFiles} />}
+            {activeTab === 'data' && <AdminPlatformManager />}
 
             {activeTab === 'integrations' && (
             <div className="p-8 space-y-6 overflow-auto">

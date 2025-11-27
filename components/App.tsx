@@ -17,6 +17,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { DiscoveryPlatform } from './components/DiscoveryPlatform';
 import { EvidenceVault } from './components/EvidenceVault';
 import { SecureMessenger } from './components/SecureMessenger';
+import { JurisdictionManager } from './components/JurisdictionManager';
 import { Case } from './types';
 import { Bell, User as UserIcon, Search, Menu } from 'lucide-react';
 import { MOCK_USERS } from './data/mockUsers';
@@ -62,6 +63,7 @@ const App: React.FC = () => {
       case 'messages': return <SecureMessenger />;
       case 'discovery': return <DiscoveryPlatform />;
       case 'evidence': return <EvidenceVault onNavigateToCase={handleSelectCaseById} />;
+      case 'jurisdiction': return <JurisdictionManager />;
       case 'calendar': return <CalendarView />;
       case 'billing': return <BillingDashboard navigateTo={setActiveView} />;
       case 'crm': return <ClientCRM />;
