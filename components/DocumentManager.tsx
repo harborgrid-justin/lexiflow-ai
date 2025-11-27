@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
-import { Search, FileText, Filter, Plus, Clock, MoreVertical, Download, Eye, Layers, ShieldCheck, Share2, Split, CheckSquare, Wand2, RefreshCw, X, Tag } from 'lucide-react';
+import { Search, Plus, Share2, Split, Wand2, RefreshCw, X } from 'lucide-react';
 import { UserRole, LegalDocument } from '../types';
 import { DocumentVersions } from './DocumentVersions';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
-import { Badge } from './common/Badge';
 import { Modal } from './common/Modal';
 import { useDocumentManager } from '../hooks/useDocumentManager';
+import { DocumentTable } from './document/DocumentTable';
+import { DocumentFilters } from './document/DocumentFilters';
 
 interface DocumentManagerProps {
   currentUserRole?: UserRole;
@@ -58,7 +59,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
                     {taggingDoc?.tags.map(tag => (
                         <span key={tag} className="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-blue-700 text-sm border border-blue-100">
                             {tag}
-                            <button onClick={() => removeTag(taggingDoc.id, tag)} className="ml-2 text-blue-400 hover:text-blue-600"><X className="h-3 w-3"/></button>
+                            <button onClick={() => removeTag(taggingDoc!.id, tag)} className="ml-2 text-blue-400 hover:text-blue-600"><X className="h-3 w-3"/></button>
                         </span>
                     ))}
                 </div>
@@ -128,28 +129,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
-          {/* Feature 2: Cross-Module Filters */}
-          <div className="w-full lg:w-64 bg-white rounded-lg border border-slate-200 p-4 h-fit">
-              <h3 className="font-bold text-slate-800 mb-4 flex items-center"><Filter className="h-4 w-4 mr-2"/> Source Module</h3>
-              <div className="space-y-1">
-                  {['All', 'General', 'Evidence', 'Discovery', 'Billing'].map(mod => (
-                      <button 
-                        key={mod}
-                        onClick={() => setActiveModuleFilter(mod)}
-                        className={`w-full text-left px-3 py-2 rounded text-sm font-medium transition-colors ${activeModuleFilter === mod ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                      >
-                          {mod}
-                      </button>
-                  ))}
-              </div>
-
-              <h3 className="font-bold text-slate-800 mt-6 mb-4 flex items-center"><Layers className="h-4 w-4 mr-2"/> Smart Categories</h3>
-               <div className="space-y-2">
-                  <div className="flex items-center text-sm text-slate-600"><CheckSquare className="h-3 w-3 mr-2"/> Contracts</div>
-                  <div className="flex items-center text-sm text-slate-600"><CheckSquare className="h-3 w-3 mr-2"/> Pleadings</div>
-                  <div className="flex items-center text-sm text-slate-600"><CheckSquare className="h-3 w-3 mr-2"/> Correspondence</div>
-              </div>
-          </div>
+          <DocumentFilters activeModuleFilter={activeModuleFilter} setActiveModuleFilter={setActiveModuleFilter} />
 
           <div className="flex-1 flex flex-col bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
              {/* Toolbar */}
@@ -171,74 +151,14 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
                 </div>
              </div>
 
-             {/* Table */}
-             <div className="flex-1 overflow-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50 sticky top-0 z-10">
-                    <tr>
-                    <th className="w-10 px-6 py-3"><input type="checkbox" onChange={() => selectedDocs.length === filtered.length ? setSelectedDocs([]) : setSelectedDocs(filtered.map(d => d.id))} checked={selectedDocs.length === filtered.length && filtered.length > 0} /></th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Document Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Module Source</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Security</th>
-                    <th className="px-6 py-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                    {filtered.map((doc) => (
-                    <tr key={doc.id} className={`hover:bg-slate-50 cursor-pointer group ${selectedDocs.includes(doc.id) ? 'bg-blue-50/30' : ''}`} onClick={() => toggleSelection(doc.id)}>
-                        <td className="px-6 py-4"><input type="checkbox" checked={selectedDocs.includes(doc.id)} onChange={() => toggleSelection(doc.id)} onClick={(e) => e.stopPropagation()}/></td>
-                        <td className="px-6 py-4">
-                        <div className="flex items-center">
-                            <FileText className={`h-8 w-8 p-1.5 rounded-lg mr-3 transition-colors ${doc.sourceModule === 'Evidence' ? 'bg-purple-100 text-purple-600' : 'bg-blue-50 text-blue-600'}`} />
-                            <div>
-                            <div className="text-sm font-medium text-slate-900 group-hover:text-blue-700">{doc.title}</div>
-                            {/* Feature 4: Meta-tagging display & Edit */}
-                            <div className="flex gap-1 mt-1 flex-wrap items-center">
-                                {doc.tags.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">{t}</span>)}
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); setTaggingDoc(doc); }} 
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600" 
-                                    title="Manage Tags"
-                                >
-                                    <Tag className="h-3 w-3"/>
-                                </button>
-                            </div>
-                            </div>
-                        </div>
-                        </td>
-                        {/* Feature 5: Module Linking */}
-                        <td className="px-6 py-4">
-                            <Badge variant={doc.sourceModule === 'Evidence' ? 'warning' : doc.sourceModule === 'Discovery' ? 'info' : 'neutral'}>
-                                {doc.sourceModule}
-                            </Badge>
-                        </td>
-                        {/* Feature 6: Status Indicators (OCR/Sign) */}
-                        <td className="px-6 py-4">
-                             {doc.status === 'Signed' ? (
-                                 <span className="flex items-center text-xs text-green-700 font-medium"><CheckSquare className="h-3 w-3 mr-1"/> e-Signed</span>
-                             ) : doc.status === 'Draft' ? (
-                                <span className="flex items-center text-xs text-slate-500"><Clock className="h-3 w-3 mr-1"/> Draft</span>
-                             ) : (
-                                <span className="flex items-center text-xs text-blue-600">Final</span>
-                             )}
-                        </td>
-                        {/* Feature 7: Security Status */}
-                        <td className="px-6 py-4">
-                            {doc.isEncrypted && <div className="flex items-center text-xs text-slate-500" title="AES-256 Encrypted"><ShieldCheck className="h-3 w-3 mr-1 text-green-500"/> Secure</div>}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                            <button className="p-1.5 text-slate-400 hover:text-blue-600"><Download className="h-4 w-4"/></button>
-                            <button onClick={() => setSelectedDocForHistory(doc)} className="p-1.5 text-slate-400 hover:text-blue-600" title="View History"><Eye className="h-4 w-4"/></button>
-                            <button className="p-1.5 text-slate-400 hover:text-blue-600"><MoreVertical className="h-4 w-4"/></button>
-                        </div>
-                        </td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-             </div>
+             <DocumentTable 
+                documents={filtered}
+                selectedDocs={selectedDocs}
+                toggleSelection={toggleSelection}
+                setSelectedDocs={setSelectedDocs}
+                setSelectedDocForHistory={setSelectedDocForHistory}
+                setTaggingDoc={setTaggingDoc}
+             />
           </div>
       </div>
     </div>

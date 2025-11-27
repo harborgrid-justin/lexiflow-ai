@@ -18,7 +18,7 @@ export const DiscoveryProduction: React.FC<DiscoveryProductionProps> = ({ reques
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
           setUploading(true);
-          const files = Array.from(e.target.files);
+          const files = Array.from(e.target.files) as File[];
           for (const file of files) {
               await DocumentService.processFile(file); // Simulate processing
               setUploadedFiles(prev => [...prev, file.name]);

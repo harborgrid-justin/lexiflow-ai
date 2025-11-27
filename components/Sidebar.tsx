@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Briefcase, FileText, Search, ShieldCheck, Scale, X, Calendar, ChevronDown, Book, DollarSign, Users, BarChart3, Settings, FileQuestion, Fingerprint, MessageSquare, Globe } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Search, ShieldCheck, Scale, X, Calendar, ChevronDown, Book, DollarSign, Users, BarChart3, Settings, FileQuestion, Fingerprint, MessageSquare, Globe, GitGraph, ScrollText } from 'lucide-react';
 import { User as UserType } from '../types';
 
 interface SidebarProps {
@@ -12,6 +12,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isO
   const baseMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'cases', label: 'Case Management', icon: Briefcase },
+    { id: 'workflows', label: 'Workflows & Processes', icon: GitGraph },
     { id: 'messages', label: 'Secure Messenger', icon: MessageSquare },
     { id: 'discovery', label: 'Discovery Center', icon: FileQuestion },
     { id: 'evidence', label: 'Evidence Vault', icon: Fingerprint },
@@ -22,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isO
     { id: 'crm', label: 'Client CRM', icon: Users },
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'library', label: 'Knowledge Base', icon: Book },
+    { id: 'clauses', label: 'Clause Library', icon: ScrollText },
     { id: 'research', label: 'Legal Research', icon: Search },
   ];
 

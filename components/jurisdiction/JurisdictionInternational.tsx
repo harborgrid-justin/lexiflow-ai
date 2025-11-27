@@ -12,7 +12,7 @@ export const JurisdictionInternational: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-8 rounded-lg flex justify-between items-center">
+      <div className="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-8 rounded-lg flex justify-between items-center shadow-lg">
         <div>
           <h2 className="text-2xl font-bold flex items-center"><Globe className="h-6 w-6 mr-3"/> Cross-Border Jurisdiction</h2>
           <p className="text-blue-200 mt-2">Manage international service, discovery (Hague Evidence), and enforcement.</p>

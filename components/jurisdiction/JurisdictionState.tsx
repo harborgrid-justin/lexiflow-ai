@@ -14,11 +14,11 @@ export const JurisdictionState: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200">
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <h3 className="font-bold text-slate-800">State Court Venues</h3>
         <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"/>
-            <input className="w-full pl-9 pr-3 py-2 border rounded-md text-sm" placeholder="Search state courts..."/>
+            <input className="w-full pl-9 pr-3 py-2 border rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search state courts..."/>
         </div>
       </div>
 

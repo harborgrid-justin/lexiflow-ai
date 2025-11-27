@@ -5,6 +5,7 @@ import { GeminiService } from '../services/geminiService';
 import { MOCK_DOCUMENTS } from '../data/mockDocuments';
 import { MOCK_STAGES } from '../data/mockWorkflow';
 import { MOCK_TIME_ENTRIES } from '../data/mockBilling';
+import { MOCK_MOTIONS } from '../data/mockMotions';
 
 export const useCaseDetail = (caseData: Case) => {
   const [activeTab, setActiveTab] = useState('Overview');
@@ -31,17 +32,35 @@ export const useCaseDetail = (caseData: Case) => {
   const timelineEvents = useMemo(() => {
     const events: TimelineEvent[] = [];
     events.push({ id: 'init', date: caseData.filingDate, title: 'Case Filed', type: 'milestone', description: `Filed in ${caseData.court}` });
+    
+    // Documents
     documents.forEach(d => {
-        events.push({ id: d.id, date: d.uploadDate, title: `Doc Upload: ${d.title}`, type: 'document', description: d.summary || d.type });
+        events.push({ id: d.id, date: d.uploadDate, title: `Doc Upload: ${d.title}`, type: 'document', description: d.summary || d.type, relatedId: d.id });
     });
+    
+    // Tasks
     stages.forEach(s => {
         s.tasks.forEach(t => {
-            if(t.status === 'Done') events.push({ id: t.id, date: t.dueDate, title: `Task Completed: ${t.title}`, type: 'task', description: `Assigned to ${t.assignee}` });
+            if(t.status === 'Done') events.push({ id: t.id, date: t.dueDate, title: `Task Completed: ${t.title}`, type: 'task', description: `Assigned to ${t.assignee}`, relatedId: t.id });
         });
     });
+    
+    // Billing
     billingEntries.forEach(b => {
-        events.push({ id: b.id, date: b.date, title: 'Billable Time Logged', type: 'billing', description: `${(b.duration/60).toFixed(1)}h - ${b.description}` });
+        events.push({ id: b.id, date: b.date, title: 'Billable Time Logged', type: 'billing', description: `${(b.duration/60).toFixed(1)}h - ${b.description}`, relatedId: b.id });
     });
+
+    // Motions & Hearings (NEW)
+    const relevantMotions = MOCK_MOTIONS.filter(m => m.caseId === caseData.id);
+    relevantMotions.forEach(m => {
+        if(m.filingDate) {
+            events.push({ id: `mot-file-${m.id}`, date: m.filingDate, title: `Motion Filed: ${m.title}`, type: 'motion', description: `Type: ${m.type} | Status: ${m.status}`, relatedId: m.id });
+        }
+        if(m.hearingDate) {
+            events.push({ id: `mot-hear-${m.id}`, date: m.hearingDate, title: `Hearing Scheduled: ${m.title}`, type: 'hearing', description: `Court Appearance Required`, relatedId: m.id });
+        }
+    });
+
     return events.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [caseData, documents, stages, billingEntries]);
 

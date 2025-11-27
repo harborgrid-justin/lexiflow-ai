@@ -7,11 +7,40 @@ export enum CaseStatus {
   Appeal = 'Appeal'
 }
 
-export type UserRole = 'Senior Partner' | 'Associate' | 'Paralegal' | 'Administrator';
+export type UserRole = 'Senior Partner' | 'Associate' | 'Paralegal' | 'Administrator' | 'Client User' | 'Guest';
 export type MatterType = 'Litigation' | 'M&A' | 'IP' | 'Real Estate' | 'General';
 export type BillingModel = 'Hourly' | 'Fixed' | 'Contingency' | 'Hybrid';
+export type OrganizationType = 'LawFirm' | 'Corporate' | 'Government' | 'Court' | 'Vendor';
 
-export interface User { id: string; name: string; role: UserRole; office?: string; }
+export interface Organization {
+  id: string;
+  name: string;
+  type: OrganizationType;
+  domain: string;
+  logo?: string;
+  status: 'Active' | 'Inactive';
+}
+
+export interface Group {
+  id: string;
+  orgId: string;
+  name: string;
+  description: string;
+  permissions: string[];
+}
+
+export interface User { 
+  id: string; 
+  name: string; 
+  email?: string;
+  role: UserRole; 
+  office?: string; 
+  // Hierarchy Links
+  orgId?: string;
+  groupIds?: string[];
+  userType?: 'Internal' | 'External'; 
+  avatar?: string;
+}
 
 export interface Party { 
   id: string; 
@@ -20,6 +49,8 @@ export interface Party {
   contact: string; 
   type: 'Individual' | 'Corporation' | 'Government';
   counsel?: string;
+  // Link party to an organization record if they are a client/entity in the system
+  linkedOrgId?: string; 
 }
 
 export interface Client {
@@ -30,6 +61,7 @@ export interface Client {
   totalBilled: number;
   matters: string[];
   riskScore?: number;
+  orgId?: string; // Link CRM client to Organization entity
 }
 
 export interface TimeEntry {
@@ -68,6 +100,9 @@ export interface Case {
   status: CaseStatus; filingDate: string; description: string; value: number;
   matterType?: MatterType; jurisdiction?: string; court?: string; parties?: Party[];
   billingModel?: BillingModel; judge?: string;
+  // Hierarchy Links
+  ownerOrgId?: string;
+  assignedGroupIds?: string[];
 }
 
 export interface DocumentVersion {
@@ -96,9 +131,19 @@ export interface LegalDocument {
 }
 
 export interface WorkflowTask {
-  id: string; title: string; status: 'Pending'|'In Progress'|'Review'|'Done';
-  assignee: string; dueDate: string; priority: 'High'|'Medium'|'Low'; caseId?: string;
-  slaWarning?: boolean; automatedTrigger?: string;
+  id: string; 
+  title: string; 
+  status: 'Pending'|'In Progress'|'Review'|'Done';
+  assignee: string; 
+  dueDate: string; 
+  priority: 'High'|'Medium'|'Low'; 
+  caseId?: string;
+  slaWarning?: boolean; 
+  automatedTrigger?: string;
+  // New Module Linking
+  relatedModule?: 'Documents' | 'Billing' | 'Discovery' | 'Motions' | 'Evidence';
+  actionLabel?: string;
+  description?: string;
 }
 
 export interface WorkflowStage {
@@ -114,8 +159,9 @@ export interface ResearchSession {
 
 export interface TimelineEvent {
   id: string; date: string; title: string;
-  type: 'document' | 'task' | 'billing' | 'milestone' | 'system';
+  type: 'document' | 'task' | 'billing' | 'milestone' | 'system' | 'motion' | 'hearing';
   description?: string; user?: string;
+  relatedId?: string;
 }
 
 // --- NEW ENTERPRISE TYPES ---
@@ -153,6 +199,26 @@ export interface AuditLogEntry {
 export interface Playbook {
   id: string; name: string; jurisdiction: string; matterType: MatterType;
   stages: WorkflowStage[];
+}
+
+// --- MOTIONS & DOCKET ---
+
+export type MotionType = 'Dismiss' | 'Summary Judgment' | 'Compel Discovery' | 'In Limine' | 'Continuance' | 'Sanctions';
+export type MotionStatus = 'Draft' | 'Filed' | 'Opposition Served' | 'Reply Served' | 'Hearing Set' | 'Submitted' | 'Decided';
+
+export interface Motion {
+  id: string;
+  caseId: string;
+  title: string;
+  type: MotionType;
+  status: MotionStatus;
+  filingDate?: string;
+  hearingDate?: string;
+  outcome?: string;
+  documents?: string[]; // IDs of linked docs
+  assignedAttorney?: string;
+  oppositionDueDate?: string;
+  replyDueDate?: string;
 }
 
 // --- DISCOVERY & EVIDENCE ---

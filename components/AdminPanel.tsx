@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
-import { Activity, Shield, Link, Database } from 'lucide-react';
+import { Activity, Shield, Link, Database, Network } from 'lucide-react';
 import { MOCK_AUDIT_LOGS } from '../data/mockAdmin';
 import { AdminAuditLog } from './admin/AdminAuditLog';
 import { AdminPlatformManager } from './admin/AdminPlatformManager';
+import { AdminHierarchy } from './admin/AdminHierarchy';
 import { PageHeader } from './common/PageHeader';
 
 export const AdminPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('logs');
+  const [activeTab, setActiveTab] = useState('hierarchy');
 
   const logs = MOCK_AUDIT_LOGS;
 
@@ -20,6 +21,9 @@ export const AdminPanel: React.FC = () => {
       
       <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
         <div className="w-full md:w-64 flex flex-col space-y-2 shrink-0">
+            <button onClick={() => setActiveTab('hierarchy')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'hierarchy' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Network className="h-4 w-4 mr-3"/> Hierarchy & Access
+            </button>
             <button onClick={() => setActiveTab('logs')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'logs' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
             <Activity className="h-4 w-4 mr-3"/> Audit Logs
             </button>
@@ -35,6 +39,7 @@ export const AdminPanel: React.FC = () => {
         </div>
 
         <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            {activeTab === 'hierarchy' && <AdminHierarchy />}
             {activeTab === 'logs' && <AdminAuditLog logs={logs} />}
             {activeTab === 'data' && <AdminPlatformManager />}
 

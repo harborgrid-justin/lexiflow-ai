@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
+import { TabNavigation } from './common/TabNavigation';
 import { useSecureMessenger } from '../hooks/useSecureMessenger';
 import { MessengerChatList } from './messenger/MessengerChatList';
 import { MessengerChatWindow } from './messenger/MessengerChatWindow';
@@ -35,6 +36,13 @@ export const SecureMessenger: React.FC = () => {
     allFiles
   } = useSecureMessenger();
 
+  const tabs = [
+    { id: 'chats', label: 'Active Chats', icon: MessageSquare },
+    { id: 'contacts', label: 'Firm Directory', icon: Users },
+    { id: 'files', label: 'Shared Files', icon: FileText },
+    { id: 'archived', label: 'Archived', icon: Archive },
+  ];
+
   return (
     <div className="h-full flex flex-col animate-fade-in">
       <PageHeader 
@@ -42,29 +50,12 @@ export const SecureMessenger: React.FC = () => {
         subtitle="End-to-End Encrypted Communication Channel." 
       />
 
-      <div className="border-b border-slate-200 mb-4">
-        <nav className="flex space-x-6 overflow-x-auto">
-          {[
-            { id: 'chats', label: 'Active Chats', icon: MessageSquare },
-            { id: 'contacts', label: 'Firm Directory', icon: Users },
-            { id: 'files', label: 'Shared Files', icon: FileText },
-            { id: 'archived', label: 'Archived', icon: Archive },
-          ].map(item => (
-            <button 
-              key={item.id}
-              onClick={() => setView(item.id as any)}
-              className={`pb-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors ${
-                view === item.id 
-                  ? 'border-blue-600 text-blue-600' 
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <TabNavigation 
+        tabs={tabs} 
+        activeTab={view} 
+        onTabChange={(id) => setView(id as any)}
+        className="mb-4 bg-white rounded-t-lg md:bg-transparent"
+      />
 
       <div className="flex-1 flex flex-col md:flex-row bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden min-h-0">
         

@@ -38,7 +38,7 @@ export const JurisdictionLocalRules: React.FC = () => {
               </TableCell>
               <TableCell>{r.updated}</TableCell>
               <TableCell className="text-right">
-                <button className="text-xs border px-2 py-1 rounded hover:bg-slate-50">Download</button>
+                <button className="text-xs border px-2 py-1 rounded hover:bg-slate-50 transition-colors">Download</button>
               </TableCell>
             </TableRow>
           ))}

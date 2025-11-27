@@ -65,5 +65,71 @@ export const GeminiService = {
       const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: `Rewrite this legal billing entry to be professional, specific, and value-oriented: "${raw}"` });
       return response.text || raw;
     } catch (e) { return raw; }
+  },
+
+  async parseDocket(text: string): Promise<any> {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Parse the following court docket text into structured JSON. Extract the Case Information, Parties, Docket Entries, and any Deadlines or Calendar Events.
+        
+        Text:
+        ${text.substring(0, 15000)}`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              caseInfo: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  caseNumber: { type: Type.STRING },
+                  court: { type: Type.STRING },
+                  judge: { type: Type.STRING }
+                }
+              },
+              parties: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    name: { type: Type.STRING },
+                    role: { type: Type.STRING },
+                    type: { type: Type.STRING }
+                  }
+                }
+              },
+              docketEntries: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    date: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    entryNumber: { type: Type.STRING }
+                  }
+                }
+              },
+              deadlines: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    date: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    type: { type: Type.STRING }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      return JSON.parse(response.text || '{}');
+    } catch (e) {
+      console.error("Docket parsing failed:", e);
+      return null;
+    }
   }
 };

@@ -4,7 +4,7 @@ import { Map, MapPin } from 'lucide-react';
 
 export const JurisdictionGeoMap: React.FC = () => {
   return (
-    <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
       <div className="p-4 border-b border-slate-200 flex justify-between items-center">
         <h3 className="font-bold text-slate-900 flex items-center"><Map className="h-5 w-5 mr-2 text-blue-600"/> Jurisdiction Map</h3>
         <div className="flex gap-2 text-xs">

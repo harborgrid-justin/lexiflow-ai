@@ -1,0 +1,264 @@
+
+import React, { useState, useEffect } from 'react';
+import { Motion, MotionStatus, MotionType } from '../../types';
+import { MOCK_MOTIONS } from '../../data/mockMotions';
+import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
+import { Badge } from '../common/Badge';
+import { Button } from '../common/Button';
+import { Plus, Gavel, Calendar, Wand2, ArrowRight, RefreshCw, GitGraph, Clock } from 'lucide-react';
+import { Modal } from '../common/Modal';
+import { Input } from '../common/Inputs';
+import { GeminiService } from '../../services/geminiService';
+
+interface CaseMotionsProps {
+  caseId: string;
+  caseTitle: string;
+}
+
+export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) => {
+  const [motions, setMotions] = useState<Motion[]>(MOCK_MOTIONS.filter(m => m.caseId === caseId));
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newMotion, setNewMotion] = useState<Partial<Motion>>({ type: 'Dismiss', status: 'Draft' });
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Auto-calculate deadlines when hearing date changes
+  useEffect(() => {
+    if (newMotion.hearingDate) {
+      const hearing = new Date(newMotion.hearingDate);
+      if (!isNaN(hearing.getTime())) {
+        const opp = new Date(hearing);
+        opp.setDate(hearing.getDate() - 14); // ~14 calendar days prior
+        const reply = new Date(hearing);
+        reply.setDate(hearing.getDate() - 7); // ~7 calendar days prior
+        
+        setNewMotion(prev => ({
+          ...prev,
+          oppositionDueDate: opp.toISOString().split('T')[0],
+          replyDueDate: reply.toISOString().split('T')[0]
+        }));
+      }
+    }
+  }, [newMotion.hearingDate]);
+
+  const handleSave = () => {
+    if (!newMotion.title) return;
+    const motion: Motion = {
+      id: `mot-${Date.now()}`,
+      caseId,
+      title: newMotion.title,
+      type: newMotion.type as MotionType,
+      status: newMotion.status as MotionStatus,
+      assignedAttorney: 'Current User',
+      filingDate: new Date().toISOString().split('T')[0],
+      hearingDate: newMotion.hearingDate,
+      oppositionDueDate: newMotion.oppositionDueDate,
+      replyDueDate: newMotion.replyDueDate
+    };
+    setMotions([...motions, motion]);
+    setIsModalOpen(false);
+    setNewMotion({ type: 'Dismiss', status: 'Draft' });
+  };
+
+  const handleGenerateStrategy = async () => {
+    if (!newMotion.title) return;
+    setIsGenerating(true);
+    // Simulate AI generation for strategy
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    alert(`AI Strategy Generated: Arguments for ${newMotion.title} based on ${caseTitle} have been drafted to your documents.`);
+    setIsGenerating(false);
+  };
+
+  const handleSyncCalendar = () => {
+    const deadlinesCount = motions.filter(m => m.hearingDate).length * 3; // Hearing + Opp + Reply
+    alert(`Synced ${deadlinesCount} deadlines to Master Calendar and Outlook.`);
+  };
+
+  const handleAddToWorkflow = (motion: Motion) => {
+      alert(`Created new Workflow Stage: "${motion.title} Prep" with tasks for Research, Drafting, and Filing.`);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Draft': return 'neutral';
+      case 'Filed': return 'info';
+      case 'Hearing Set': return 'warning';
+      case 'Decided': return 'success';
+      default: return 'neutral';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Motion Practice</h3>
+          <p className="text-sm text-slate-500">Track filings, opposition deadlines, and hearings.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" icon={RefreshCw} onClick={handleSyncCalendar}>Sync Calendar</Button>
+          <Button variant="primary" size="sm" icon={Plus} onClick={() => setIsModalOpen(true)}>New Motion</Button>
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <TableContainer>
+          <TableHeader>
+            <TableHead>Motion Title</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Hearing</TableHead>
+            <TableHead>Opp. Due</TableHead>
+            <TableHead>Reply Due</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableHeader>
+          <TableBody>
+            {motions.map(motion => (
+              <TableRow key={motion.id}>
+                <TableCell className="font-medium text-slate-900 flex items-center">
+                  <Gavel className="h-4 w-4 mr-2 text-slate-400" />
+                  {motion.title}
+                </TableCell>
+                <TableCell>{motion.type}</TableCell>
+                <TableCell>
+                  <Badge variant={getStatusColor(motion.status) as any}>{motion.status}</Badge>
+                </TableCell>
+                <TableCell>
+                  {motion.hearingDate ? (
+                    <span className="flex items-center text-red-600 font-medium text-xs">
+                      <Calendar className="h-3 w-3 mr-1" /> {motion.hearingDate}
+                    </span>
+                  ) : '-'}
+                </TableCell>
+                <TableCell>
+                  {motion.oppositionDueDate ? (
+                    <span className="text-xs text-slate-600 font-mono">{motion.oppositionDueDate}</span>
+                  ) : '-'}
+                </TableCell>
+                <TableCell>
+                  {motion.replyDueDate ? (
+                    <span className="text-xs text-slate-600 font-mono">{motion.replyDueDate}</span>
+                  ) : '-'}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="ghost" className="text-indigo-600" onClick={() => handleAddToWorkflow(motion)} icon={GitGraph}>To Workflow</Button>
+                    <Button size="sm" variant="ghost" className="text-blue-600">Details</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {motions.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-slate-400 italic">No active motions.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </TableContainer>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {motions.map(motion => (
+          <div key={motion.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <div className="flex justify-between items-start mb-2">
+              <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <Gavel className="h-4 w-4 text-blue-500" />
+                {motion.title}
+              </h4>
+              <Badge variant={getStatusColor(motion.status) as any}>{motion.status}</Badge>
+            </div>
+            <div className="text-xs text-slate-500 mb-3">{motion.type} • Filed: {motion.filingDate || 'Draft'}</div>
+            
+            {motion.hearingDate && (
+              <div className="bg-slate-50 p-3 rounded border border-slate-100 space-y-2 mb-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium flex items-center"><Calendar className="h-3 w-3 mr-1"/> Hearing</span>
+                  <span className="font-bold text-slate-900">{motion.hearingDate}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Opposition Due</span>
+                  <span className="font-mono text-slate-600">{motion.oppositionDueDate}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Reply Due</span>
+                  <span className="font-mono text-slate-600">{motion.replyDueDate}</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button size="sm" variant="outline" className="flex-1" icon={GitGraph} onClick={() => handleAddToWorkflow(motion)}>To Workflow</Button>
+              <Button size="sm" variant="outline" className="flex-1">Details</Button>
+            </div>
+          </div>
+        ))}
+        {motions.length === 0 && (
+          <div className="text-center py-8 text-slate-400 italic bg-slate-50 rounded-lg">No active motions.</div>
+        )}
+      </div>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Draft New Motion">
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Motion Type</label>
+            <select 
+              className="w-full px-3 py-2 border rounded-md text-sm bg-white"
+              value={newMotion.type}
+              onChange={(e) => setNewMotion({...newMotion, type: e.target.value as MotionType})}
+            >
+              <option value="Dismiss">Motion to Dismiss</option>
+              <option value="Summary Judgment">Summary Judgment</option>
+              <option value="Compel Discovery">Compel Discovery</option>
+              <option value="In Limine">Motion In Limine</option>
+              <option value="Continuance">Motion for Continuance</option>
+            </select>
+          </div>
+          
+          <Input 
+            label="Title" 
+            placeholder="e.g. Motion to Dismiss Count III"
+            value={newMotion.title || ''}
+            onChange={(e) => setNewMotion({...newMotion, title: e.target.value})}
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Hearing Date (Optional)</label>
+            <input 
+              type="date"
+              className="w-full px-3 py-2 border rounded-md text-sm bg-white"
+              value={newMotion.hearingDate || ''}
+              onChange={(e) => setNewMotion({...newMotion, hearingDate: e.target.value})}
+            />
+            {newMotion.hearingDate && (
+              <div className="mt-2 text-xs text-blue-600 flex items-center gap-4 bg-blue-50 p-2 rounded">
+                <span><Clock className="h-3 w-3 inline mr-1"/> Opp: {newMotion.oppositionDueDate}</span>
+                <span><Clock className="h-3 w-3 inline mr-1"/> Reply: {newMotion.replyDueDate}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex items-start gap-3">
+            <Wand2 className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5"/>
+            <div>
+              <h4 className="text-sm font-bold text-indigo-900">AI Strategy Assistance</h4>
+              <p className="text-xs text-indigo-700 mt-1 mb-2">Gemini can analyze case facts and local rules to suggest arguments for this motion.</p>
+              <button 
+                onClick={handleGenerateStrategy}
+                disabled={isGenerating || !newMotion.title}
+                className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {isGenerating ? 'Analyzing Case Law...' : 'Generate Arguments'}
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-2">
+            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button variant="primary" onClick={handleSave} icon={ArrowRight}>Create Draft</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+};

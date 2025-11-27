@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Case } from '../types';
 import { 
   Plus, Briefcase, UserPlus, ShieldAlert, Users, Calendar, CheckSquare,
-  DollarSign, Gavel, Mic2, FileCheck, Archive
+  DollarSign, Gavel, Mic2, FileCheck, Archive, FileInput
 } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
@@ -19,6 +19,7 @@ import {
   CaseListConflicts, CaseListTasks, CaseListReporters, 
   CaseListClosing, CaseListArchived 
 } from './case-list/CaseListMisc';
+import { DocketImportModal } from './DocketImportModal';
 
 interface CaseListProps {
   onSelectCase: (c: Case) => void;
@@ -41,6 +42,13 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase }) => {
   } = useCaseList();
 
   const [view, setView] = useState<CaseView>('active');
+  const [isDocketModalOpen, setIsDocketModalOpen] = useState(false);
+
+  const handleDocketImport = (data: any) => {
+    console.log("Imported Docket Data:", data);
+    alert(`Successfully imported case: ${data.caseInfo?.title}. Created ${data.parties?.length} parties and ${data.docketEntries?.length} docket entries.`);
+    // In a real app, this would dispatch to a store/context
+  };
 
   const menuItems = [
     { id: 'active', label: 'Matters', icon: Briefcase },
@@ -62,7 +70,10 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase }) => {
         title="Case Management" 
         subtitle="Manage matters, intake, and firm operations."
         actions={
-          <Button variant="primary" icon={Plus} onClick={() => setIsModalOpen(true)}>New Matter</Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" icon={FileInput} onClick={() => setIsDocketModalOpen(true)}>Import Docket</Button>
+            <Button variant="primary" icon={Plus} onClick={() => setIsModalOpen(true)}>New Matter</Button>
+          </div>
         }
       />
 
@@ -124,6 +135,12 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase }) => {
           </div>
         </div>
       </Modal>
+
+      <DocketImportModal 
+        isOpen={isDocketModalOpen} 
+        onClose={() => setIsDocketModalOpen(false)} 
+        onImport={handleDocketImport}
+      />
     </div>
   );
 };
