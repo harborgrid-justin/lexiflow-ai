@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Conversation, Attachment } from '../../hooks/useSecureMessenger';
+import { Conversation, Attachment } from '../../types';
 import { Lock, Shield } from 'lucide-react';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';

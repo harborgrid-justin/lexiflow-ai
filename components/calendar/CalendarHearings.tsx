@@ -1,12 +1,43 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, User, Clock } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
+
+interface Hearing {
+  id: number | string;
+  title: string;
+  case: string;
+  time: string;
+  location: string;
+  judge: string;
+}
 
 export const CalendarHearings: React.FC = () => {
-  const hearings = [
-    { id: 1, title: 'Case Management Conference', case: 'Martinez v. TechCorp', time: '09:00 AM', location: 'Dept 504, SF Superior', judge: 'Hon. S. Miller' },
-    { id: 2, title: 'Motion Summary Judgment', case: 'State v. GreenEnergy', time: '01:30 PM', location: 'Courtroom 4B, NV District', judge: 'Hon. A. Wright' },
-  ];
+  const [hearings, setHearings] = useState<Hearing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHearings = async () => {
+      try {
+        const data = await ApiService.getCalendarHearings();
+        setHearings(data);
+      } catch (error) {
+        console.error('Failed to fetch hearings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHearings();
+  }, []);
+
+  if (loading) {
+    return <div className="p-4 text-center text-slate-500">Loading hearings...</div>;
+  }
+
+  if (hearings.length === 0) {
+    return <div className="p-4 text-center text-slate-500">No upcoming hearings found.</div>;
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

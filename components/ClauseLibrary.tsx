@@ -1,15 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clause } from '../types';
+import { ApiService } from '../services/apiService';
 import { Search, BarChart2, ShieldAlert, FileText, History } from 'lucide-react';
 import { ClauseHistoryModal } from './ClauseHistoryModal';
-import { MOCK_CLAUSES } from '../data/mockClauses';
 
 export const ClauseLibrary: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClause, setSelectedClause] = useState<Clause | null>(null);
+  const [clauses, setClauses] = useState<Clause[]>([]);
 
-  const clauses = MOCK_CLAUSES;
+  useEffect(() => {
+    const fetchClauses = async () => {
+        try {
+            const data = await ApiService.getClauses();
+            setClauses(data);
+        } catch (e) {
+            console.error("Failed to fetch clauses", e);
+        }
+    };
+    fetchClauses();
+  }, []);
 
   const filtered = clauses.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.category.toLowerCase().includes(searchTerm.toLowerCase()));
 

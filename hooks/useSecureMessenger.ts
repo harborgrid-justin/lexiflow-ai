@@ -1,80 +1,49 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { Conversation, Message, Attachment } from '../types';
+import { ApiService } from '../services/apiService';
 
-export interface Attachment {
-  name: string;
-  type: 'doc' | 'image';
-  size: string;
-  sender?: string;
-  date?: string;
-}
 
-export interface Message {
-  id: string;
-  senderId: string;
-  text: string;
-  timestamp: string;
-  status: 'sent' | 'delivered' | 'read';
-  attachments?: Attachment[];
-  isPrivileged?: boolean;
-}
 
-export interface Conversation {
-  id: string;
-  name: string;
-  role: string;
-  isExternal: boolean;
-  unread: number;
-  status: 'online' | 'offline' | 'away';
-  draft?: string;
-  messages: Message[];
-}
-
-const INITIAL_CONVERSATIONS: Conversation[] = [
-  {
-    id: 'c1', name: 'Sarah Jenkins', role: 'Paralegal', isExternal: false, unread: 2, status: 'online',
-    messages: [
-      { id: 'm1', senderId: 'other', text: 'Good morning! Did you see the new discovery request?', timestamp: new Date(Date.now() - 3600000).toISOString(), status: 'read' },
-      { id: 'm2', senderId: 'me', text: 'Yes, reviewing it now. We need to collect those logs.', timestamp: new Date(Date.now() - 3500000).toISOString(), status: 'read' },
-      { id: 'm3', senderId: 'other', text: 'I have uploaded the new evidence files to the vault.', timestamp: new Date(Date.now() - 900000).toISOString(), status: 'read', attachments: [{ name: 'Server_Logs.zip', type: 'doc', size: '45MB' }] }
-    ]
-  },
-  {
-    id: 'c2', name: 'John Doe', role: 'Client (TechCorp)', isExternal: true, unread: 0, status: 'offline',
-    messages: [
-      { id: 'm1', senderId: 'me', text: 'Please review the attached settlement draft.', timestamp: new Date(Date.now() - 86400000).toISOString(), status: 'read', isPrivileged: true },
-      { id: 'm2', senderId: 'other', text: 'Can we reschedule our call to 3 PM?', timestamp: new Date(Date.now() - 82800000).toISOString(), status: 'read' }
-    ]
-  },
-  {
-    id: 'c3', name: 'Morgan & Morgan', role: 'Opposing Counsel', isExternal: true, unread: 0, status: 'online',
-    messages: [
-       { id: 'm1', senderId: 'other', text: 'We are filing for an extension.', timestamp: new Date(Date.now() - 172800000).toISOString(), status: 'read' }
-    ]
-  }
-];
-
-const MOCK_CONTACTS = [
-    { id: 'u1', name: 'Alexandra H.', role: 'Senior Partner', status: 'online', email: 'alex@lexiflow.com', department: 'Litigation' },
-    { id: 'u2', name: 'Sarah Jenkins', role: 'Paralegal', status: 'online', email: 'sarah@lexiflow.com', department: 'Support' },
-    { id: 'u3', name: 'James Doe', role: 'Associate', status: 'busy', email: 'james@lexiflow.com', department: 'Litigation' },
-    { id: 'c1', name: 'John Doe', role: 'Client (TechCorp)', status: 'offline', email: 'j.doe@techcorp.com', department: 'External' },
-    { id: 'c2', name: 'Morgan & Morgan', role: 'Opposing Counsel', status: 'busy', email: 'legal@morgan.com', department: 'External' },
-];
-
-export const useSecureMessenger = () => {
+export const useSecureMessenger = (currentUserId?: string) => {
   const [view, setView] = useState<'chats' | 'contacts' | 'files' | 'archived'>('chats');
-  const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [contactsList, setContactsList] = useState<any[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [inputText, setInputText] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [isPrivilegedMode, setIsPrivilegedMode] = useState(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [convs, users] = await Promise.all([
+          ApiService.getConversations(),
+          ApiService.getUsers()
+        ]);
+        setConversations(convs);
+        setContactsList(users.map(u => ({
+            id: u.id,
+            name: u.name,
+            role: u.role,
+            status: 'online', // Mock status for now
+            email: u.email,
+            department: u.role
+        })));
+      } catch (error) {
+        console.error("Failed to fetch messenger data", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
       const lastMsgA = a.messages[a.messages.length - 1];
       const lastMsgB = b.messages[b.messages.length - 1];
+      if (!lastMsgA) return 1;
+      if (!lastMsgB) return -1;
       return new Date(lastMsgB.timestamp).getTime() - new Date(lastMsgA.timestamp).getTime();
     });
   }, [conversations]);
@@ -89,11 +58,11 @@ export const useSecureMessenger = () => {
   }, [sortedConversations, searchTerm]);
 
   const contacts = useMemo(() => {
-      return MOCK_CONTACTS.filter(c => 
+      return contactsList.filter(c => 
           c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
           c.role.toLowerCase().includes(searchTerm.toLowerCase())
       );
-  }, [searchTerm]);
+  }, [contactsList, searchTerm]);
 
   const allFiles = useMemo(() => {
       const files: Attachment[] = [];
@@ -135,12 +104,12 @@ export const useSecureMessenger = () => {
     ));
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if ((!inputText.trim() && pendingAttachments.length === 0) || !activeConvId) return;
     
     const newMessage: Message = {
       id: `new-${Date.now()}`,
-      senderId: 'me',
+      senderId: currentUserId || 'me',
       text: inputText,
       timestamp: new Date().toISOString(),
       status: 'sent',
@@ -148,6 +117,7 @@ export const useSecureMessenger = () => {
       attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined
     };
 
+    // Optimistic update
     setConversations(prev => prev.map(c => {
       if (c.id === activeConvId) {
         return {
@@ -162,22 +132,21 @@ export const useSecureMessenger = () => {
     setInputText('');
     setPendingAttachments([]);
 
-    setTimeout(() => {
-        setConversations(prev => prev.map(c => 
-            c.id === activeConvId 
-            ? { ...c, messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: 'delivered' as const } : m) } 
-            : c
-        ));
-    }, 1500);
+    try {
+      await ApiService.sendMessage(activeConvId, newMessage.text, currentUserId);
+      
+      // Update status to delivered
+      setConversations(prev => prev.map(c => 
+          c.id === activeConvId 
+          ? { ...c, messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: 'delivered' as const } : m) } 
+          : c
+      ));
+    } catch (error) {
+      console.error("Failed to send message", error);
+      // Revert or show error
+    }
 
-    setTimeout(() => {
-        setConversations(prev => prev.map(c => 
-            c.id === activeConvId 
-            ? { ...c, messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: 'read' as const } : m) } 
-            : c
-        ));
-    }, 3500);
-
+    // Mock reply for demo purposes
     if (activeConversation && activeConversation.status !== 'offline') {
         setTimeout(() => {
             const replyMsg: Message = {

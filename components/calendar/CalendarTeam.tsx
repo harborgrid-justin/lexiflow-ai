@@ -1,15 +1,38 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserAvatar } from '../common/UserAvatar';
+import { ApiService } from '../../services/apiService';
+
+interface TeamMember {
+  name: string;
+  role: string;
+  schedule: number[];
+}
 
 export const CalendarTeam: React.FC = () => {
-  const team = [
-    { name: 'Alexandra H.', role: 'Senior Partner', schedule: [1, 1, 0, 1, 1, 0, 0] },
-    { name: 'James Doe', role: 'Associate', schedule: [1, 1, 1, 1, 1, 0, 0] },
-    { name: 'Sarah Jenkins', role: 'Paralegal', schedule: [1, 1, 1, 1, 0, 0, 0] },
-  ];
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const data = await ApiService.getCalendarTeam();
+        setTeam(data);
+      } catch (error) {
+        console.error('Failed to fetch team availability:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeam();
+  }, []);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  if (loading) {
+    return <div className="p-4 text-center text-slate-500">Loading team availability...</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">

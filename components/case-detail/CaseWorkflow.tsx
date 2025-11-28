@@ -14,30 +14,20 @@ interface CaseWorkflowProps {
   generatingWorkflow: boolean;
   onGenerateWorkflow: () => void;
   onNavigateToModule?: (module: string) => void;
+  onToggleTask?: (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => void;
 }
 
-export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages: initialStages, generatingWorkflow, onGenerateWorkflow, onNavigateToModule }) => {
+export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWorkflow, onGenerateWorkflow, onNavigateToModule, onToggleTask }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'automation'>('timeline');
-  const [stages, setStages] = useState(initialStages);
-  const [expandedStage, setExpandedStage] = useState<string | null>(initialStages.find(s => s.status === 'Active')?.id || null);
+  const [expandedStage, setExpandedStage] = useState<string | null>(stages.find(s => s.status === 'Active')?.id || null);
 
   const handleToggleTask = (stageId: string, taskId: string) => {
-    setStages(prevStages => prevStages.map(stage => {
-        if (stage.id !== stageId) return stage;
-        
-        const newTasks = stage.tasks.map(task => 
-            task.id === taskId ? { ...task, status: task.status === 'Done' ? 'Pending' : 'Done' } : task
-        );
-        
-        const allDone = newTasks.every(t => t.status === 'Done');
-        const anyInProgress = newTasks.some(t => t.status === 'In Progress');
-        
-        let newStageStatus: 'Pending' | 'Active' | 'Completed' = stage.status;
-        if (allDone) newStageStatus = 'Completed';
-        else if (anyInProgress || newTasks.some(t => t.status === 'Done')) newStageStatus = 'Active';
-
-        return { ...stage, tasks: newTasks as WorkflowTask[], status: newStageStatus };
-    }));
+    const stage = stages.find(s => s.id === stageId);
+    const task = stage?.tasks.find(t => t.id === taskId);
+    if (task && onToggleTask) {
+        const newStatus = task.status === 'Done' ? 'Pending' : 'Done';
+        onToggleTask(taskId, newStatus);
+    }
   };
 
   const getModuleIcon = (module?: string) => {
@@ -56,9 +46,9 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages: initialStage
   const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
       {/* Workflow Header / Stats */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
           <div className="w-full md:w-1/3">
               <h3 className="text-lg font-bold text-slate-900 mb-1">Workflow Status</h3>
               <div className="flex items-center justify-between text-sm text-slate-500 mb-2">
@@ -99,6 +89,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages: initialStage
           </div>
       </div>
 
+      <div className="flex-1 overflow-y-auto pr-2">
       {activeTab === 'timeline' ? (
         <div className="space-y-6">
             {stages.map((stage, index) => {
@@ -221,7 +212,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages: initialStage
                         <div className="bg-blue-100 p-3 rounded-full text-blue-600"><Clock className="h-6 w-6"/></div>
                         <div>
                             <h4 className="font-bold text-slate-900">SLA Breach Warning</h4>
-                            <p className="text-sm text-slate-500 mt-1">IF "High Priority" task is overdue > 24h THEN notify Senior Partner.</p>
+                            <p className="text-sm text-slate-500 mt-1">IF "High Priority" task is overdue &gt; 24h THEN notify Senior Partner.</p>
                             <div className="mt-3 flex gap-2">
                                 <span className="text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200">Role: Senior Partner</span>
                             </div>
@@ -237,6 +228,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages: initialStage
             </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

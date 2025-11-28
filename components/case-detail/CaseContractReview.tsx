@@ -17,8 +17,10 @@ export const CaseContractReview: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col md:flex-row gap-6">
-      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="flex-1 overflow-hidden pr-2">
+        <div className="h-full flex flex-col md:flex-row gap-6">
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
           <h3 className="font-bold text-slate-800 flex items-center">
             <FileText className="mr-2 h-5 w-5 text-blue-600" /> Contract Text
@@ -75,6 +77,8 @@ export const CaseContractReview: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+    </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Conversation } from '../../hooks/useSecureMessenger';
+import { Conversation } from '../../types';
 import { UserAvatar } from '../common/UserAvatar';
 import { Button } from '../common/Button';
 import { Search, MoreVertical, Briefcase } from 'lucide-react';

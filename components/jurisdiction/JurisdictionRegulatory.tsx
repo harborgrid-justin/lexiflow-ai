@@ -1,29 +1,44 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../common/Card';
 import { Scale, AlertTriangle, FileText } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
+import { Jurisdiction } from '../../types';
 
 export const JurisdictionRegulatory: React.FC = () => {
+  const [agencies, setAgencies] = useState<Jurisdiction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await ApiService.getJurisdictions('Regulatory');
+        setAgencies(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading) return <div className="p-4">Loading regulatory bodies...</div>;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card title="Administrative Bodies">
         <div className="space-y-4">
-          <div className="flex items-start p-3 border rounded-lg bg-slate-50">
-            <Scale className="h-6 w-6 text-blue-600 mr-3 mt-1"/>
-            <div>
-              <h4 className="font-bold text-slate-900">Federal Trade Commission (FTC)</h4>
-              <p className="text-sm text-slate-500">Antitrust reviews & Consumer protection.</p>
-              <div className="mt-2 text-xs font-mono bg-white border px-2 py-1 rounded inline-block">Ref: 15 U.S.C. § 41</div>
+          {agencies.map((agency) => (
+            <div key={agency.id} className="flex items-start p-3 border rounded-lg bg-slate-50">
+              <Scale className={`h-6 w-6 mr-3 mt-1 ${agency.metadata.iconColor === 'green' ? 'text-green-600' : 'text-blue-600'}`}/>
+              <div>
+                <h4 className="font-bold text-slate-900">{agency.name}</h4>
+                <p className="text-sm text-slate-500">{agency.metadata.description}</p>
+                <div className="mt-2 text-xs font-mono bg-white border px-2 py-1 rounded inline-block">Ref: {agency.metadata.reference}</div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-start p-3 border rounded-lg bg-slate-50">
-            <Scale className="h-6 w-6 text-green-600 mr-3 mt-1"/>
-            <div>
-              <h4 className="font-bold text-slate-900">Securities & Exchange Commission (SEC)</h4>
-              <p className="text-sm text-slate-500">Capital markets oversight & enforcement.</p>
-              <div className="mt-2 text-xs font-mono bg-white border px-2 py-1 rounded inline-block">Ref: Sarbanes-Oxley</div>
-            </div>
-          </div>
+          ))}
         </div>
       </Card>
 

@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 import { DiscoveryRequest } from '../types';
+import { ApiService } from '../services/apiService';
 import { 
   MessageCircle, Plus, Scale, Shield, Users, Lock, Clock, ArrowLeft
 } from 'lucide-react';
-import { MOCK_DISCOVERY } from '../data/mockDiscovery';
 
 import { DiscoveryDashboard } from './discovery/DiscoveryDashboard';
 import { DiscoveryRequests } from './discovery/DiscoveryRequests';
@@ -21,7 +21,19 @@ type DiscoveryView = 'dashboard' | 'requests' | 'privilege' | 'holds' | 'plan' |
 export const DiscoveryPlatform: React.FC = () => {
   const [view, setView] = useState<DiscoveryView>('dashboard');
   const [contextId, setContextId] = useState<string | null>(null); // To store ID of doc or request being viewed/edited
-  const [requests, setRequests] = useState<DiscoveryRequest[]>(MOCK_DISCOVERY);
+  const [requests, setRequests] = useState<DiscoveryRequest[]>([]);
+
+  useEffect(() => {
+    const fetchDiscovery = async () => {
+        try {
+            const data = await ApiService.getDiscovery();
+            setRequests(data);
+        } catch (e) {
+            console.error("Failed to fetch discovery", e);
+        }
+    };
+    fetchDiscovery();
+  }, []);
 
   const handleNavigate = (targetView: DiscoveryView, id?: string) => {
     if (id) setContextId(id);
@@ -33,12 +45,17 @@ export const DiscoveryPlatform: React.FC = () => {
     setContextId(null);
   };
 
-  const handleSaveResponse = (reqId: string, text: string) => {
-      // Update logic
-      const updatedRequests = requests.map(r => r.id === reqId ? { ...r, status: 'Responded' as const } : r);
-      setRequests(updatedRequests);
-      alert(`Response saved for ${reqId}. Status updated to Responded.`);
-      setView('requests');
+  const handleSaveResponse = async (reqId: string, text: string) => {
+      try {
+        await ApiService.updateDiscoveryRequest(reqId, { status: 'Responded', responsePreview: text });
+        const updatedRequests = requests.map(r => r.id === reqId ? { ...r, status: 'Responded' as const, responsePreview: text } : r);
+        setRequests(updatedRequests);
+        alert(`Response saved for ${reqId}. Status updated to Responded.`);
+        setView('requests');
+      } catch (error) {
+        console.error("Failed to save response", error);
+        alert("Failed to save response.");
+      }
   };
 
   const renderContent = () => {

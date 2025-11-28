@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Printer, Download, FileText } from 'lucide-react';
 import { Button } from '../common/Button';
-import { MOCK_DISCOVERY_DOCS } from '../../data/mockDiscovery';
+import { ApiService } from '../../services/apiService';
+import { LegalDocument } from '../../types';
 
 interface DiscoveryDocumentViewerProps {
   docId: string;
@@ -10,8 +11,19 @@ interface DiscoveryDocumentViewerProps {
 }
 
 export const DiscoveryDocumentViewer: React.FC<DiscoveryDocumentViewerProps> = ({ docId, onBack }) => {
-  // @ts-ignore
-  const doc = MOCK_DISCOVERY_DOCS[docId];
+  const [doc, setDoc] = useState<LegalDocument | null>(null);
+
+  useEffect(() => {
+    const fetchDoc = async () => {
+        try {
+            const data = await ApiService.getDocument(docId);
+            setDoc(data);
+        } catch (e) {
+            console.error("Failed to fetch document", e);
+        }
+    };
+    if (docId) fetchDoc();
+  }, [docId]);
 
   if (!doc) return <div className="p-8 text-center text-slate-500">Document not found.</div>;
 
@@ -27,7 +39,7 @@ export const DiscoveryDocumentViewer: React.FC<DiscoveryDocumentViewerProps> = (
                         <FileText className="h-5 w-5 mr-2 text-blue-600"/>
                         {doc.title}
                     </h2>
-                    <p className="text-xs text-slate-500">Filed: {doc.date} • {doc.type}</p>
+                    <p className="text-xs text-slate-500">Filed: {doc.uploadDate} • {doc.type}</p>
                 </div>
             </div>
             <div className="flex gap-2">

@@ -1,20 +1,39 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Briefcase, Play, Layers, RefreshCw } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { Button } from './common/Button';
-import { MOCK_CASES } from '../data/mockCases';
-import { BUSINESS_PROCESSES } from '../data/mockFirmProcesses';
+import { ApiService } from '../services/apiService';
+import { Case } from '../types';
 import { CaseWorkflowList } from './workflow/CaseWorkflowList';
 import { FirmProcessList } from './workflow/FirmProcessList';
+import { WorkflowConfig } from './workflow/WorkflowConfig';
 
 interface MasterWorkflowProps {
   onSelectCase: (caseId: string) => void;
 }
 
 export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) => {
-  const [activeTab, setActiveTab] = useState<'cases' | 'firm'>('cases');
+  const [activeTab, setActiveTab] = useState<'cases' | 'firm' | 'config'>('cases');
+  const [cases, setCases] = useState<Case[]>([]);
+  const [processes, setProcesses] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [c, p] = await Promise.all([
+                ApiService.getCases(),
+                ApiService.getFirmProcesses()
+            ]);
+            setCases(c);
+            setProcesses(p);
+        } catch (e) {
+            console.error("Failed to fetch workflow data", e);
+        }
+    };
+    fetchData();
+  }, []);
 
   const getCaseProgress = (status: string) => {
     switch(status) {
@@ -42,7 +61,7 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
         actions={
           <div className="flex gap-2">
             <Tabs 
-              tabs={['cases', 'firm']} 
+              tabs={['cases', 'firm', 'config']} 
               activeTab={activeTab} 
               onChange={(t) => setActiveTab(t as any)} 
             />
@@ -55,7 +74,7 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
           <p className="text-xs text-slate-500 font-bold uppercase">Active Workflows</p>
-          <p className="text-2xl font-bold text-blue-600">{MOCK_CASES.length + BUSINESS_PROCESSES.filter(p => p.status === 'Active').length}</p>
+          <p className="text-2xl font-bold text-blue-600">{cases.length + processes.filter(p => p.status === 'Active').length}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
           <p className="text-xs text-slate-500 font-bold uppercase">Tasks Due Today</p>
@@ -77,10 +96,10 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
             <h3 className="font-bold text-slate-900 flex items-center">
               <Briefcase className="h-5 w-5 mr-2 text-slate-500"/> Matter Lifecycles
             </h3>
-            <span className="text-xs text-slate-500">Showing {MOCK_CASES.length} active matters</span>
+            <span className="text-xs text-slate-500">Showing {cases.length} active matters</span>
           </div>
           <CaseWorkflowList 
-            cases={MOCK_CASES} 
+            cases={cases} 
             onSelectCase={onSelectCase} 
             getCaseProgress={getCaseProgress} 
             getNextTask={getNextTask} 
@@ -96,8 +115,12 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
             </h3>
             <Button variant="outline" size="sm" icon={RefreshCw}>Refresh Status</Button>
           </div>
-          <FirmProcessList processes={BUSINESS_PROCESSES} />
+          <FirmProcessList processes={processes} />
         </div>
+      )}
+
+      {activeTab === 'config' && (
+        <WorkflowConfig />
       )}
     </div>
   );

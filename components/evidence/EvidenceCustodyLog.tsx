@@ -1,15 +1,29 @@
 
-import React, { useState } from 'react';
-import { MOCK_EVIDENCE } from '../../data/mockEvidence';
+import React, { useState, useEffect } from 'react';
+import { ApiService } from '../../services/apiService';
+import { EvidenceItem } from '../../types';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Search, Filter, Download } from 'lucide-react';
 import { Button } from '../common/Button';
 
 export const EvidenceCustodyLog: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+
+  useEffect(() => {
+    const fetchEvidence = async () => {
+        try {
+            const data = await ApiService.getEvidence();
+            setEvidence(data);
+        } catch (e) {
+            console.error("Failed to fetch evidence", e);
+        }
+    };
+    fetchEvidence();
+  }, []);
 
   // Flatten all custody events
-  const allEvents = MOCK_EVIDENCE.flatMap(item => 
+  const allEvents = evidence.flatMap(item => 
     item.chainOfCustody.map(event => ({
       ...event,
       itemId: item.id,

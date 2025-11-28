@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LegalDocument } from '../../types';
+import { LegalDocument, User } from '../../types';
 import { FileText, History, Tag, Cpu, Sparkles, Bot, Plus, Wand2, Eye } from 'lucide-react';
 import { DocumentAssembly } from '../DocumentAssembly';
 
@@ -9,9 +9,10 @@ interface CaseDocumentsProps {
   analyzingId: string | null;
   onAnalyze: (doc: LegalDocument) => void;
   onDocumentCreated?: (doc: LegalDocument) => void;
+  currentUser?: User;
 }
 
-export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzingId, onAnalyze, onDocumentCreated }) => {
+export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzingId, onAnalyze, onDocumentCreated, currentUser }) => {
   const [showWizard, setShowWizard] = useState(false);
 
   const handleUpload = () => {
@@ -26,26 +27,27 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
             uploadDate: new Date().toISOString().split('T')[0],
             lastModified: new Date().toISOString().split('T')[0],
             tags: ['Uploaded', 'Review Required'],
-            versions: []
+            versions: [],
+            uploadedBy: currentUser?.id
         };
         onDocumentCreated(newDoc);
     }
   };
 
   return (
-    <div className="space-y-6 relative">
+    <div className="h-full flex flex-col space-y-6 relative animate-fade-in pb-2">
       {showWizard && (
         <DocumentAssembly 
           caseTitle="Current Case" 
           onClose={() => setShowWizard(false)} 
           onSave={(doc) => {
-             if (onDocumentCreated) onDocumentCreated(doc);
+             if (onDocumentCreated) onDocumentCreated({ ...doc, uploadedBy: currentUser?.id });
           }}
         />
       )}
       
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div className="flex gap-2">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
+        <div className="flex gap-2 w-full md:w-auto">
           <input placeholder="Search documents..." className="px-4 py-2 border rounded-md text-sm w-full md:w-64" />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
@@ -58,7 +60,7 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 flex-1 overflow-y-auto content-start pr-2">
         {documents.map((doc) => (
           <div key={doc.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 animate-fade-in-up">
             <div className="flex justify-between items-start mb-4">

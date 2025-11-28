@@ -1,15 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Users, Search, AlertTriangle, Lock, CheckCircle } from 'lucide-react';
-import { MOCK_CONFLICTS, MOCK_WALLS } from '../data/mockCompliance';
+import { ApiService } from '../services/apiService';
+import { ConflictCheck, EthicalWall } from '../types';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 
 export const ComplianceDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'conflicts' | 'walls' | 'risk'>('conflicts');
+  const [conflicts, setConflicts] = useState<ConflictCheck[]>([]);
+  const [walls, setWalls] = useState<EthicalWall[]>([]);
 
-  const conflicts = MOCK_CONFLICTS;
-  const walls = MOCK_WALLS;
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [c, w] = await Promise.all([
+                ApiService.getConflicts(),
+                ApiService.getWalls()
+            ]);
+            setConflicts(c);
+            setWalls(w);
+        } catch (e) {
+            console.error("Failed to fetch compliance data", e);
+        }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">

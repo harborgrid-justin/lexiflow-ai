@@ -1,27 +1,16 @@
-
-import { useState, useMemo } from 'react';
-import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party } from '../types';
+import { useState, useMemo, useEffect } from 'react';
+import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion } from '../types';
 import { GeminiService } from '../services/geminiService';
-import { MOCK_DOCUMENTS } from '../data/mockDocuments';
-import { MOCK_STAGES } from '../data/mockWorkflow';
-import { MOCK_TIME_ENTRIES } from '../data/mockBilling';
-import { MOCK_MOTIONS } from '../data/mockMotions';
+import { ApiService } from '../services/apiService';
 
 export const useCaseDetail = (caseData: Case) => {
   const [activeTab, setActiveTab] = useState('Overview');
   
-  const [documents, setDocuments] = useState<LegalDocument[]>(() => {
-    const docs = MOCK_DOCUMENTS.filter(d => d.caseId === caseData.id);
-    return docs.length > 0 ? docs : MOCK_DOCUMENTS.slice(0, 1);
-  });
-  
-  const [stages, setStages] = useState<WorkflowStage[]>(MOCK_STAGES);
+  const [documents, setDocuments] = useState<LegalDocument[]>([]);
+  const [stages, setStages] = useState<WorkflowStage[]>([]);
   const [parties, setParties] = useState<Party[]>(caseData.parties || []);
-  
-  const [billingEntries, setBillingEntries] = useState<TimeEntry[]>(() => {
-    const entries = MOCK_TIME_ENTRIES.filter(e => e.caseId === caseData.id);
-    return entries.length > 0 ? entries : MOCK_TIME_ENTRIES.slice(0, 2);
-  });
+  const [billingEntries, setBillingEntries] = useState<TimeEntry[]>([]);
+  const [motions, setMotions] = useState<Motion[]>([]);
 
   const [generatingWorkflow, setGeneratingWorkflow] = useState(false);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -29,9 +18,32 @@ export const useCaseDetail = (caseData: Case) => {
   const [draftResult, setDraftResult] = useState('');
   const [isDrafting, setIsDrafting] = useState(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!caseData?.id) return;
+      try {
+        const [docs, wf, bill, mots] = await Promise.all([
+          ApiService.getCaseDocuments(caseData.id),
+          ApiService.getCaseWorkflow(caseData.id),
+          ApiService.getCaseBilling(caseData.id),
+          ApiService.getCaseMotions(caseData.id)
+        ]);
+        setDocuments(docs);
+        setStages(wf);
+        setBillingEntries(bill);
+        setMotions(mots);
+      } catch (error) {
+        console.error("Failed to fetch case details", error);
+      }
+    };
+    fetchData();
+  }, [caseData.id]);
+
   const timelineEvents = useMemo(() => {
     const events: TimelineEvent[] = [];
-    events.push({ id: 'init', date: caseData.filingDate, title: 'Case Filed', type: 'milestone', description: `Filed in ${caseData.court}` });
+    if (caseData.filingDate) {
+        events.push({ id: 'init', date: caseData.filingDate, title: 'Case Filed', type: 'milestone', description: `Filed in ${caseData.court}` });
+    }
     
     // Documents
     documents.forEach(d => {
@@ -50,9 +62,8 @@ export const useCaseDetail = (caseData: Case) => {
         events.push({ id: b.id, date: b.date, title: 'Billable Time Logged', type: 'billing', description: `${(b.duration/60).toFixed(1)}h - ${b.description}`, relatedId: b.id });
     });
 
-    // Motions & Hearings (NEW)
-    const relevantMotions = MOCK_MOTIONS.filter(m => m.caseId === caseData.id);
-    relevantMotions.forEach(m => {
+    // Motions & Hearings
+    motions.forEach(m => {
         if(m.filingDate) {
             events.push({ id: `mot-file-${m.id}`, date: m.filingDate, title: `Motion Filed: ${m.title}`, type: 'motion', description: `Type: ${m.type} | Status: ${m.status}`, relatedId: m.id });
         }
@@ -62,13 +73,19 @@ export const useCaseDetail = (caseData: Case) => {
     });
 
     return events.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [caseData, documents, stages, billingEntries]);
+  }, [caseData, documents, stages, billingEntries, motions]);
 
   const handleAnalyze = async (doc: LegalDocument) => {
     setAnalyzingId(doc.id);
-    const result = await GeminiService.analyzeDocument(doc.content);
-    setDocuments(docs => docs.map(d => d.id === doc.id ? { ...d, summary: result.summary, riskScore: result.riskScore } : d));
-    setAnalyzingId(null);
+    try {
+      const result = await GeminiService.analyzeDocument(doc.content);
+      await ApiService.updateDocument(doc.id, { summary: result.summary, riskScore: result.riskScore });
+      setDocuments(docs => docs.map(d => d.id === doc.id ? { ...d, summary: result.summary, riskScore: result.riskScore } : d));
+    } catch (error) {
+      console.error("Failed to analyze document", error);
+    } finally {
+      setAnalyzingId(null);
+    }
   };
 
   const handleDraft = async () => {
@@ -77,6 +94,17 @@ export const useCaseDetail = (caseData: Case) => {
     const text = await GeminiService.generateDraft(`${draftPrompt}\n\nCase: ${caseData.title}\nClient: ${caseData.client}`, 'Motion/Clause');
     setDraftResult(text);
     setIsDrafting(false);
+  };
+
+  const createDocument = async (doc: Partial<LegalDocument>) => {
+    try {
+      const newDoc = await ApiService.createDocument(doc);
+      setDocuments([...documents, newDoc]);
+      return newDoc;
+    } catch (error) {
+      console.error("Failed to create document", error);
+      throw error;
+    }
   };
 
   const handleGenerateWorkflow = async () => {
@@ -88,6 +116,27 @@ export const useCaseDetail = (caseData: Case) => {
     }));
     setStages([...stages, ...newStages]);
     setGeneratingWorkflow(false);
+  };
+
+  const addTimeEntry = async (entry: Partial<TimeEntry>) => {
+    try {
+      const newEntry = await ApiService.createTimeEntry(entry);
+      setBillingEntries([newEntry, ...billingEntries]);
+    } catch (error) {
+      console.error("Failed to add time entry", error);
+    }
+  };
+
+  const toggleTask = async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
+    try {
+      await ApiService.updateTask(taskId, { status });
+      setStages(prevStages => prevStages.map(stage => ({
+        ...stage,
+        tasks: stage.tasks.map(t => t.id === taskId ? { ...t, status } : t)
+      })));
+    } catch (error) {
+      console.error("Failed to update task", error);
+    }
   };
 
   return {
@@ -110,6 +159,9 @@ export const useCaseDetail = (caseData: Case) => {
     timelineEvents,
     handleAnalyze,
     handleDraft,
-    handleGenerateWorkflow
+    handleGenerateWorkflow,
+    addTimeEntry,
+    toggleTask,
+    createDocument
   };
 };

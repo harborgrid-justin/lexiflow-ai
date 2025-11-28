@@ -16,8 +16,8 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
         .reduce((sum, e) => sum + e.total, 0);
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
                 <div className="bg-slate-900 text-white p-4 rounded-lg">
                     <p className="text-xs opacity-70 uppercase font-bold">Model</p>
                     <p className="text-xl font-bold">{billingModel || 'Hourly'}</p>
@@ -32,14 +32,14 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-                <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-0">
+                <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50 shrink-0">
                     <h3 className="font-bold text-slate-900">Time Entries</h3>
                     <button className="text-sm text-blue-600 hover:text-blue-800 flex items-center"><Download className="h-4 w-4 mr-1"/> Export</button>
                 </div>
                 
                 {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block overflow-y-auto flex-1">
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-50">
                             <tr>
@@ -69,7 +69,7 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="md:hidden">
+                <div className="md:hidden overflow-y-auto flex-1">
                     {entries.length > 0 ? entries.map(e => (
                         <div key={e.id} className="p-4 border-b border-slate-100 last:border-0">
                             <div className="flex justify-between items-start mb-2">

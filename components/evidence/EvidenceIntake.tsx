@@ -4,14 +4,15 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { ArrowLeft, UploadCloud, FileText, CheckCircle, Loader2, Link, ShieldCheck } from 'lucide-react';
 import { DocumentService } from '../../services/documentService';
-import { EvidenceItem } from '../../types';
+import { EvidenceItem, User } from '../../types';
 
 interface EvidenceIntakeProps {
   handleBack: () => void;
   onComplete: (item: EvidenceItem) => void;
+  currentUser?: User;
 }
 
-export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onComplete }) => {
+export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onComplete, currentUser }) => {
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -62,7 +63,8 @@ export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onCo
           type: type as any,
           description: description,
           collectionDate: new Date().toISOString().split('T')[0],
-          collectedBy: 'Current User',
+          collectedBy: currentUser?.name || 'Current User',
+          collectedByUserId: currentUser?.id,
           custodian: custodian || 'Unknown',
           location: 'Evidence Locker / Digital S3',
           admissibility: 'Pending',
@@ -72,7 +74,7 @@ export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onCo
               id: `cc-${Date.now()}`,
               date: new Date().toISOString(),
               action: 'Initial Collection',
-              actor: 'Current User',
+              actor: currentUser?.name || 'Current User',
               notes: 'Intake via Digital Wizard'
           }]
       };

@@ -1,6 +1,7 @@
 
-import React from 'react';
-import { MOCK_DISCOVERY } from '../../data/mockDiscovery';
+import React, { useState, useEffect } from 'react';
+import { ApiService } from '../../services/apiService';
+import { DiscoveryRequest } from '../../types';
 import { DiscoveryRequests } from '../discovery/DiscoveryRequests';
 
 interface CaseDiscoveryProps {
@@ -8,7 +9,19 @@ interface CaseDiscoveryProps {
 }
 
 export const CaseDiscovery: React.FC<CaseDiscoveryProps> = ({ caseId }) => {
-  const caseRequests = MOCK_DISCOVERY.filter(r => r.caseId === caseId);
+  const [caseRequests, setCaseRequests] = useState<DiscoveryRequest[]>([]);
+
+  useEffect(() => {
+    const fetchDiscovery = async () => {
+        try {
+            const data = await ApiService.getCaseDiscovery(caseId);
+            setCaseRequests(data);
+        } catch (e) {
+            console.error("Failed to fetch discovery", e);
+        }
+    };
+    if (caseId) fetchDiscovery();
+  }, [caseId]);
 
   const handleNavigate = (view: string, id?: string) => {
       const req = caseRequests.find(r => r.id === id);
@@ -16,16 +29,20 @@ export const CaseDiscovery: React.FC<CaseDiscoveryProps> = ({ caseId }) => {
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-slate-900">Discovery Requests</h3>
-      {caseRequests.length === 0 ? (
-        <p className="text-slate-500 italic">No discovery requests found for this case.</p>
-      ) : (
-        <DiscoveryRequests 
-            items={caseRequests}
-            onNavigate={handleNavigate}
-        />
-      )}
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 shrink-0">
+        <h3 className="text-lg font-bold text-slate-900">Discovery Requests</h3>
+      </div>
+      <div className="flex-1 overflow-y-auto pr-2">
+        {caseRequests.length === 0 ? (
+          <p className="text-slate-500 italic">No discovery requests found for this case.</p>
+        ) : (
+          <DiscoveryRequests 
+              items={caseRequests}
+              onNavigate={handleNavigate}
+          />
+        )}
+      </div>
     </div>
   );
 };

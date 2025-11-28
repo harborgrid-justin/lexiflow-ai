@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Motion, MotionStatus, MotionType } from '../../types';
-import { MOCK_MOTIONS } from '../../data/mockMotions';
+import { Motion, MotionStatus, MotionType, User } from '../../types';
+import { ApiService } from '../../services/apiService';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
@@ -9,17 +9,32 @@ import { Plus, Gavel, Calendar, Wand2, ArrowRight, RefreshCw, GitGraph, Clock } 
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Inputs';
 import { GeminiService } from '../../services/geminiService';
+import { MotionDetail } from './MotionDetail';
 
 interface CaseMotionsProps {
   caseId: string;
   caseTitle: string;
+  currentUser?: User;
 }
 
-export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) => {
-  const [motions, setMotions] = useState<Motion[]>(MOCK_MOTIONS.filter(m => m.caseId === caseId));
+export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, currentUser }) => {
+  const [motions, setMotions] = useState<Motion[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newMotion, setNewMotion] = useState<Partial<Motion>>({ type: 'Dismiss', status: 'Draft' });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedMotionId, setSelectedMotionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMotions = async () => {
+        try {
+            const data = await ApiService.getCaseMotions(caseId);
+            setMotions(data);
+        } catch (e) {
+            console.error("Failed to fetch motions", e);
+        }
+    };
+    if (caseId) fetchMotions();
+  }, [caseId]);
 
   // Auto-calculate deadlines when hearing date changes
   useEffect(() => {
@@ -40,23 +55,28 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) =
     }
   }, [newMotion.hearingDate]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!newMotion.title) return;
-    const motion: Motion = {
-      id: `mot-${Date.now()}`,
-      caseId,
-      title: newMotion.title,
-      type: newMotion.type as MotionType,
-      status: newMotion.status as MotionStatus,
-      assignedAttorney: 'Current User',
-      filingDate: new Date().toISOString().split('T')[0],
-      hearingDate: newMotion.hearingDate,
-      oppositionDueDate: newMotion.oppositionDueDate,
-      replyDueDate: newMotion.replyDueDate
-    };
-    setMotions([...motions, motion]);
-    setIsModalOpen(false);
-    setNewMotion({ type: 'Dismiss', status: 'Draft' });
+    try {
+      const motionData: Partial<Motion> = {
+        caseId,
+        title: newMotion.title,
+        type: newMotion.type as MotionType,
+        status: newMotion.status as MotionStatus,
+        assignedAttorney: currentUser?.name || 'Current User',
+        createdBy: currentUser?.id,
+        filingDate: new Date().toISOString().split('T')[0],
+        hearingDate: newMotion.hearingDate,
+        oppositionDueDate: newMotion.oppositionDueDate,
+        replyDueDate: newMotion.replyDueDate
+      };
+      const createdMotion = await ApiService.createMotion(motionData);
+      setMotions([...motions, createdMotion]);
+      setIsModalOpen(false);
+      setNewMotion({ type: 'Dismiss', status: 'Draft' });
+    } catch (error) {
+      console.error("Failed to create motion", error);
+    }
   };
 
   const handleGenerateStrategy = async () => {
@@ -87,9 +107,16 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) =
     }
   };
 
+  if (selectedMotionId) {
+    const selectedMotion = motions.find(m => m.id === selectedMotionId);
+    if (selectedMotion) {
+      return <MotionDetail motion={selectedMotion} onBack={() => setSelectedMotionId(null)} />;
+    }
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
         <div>
           <h3 className="text-lg font-bold text-slate-900">Motion Practice</h3>
           <p className="text-sm text-slate-500">Track filings, opposition deadlines, and hearings.</p>
@@ -101,8 +128,9 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) =
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block">
-        <TableContainer>
+      <div className="hidden md:block flex-1 overflow-hidden min-h-0">
+        <div className="h-full overflow-y-auto border border-slate-200 rounded-lg shadow-sm bg-white">
+          <table className="min-w-full divide-y divide-slate-200">
           <TableHeader>
             <TableHead>Motion Title</TableHead>
             <TableHead>Type</TableHead>
@@ -143,7 +171,7 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) =
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button size="sm" variant="ghost" className="text-indigo-600" onClick={() => handleAddToWorkflow(motion)} icon={GitGraph}>To Workflow</Button>
-                    <Button size="sm" variant="ghost" className="text-blue-600">Details</Button>
+                    <Button size="sm" variant="ghost" className="text-blue-600" onClick={() => setSelectedMotionId(motion.id)}>Details</Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -154,11 +182,12 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) =
               </TableRow>
             )}
           </TableBody>
-        </TableContainer>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden space-y-4 overflow-y-auto flex-1">
         {motions.map(motion => (
           <div key={motion.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
             <div className="flex justify-between items-start mb-2">
@@ -189,7 +218,7 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle }) =
             
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <Button size="sm" variant="outline" className="flex-1" icon={GitGraph} onClick={() => handleAddToWorkflow(motion)}>To Workflow</Button>
-              <Button size="sm" variant="outline" className="flex-1">Details</Button>
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => setSelectedMotionId(motion.id)}>Details</Button>
             </div>
           </div>
         ))}

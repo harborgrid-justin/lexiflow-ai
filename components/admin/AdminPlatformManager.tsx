@@ -1,32 +1,50 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Briefcase, FileText, Book, Building, 
   Plus, Search, Trash2, Edit2, Save, Database
 } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 
-// Mock Data Imports
-import { MOCK_USERS } from '../../data/mockUsers';
-import { MOCK_CASES } from '../../data/mockCases';
-import { MOCK_CLIENTS } from '../../data/mockClients';
-import { MOCK_CLAUSES } from '../../data/mockClauses';
-import { MOCK_DOCUMENTS } from '../../data/mockDocuments';
-
 type Category = 'users' | 'cases' | 'clients' | 'clauses' | 'documents';
 
 export const AdminPlatformManager: React.FC = () => {
   // Local state to simulate database
-  const [data, setData] = useState({
-    users: MOCK_USERS,
-    cases: MOCK_CASES,
-    clients: MOCK_CLIENTS,
-    clauses: MOCK_CLAUSES,
-    documents: MOCK_DOCUMENTS,
+  const [data, setData] = useState<any>({
+    users: [],
+    cases: [],
+    clients: [],
+    clauses: [],
+    documents: [],
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [u, c, cl, clauses, d] = await Promise.all([
+                ApiService.getUsers(),
+                ApiService.getCases(),
+                ApiService.getClients(),
+                ApiService.getClauses(),
+                ApiService.getDocuments()
+            ]);
+            setData({
+                users: u,
+                cases: c,
+                clients: cl,
+                clauses: clauses,
+                documents: d
+            });
+        } catch (e) {
+            console.error("Failed to fetch platform data", e);
+        }
+    };
+    fetchData();
+  }, []);
 
   const [activeCategory, setActiveCategory] = useState<Category>('users');
   const [searchTerm, setSearchTerm] = useState('');

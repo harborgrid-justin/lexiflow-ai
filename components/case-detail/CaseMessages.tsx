@@ -54,9 +54,8 @@ export const CaseMessages: React.FC<CaseMessagesProps> = ({ caseData }) => {
   };
 
   return (
-    <div className="flex flex-col h-[600px] bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-      {/* Thread Header */}
-      <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
         <div>
           <h3 className="font-bold text-slate-900 flex items-center gap-2">
             <Lock className="h-4 w-4 text-blue-600"/> Case Communication Thread
@@ -68,60 +67,64 @@ export const CaseMessages: React.FC<CaseMessagesProps> = ({ caseData }) => {
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
-        {messages.map((msg) => {
-          const isMe = msg.sender === 'Me';
-          return (
-            <div key={msg.id} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''}`}>
-              <UserAvatar name={msg.sender} className="mt-1"/>
-              <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
-                <div className="flex items-center gap-2 mb-1">
-                   <span className="text-xs font-bold text-slate-700">{msg.sender}</span>
-                   <span className="text-[10px] text-slate-400">{msg.role} • {msg.timestamp}</span>
+      <div className="flex-1 overflow-hidden pr-2 flex flex-col">
+        <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
+            {messages.map((msg) => {
+              const isMe = msg.sender === 'Me';
+              return (
+                <div key={msg.id} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''}`}>
+                  <UserAvatar name={msg.sender} className="mt-1"/>
+                  <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold text-slate-700">{msg.sender}</span>
+                      <span className="text-[10px] text-slate-400">{msg.role} • {msg.timestamp}</span>
+                    </div>
+                    <div className={`p-4 rounded-2xl text-sm shadow-sm relative ${
+                      isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'
+                    }`}>
+                      {msg.text}
+                      {msg.attachments && (
+                        <div className="mt-3 space-y-1">
+                          {msg.attachments.map(att => (
+                            <div key={att} className="flex items-center p-2 bg-black/10 rounded text-xs font-medium">
+                                <FileText className="h-3 w-3 mr-2"/> {att}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className={`p-4 rounded-2xl text-sm shadow-sm relative ${
-                   isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'
-                }`}>
-                   {msg.text}
-                   {msg.attachments && (
-                     <div className="mt-3 space-y-1">
-                       {msg.attachments.map(att => (
-                         <div key={att} className="flex items-center p-2 bg-black/10 rounded text-xs font-medium">
-                            <FileText className="h-3 w-3 mr-2"/> {att}
-                         </div>
-                       ))}
-                     </div>
-                   )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-white border-t border-slate-200">
-         <div className="flex items-center gap-3">
-            <button className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-slate-100 transition-colors">
-                <Paperclip className="h-5 w-5"/>
-            </button>
-            <div className="flex-1 relative">
-                <input 
-                  className="w-full bg-slate-100 border-none rounded-full px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Type a secure message..."
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                />
+          {/* Input Area */}
+          <div className="p-4 bg-white border-t border-slate-200">
+            <div className="flex items-center gap-3">
+                <button className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-slate-100 transition-colors">
+                    <Paperclip className="h-5 w-5"/>
+                </button>
+                <div className="flex-1 relative">
+                    <input 
+                      className="w-full bg-slate-100 border-none rounded-full px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Type a secure message..."
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    />
+                </div>
+                <Button variant="primary" className="rounded-full px-4" onClick={handleSend}>
+                    <Send className="h-4 w-4 mr-2"/> Send
+                </Button>
             </div>
-            <Button variant="primary" className="rounded-full px-4" onClick={handleSend}>
-                <Send className="h-4 w-4 mr-2"/> Send
-            </Button>
-         </div>
-         <p className="text-center text-[10px] text-slate-400 mt-2">
-            Messages are end-to-end encrypted. Do not share credentials.
-         </p>
+            <p className="text-center text-[10px] text-slate-400 mt-2">
+                Messages are end-to-end encrypted. Do not share credentials.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

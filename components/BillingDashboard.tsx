@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase } from 'lucide-react';
-import { MOCK_WIP_DATA, MOCK_REALIZATION_DATA } from '../data/mockBilling';
-import { MOCK_CLIENTS } from '../data/mockClients';
+import { ApiService } from '../services/apiService';
+import { Client } from '../types';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 
@@ -12,9 +12,26 @@ interface BillingDashboardProps {
 }
 
 export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }) => {
-  const wipData = MOCK_WIP_DATA;
-  const realizationData = MOCK_REALIZATION_DATA;
-  const clients = MOCK_CLIENTS;
+  const [wipData, setWipData] = useState<any[]>([]);
+  const [realizationData, setRealizationData] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [stats, c] = await Promise.all([
+                ApiService.getBillingStats(),
+                ApiService.getClients()
+            ]);
+            setWipData(stats.wip.map(w => ({ month: w.month, wip: w.amount })));
+            setRealizationData(stats.realization);
+            setClients(c);
+        } catch (e) {
+            console.error("Failed to fetch billing data", e);
+        }
+    };
+    fetchData();
+  }, []);
 
   const totalWip = wipData.reduce((acc, curr) => acc + curr.wip, 0);
 

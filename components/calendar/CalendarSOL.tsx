@@ -1,13 +1,40 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertTriangle, ShieldAlert, MapPin, Scale } from 'lucide-react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
+import { ApiService } from '../../services/apiService';
+
+interface SOLData {
+  date: string;
+  matter: string;
+  cause: string;
+  jurisdiction: string;
+  daysLeft: number;
+  critical: boolean;
+}
 
 export const CalendarSOL: React.FC = () => {
-  const solData = [
-      { date: '2024-05-15', matter: 'Smith Personal Injury', cause: 'Negligence (Bodily Injury)', jurisdiction: 'California (2 Years)', daysLeft: 64, critical: true },
-      { date: '2025-01-20', matter: 'TechCorp Breach', cause: 'Breach of Written Contract', jurisdiction: 'California (4 Years)', daysLeft: 300, critical: false },
-  ];
+  const [solData, setSolData] = useState<SOLData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSOL = async () => {
+      try {
+        const data = await ApiService.getCalendarSOL();
+        setSolData(data);
+      } catch (error) {
+        console.error('Failed to fetch SOL data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSOL();
+  }, []);
+
+  if (loading) {
+    return <div className="p-4 text-center text-slate-500">Loading SOL data...</div>;
+  }
 
   return (
     <div className="space-y-6">

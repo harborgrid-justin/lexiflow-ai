@@ -1,40 +1,68 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ExternalLink, BookOpen, Loader2, ArrowRight, ThumbsUp, ThumbsDown, Book } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
-import { ResearchSession } from '../types';
+import { ApiService } from '../services/apiService';
+import { ResearchSession, User } from '../types';
 import { PageHeader } from './common/PageHeader';
 
-export const ResearchTool: React.FC = () => {
+interface ResearchToolProps {
+  currentUser?: User;
+}
+
+export const ResearchTool: React.FC<ResearchToolProps> = ({ currentUser }) => {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<ResearchSession[]>([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const sessions = await ApiService.getResearchHistory();
+        setHistory(sessions);
+      } catch (error) {
+        console.error('Failed to fetch research history:', error);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
     setIsLoading(true);
-    const result = await GeminiService.conductResearch(query);
-    
-    const newSession: ResearchSession = {
-      id: Date.now().toString(),
-      query,
-      response: result.text,
-      sources: result.sources,
-      timestamp: new Date().toLocaleTimeString()
-    };
+    try {
+      const result = await GeminiService.conductResearch(query);
+      
+      const newSession: ResearchSession = {
+        id: Date.now().toString(),
+        query,
+        response: result.text,
+        sources: result.sources,
+        timestamp: new Date().toISOString(),
+        userId: currentUser?.id
+      };
 
-    setHistory([newSession, ...history]);
-    setIsLoading(false);
-    setQuery('');
+      const savedSession = await ApiService.saveResearchSession(newSession);
+      setHistory([savedSession, ...history]);
+    } catch (error) {
+      console.error('Research failed:', error);
+    } finally {
+      setIsLoading(false);
+      setQuery('');
+    }
   };
 
-  const handleFeedback = (id: string, type: 'positive' | 'negative') => {
-    setHistory(history.map(session => 
-      session.id === id ? { ...session, feedback: type } : session
-    ));
-    console.log(`Feedback ${type} recorded for session ${id}`);
+  const handleFeedback = async (id: string, type: 'positive' | 'negative') => {
+    try {
+        await ApiService.submitResearchFeedback(id, type);
+        setHistory(history.map(session => 
+          session.id === id ? { ...session, feedback: type } : session
+        ));
+    } catch (e) {
+        console.error(e);
+    }
   };
 
   return (

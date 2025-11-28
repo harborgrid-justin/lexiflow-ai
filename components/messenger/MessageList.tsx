@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Conversation } from '../../hooks/useSecureMessenger';
+import { Conversation } from '../../types';
 import { UserAvatar } from '../common/UserAvatar';
 import { Shield, ImageIcon, FileText, CheckCheck, Check, Flag } from 'lucide-react';
 

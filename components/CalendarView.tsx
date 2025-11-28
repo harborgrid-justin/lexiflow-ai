@@ -12,7 +12,11 @@ import { Calendar as CalendarIcon, Clock, Users, Gavel, AlertOctagon, Settings, 
 
 type CalendarTab = 'master' | 'deadlines' | 'team' | 'hearings' | 'sol' | 'rules' | 'sync';
 
-export const CalendarView: React.FC = () => {
+interface CalendarViewProps {
+  onNavigateToCase?: (caseId: string) => void;
+}
+
+export const CalendarView: React.FC<CalendarViewProps> = ({ onNavigateToCase }) => {
   const [activeTab, setActiveTab] = useState<CalendarTab>('master');
 
   const tabs = [
@@ -57,7 +61,7 @@ export const CalendarView: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'master' && <CalendarMaster />}
+        {activeTab === 'master' && <CalendarMaster onNavigateToCase={onNavigateToCase} />}
         {activeTab === 'deadlines' && <CalendarDeadlines />}
         {activeTab === 'team' && <CalendarTeam />}
         {activeTab === 'hearings' && <CalendarHearings />}

@@ -3,7 +3,6 @@ import React from 'react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
-import { MOCK_DISCOVERY } from '../../data/mockDiscovery';
 import { DiscoveryRequest } from '../../types';
 import { Wand2, Upload, Clock, AlertCircle } from 'lucide-react';
 
@@ -13,7 +12,7 @@ interface DiscoveryRequestsProps {
 }
 
 export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate, items }) => {
-  const requestsToRender = items || MOCK_DISCOVERY;
+  const requestsToRender = items || [];
 
   const getDaysRemaining = (dueDate: string) => {
     const due = new Date(dueDate);

@@ -1,17 +1,37 @@
 
-import { useState, useMemo } from 'react';
-import { MOCK_TASKS } from '../data/mockWorkflow';
-import { MOCK_CASES } from '../data/mockCases';
-import { MOCK_CONFLICTS } from '../data/mockCompliance';
+import { useState, useMemo, useEffect } from 'react';
+import { ApiService } from '../services/apiService';
+import { WorkflowTask, Case, ConflictCheck } from '../types';
 
 export const useCalendarView = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [tasks, setTasks] = useState<WorkflowTask[]>([]);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [conflicts, setConflicts] = useState<ConflictCheck[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [t, c, conf] = await Promise.all([
+          ApiService.getTasks(),
+          ApiService.getCases(),
+          ApiService.getConflicts()
+        ]);
+        setTasks(t);
+        setCases(c);
+        setConflicts(conf);
+      } catch (error) {
+        console.error("Failed to fetch calendar data", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const events = useMemo(() => [
-    ...MOCK_TASKS.map(t => ({ id: t.id, title: t.title, date: t.dueDate, type: 'task', priority: t.priority })),
-    ...MOCK_CASES.map(c => ({ id: c.id, title: `Filing: ${c.title}`, date: c.filingDate, type: 'case', priority: 'High' })),
-    ...MOCK_CONFLICTS.map(c => ({ id: c.id, title: `Conflict Check: ${c.entityName}`, date: c.date, type: 'compliance', priority: 'Medium' }))
-  ], []);
+    ...tasks.map(t => ({ id: t.id, title: t.title, date: t.dueDate, type: 'task', priority: t.priority, caseId: t.caseId })),
+    ...cases.map(c => ({ id: c.id, title: `Filing: ${c.title}`, date: c.filingDate, type: 'case', priority: 'High', caseId: c.id })),
+    ...conflicts.map(c => ({ id: c.id, title: `Conflict Check: ${c.entityName}`, date: c.date, type: 'compliance', priority: 'Medium', caseId: undefined }))
+  ], [tasks, cases, conflicts]);
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();

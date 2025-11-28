@@ -12,7 +12,11 @@ import { MessengerChatWindow } from './messenger/MessengerChatWindow';
 import { MessengerContacts } from './messenger/MessengerContacts';
 import { MessengerFiles } from './messenger/MessengerFiles';
 
-export const SecureMessenger: React.FC = () => {
+interface SecureMessengerProps {
+  currentUserId?: string;
+}
+
+export const SecureMessenger: React.FC<SecureMessengerProps> = ({ currentUserId }) => {
   const {
     view,
     setView,
@@ -34,7 +38,7 @@ export const SecureMessenger: React.FC = () => {
     formatTime,
     contacts,
     allFiles
-  } = useSecureMessenger();
+  } = useSecureMessenger(currentUserId);
 
   const tabs = [
     { id: 'chats', label: 'Active Chats', icon: MessageSquare },

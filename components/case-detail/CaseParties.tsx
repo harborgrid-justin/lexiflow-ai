@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
-import { Party } from '../../types';
-import { MOCK_ORGS } from '../../data/mockHierarchy';
+import React, { useState, useEffect } from 'react';
+import { Party, Organization } from '../../types';
+import { ApiService } from '../../services/apiService';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Button } from '../common/Button';
 import { Plus, Edit2, Trash2, User, Building, Gavel, Mail, Phone, Link } from 'lucide-react';
@@ -17,6 +17,19 @@ interface CasePartiesProps {
 export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentParty, setCurrentParty] = useState<Partial<Party>>({});
+  const [orgs, setOrgs] = useState<Organization[]>([]);
+
+  useEffect(() => {
+    const fetchOrgs = async () => {
+        try {
+            const data = await ApiService.getOrganizations();
+            setOrgs(data);
+        } catch (e) {
+            console.error("Failed to fetch orgs", e);
+        }
+    };
+    fetchOrgs();
+  }, []);
   
   const handleSave = () => {
     if (!currentParty.name || !currentParty.role) return;
@@ -66,8 +79,8 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
         <div>
             <h3 className="text-lg font-bold text-slate-900">Involved Parties</h3>
             <p className="text-sm text-slate-500">Manage plaintiffs, defendants, and other entities.</p>
@@ -76,8 +89,9 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block">
-        <TableContainer>
+      <div className="hidden md:block flex-1 overflow-hidden min-h-0">
+        <div className="h-full overflow-y-auto border border-slate-200 rounded-lg shadow-sm bg-white">
+          <table className="min-w-full divide-y divide-slate-200">
             <TableHeader>
                 <TableHead>Entity Name</TableHead>
                 <TableHead>Role</TableHead>
@@ -88,7 +102,7 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
             </TableHeader>
             <TableBody>
                 {parties.map(party => {
-                    const linkedOrg = MOCK_ORGS.find(o => o.id === party.linkedOrgId);
+                    const linkedOrg = orgs.find(o => o.id === party.linkedOrgId);
                     return (
                     <TableRow key={party.id}>
                         <TableCell className="font-medium text-slate-900 flex items-center gap-3">
@@ -124,11 +138,12 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
                     </TableRow>
                 )}
             </TableBody>
-        </TableContainer>
+          </table>
+        </div>
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden space-y-4 overflow-y-auto flex-1">
         {parties.map(party => (
             <div key={party.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
                 <div className="flex items-start justify-between mb-3">
@@ -198,7 +213,7 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
                         onChange={e => setCurrentParty({...currentParty, linkedOrgId: e.target.value})}
                       >
                           <option value="">No Link</option>
-                          {MOCK_ORGS.map(org => (
+                          {orgs.map(org => (
                               <option key={org.id} value={org.id}>{org.name} ({org.type})</option>
                           ))}
                       </select>

@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { ApiService } from '../services/apiService';
+import { Briefcase, Clock, FileText, AlertTriangle } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { StatCard } from './common/Stats';
 import { Card } from './common/Card';
 import { Button } from './common/Button';
-import { DASHBOARD_STATS, DASHBOARD_CHART_DATA, RECENT_ALERTS } from '../data/mockDashboard';
 
 interface DashboardProps {
   onSelectCase: (caseId: string) => void;
@@ -13,6 +14,28 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
   const CHART_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#f59e0b'];
+  const [stats, setStats] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+        try {
+            const data = await ApiService.getDashboard();
+            // Map icon strings back to components
+            const mappedStats = data.stats.map(s => ({
+                ...s,
+                icon: s.icon === 'Briefcase' ? Briefcase : s.icon === 'FileText' ? FileText : s.icon === 'Clock' ? Clock : AlertTriangle
+            }));
+            setStats(mappedStats);
+            setChartData(data.chartData);
+            setAlerts(data.alerts);
+        } catch (e) {
+            console.error("Failed to fetch dashboard", e);
+        }
+    };
+    fetchDashboard();
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -22,7 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {DASHBOARD_STATS.map((stat) => (
+        {stats.map((stat) => (
           <StatCard 
             key={stat.label} 
             label={stat.label} 
@@ -38,7 +61,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
         <Card title="Case Distribution by Phase">
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={DASHBOARD_CHART_DATA}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
@@ -47,7 +70,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {DASHBOARD_CHART_DATA.map((entry, index) => (
+                  {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Bar>
@@ -58,7 +81,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
 
         <Card title="Recent Alerts">
           <div className="space-y-4">
-            {RECENT_ALERTS.map((alert) => (
+            {alerts.map((alert) => (
               <div 
                 key={alert.id} 
                 className={`flex items-start p-3 rounded-md transition-colors border-l-4 border-l-blue-500 bg-slate-50/50 ${alert.caseId ? 'cursor-pointer hover:bg-blue-50' : ''}`}

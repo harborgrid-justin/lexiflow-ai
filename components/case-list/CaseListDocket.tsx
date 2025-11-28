@@ -1,21 +1,40 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { RefreshCcw, Plus, Calendar, AlertTriangle } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
+import { Case, Motion } from '../../types';
 import { Button } from '../common/Button';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
-import { MOCK_CASES } from '../../data/mockCases';
-import { MOCK_MOTIONS } from '../../data/mockMotions';
 import { Badge } from '../common/Badge';
 
 export const CaseListDocket: React.FC = () => {
+  const [cases, setCases] = useState<Case[]>([]);
+  const [motions, setMotions] = useState<Motion[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [c, m] = await Promise.all([
+                ApiService.getCases(),
+                ApiService.getMotions()
+            ]);
+            setCases(c);
+            setMotions(m);
+        } catch (e) {
+            console.error("Failed to fetch docket data", e);
+        }
+    };
+    fetchData();
+  }, []);
+
   // Aggregate docket items from cases and motions
   const docketItems = useMemo(() => {
-    const items = [];
+    const items: any[] = [];
 
     // Add Hearings from Motions
-    MOCK_MOTIONS.forEach(m => {
+    motions.forEach(m => {
       if (m.hearingDate) {
-        const relatedCase = MOCK_CASES.find(c => c.id === m.caseId);
+        const relatedCase = cases.find(c => c.id === m.caseId);
         items.push({
           id: `h-${m.id}`,
           date: m.hearingDate,
@@ -36,7 +55,7 @@ export const CaseListDocket: React.FC = () => {
     );
 
     return items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, []);
+  }, [cases, motions]);
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm animate-fade-in">

@@ -1,16 +1,30 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Search } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
+import { Jurisdiction } from '../../types';
 
 export const JurisdictionState: React.FC = () => {
-  const states = [
-    { state: 'California', court: 'Superior Court of Los Angeles', level: 'Trial', eFiling: 'Required', system: 'Journal Tech' },
-    { state: 'Delaware', court: 'Court of Chancery', level: 'Equity', eFiling: 'Required', system: 'File & Serve' },
-    { state: 'New York', court: 'Supreme Court (Commercial Div)', level: 'Trial', eFiling: 'Required', system: 'NYSCEF' },
-    { state: 'Texas', court: 'District Court (Harris County)', level: 'Trial', eFiling: 'Optional', system: 'eFileTexas' },
-  ];
+  const [states, setStates] = useState<Jurisdiction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await ApiService.getJurisdictions('State');
+        setStates(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading) return <div className="p-4">Loading state courts...</div>;
 
   return (
     <div className="space-y-4">
@@ -31,15 +45,15 @@ export const JurisdictionState: React.FC = () => {
           <TableHead>System Provider</TableHead>
         </TableHeader>
         <TableBody>
-          {states.map((s, i) => (
-            <TableRow key={i}>
-              <TableCell className="font-medium text-slate-900">{s.state}</TableCell>
-              <TableCell>{s.court}</TableCell>
-              <TableCell>{s.level}</TableCell>
+          {states.map((s) => (
+            <TableRow key={s.id}>
+              <TableCell className="font-medium text-slate-900">{s.metadata.state}</TableCell>
+              <TableCell>{s.name}</TableCell>
+              <TableCell>{s.metadata.level}</TableCell>
               <TableCell>
-                <Badge variant={s.eFiling === 'Required' ? 'error' : 'success'}>{s.eFiling}</Badge>
+                <Badge variant={s.metadata.eFiling === 'Required' ? 'error' : 'success'}>{s.metadata.eFiling || 'N/A'}</Badge>
               </TableCell>
-              <TableCell className="text-slate-500 text-xs">{s.system}</TableCell>
+              <TableCell className="text-slate-500 text-xs">{s.metadata.system || 'N/A'}</TableCell>
             </TableRow>
           ))}
         </TableBody>

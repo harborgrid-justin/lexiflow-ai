@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Case } from '../types';
+import { Case, CaseStatus, User } from '../types';
 import { 
   Plus, Briefcase, UserPlus, ShieldAlert, Users, Calendar, CheckSquare,
   DollarSign, Gavel, Mic2, FileCheck, Archive, FileInput
@@ -23,13 +23,14 @@ import { DocketImportModal } from './DocketImportModal';
 
 interface CaseListProps {
   onSelectCase: (c: Case) => void;
+  currentUser?: User;
 }
 
 type CaseView = 
   'active' | 'docket' | 'tasks' | 'intake' | 'conflicts' | 
   'resources' | 'trust' | 'experts' | 'reporters' | 'closing' | 'archived';
 
-export const CaseList: React.FC<CaseListProps> = ({ onSelectCase }) => {
+export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser }) => {
   const {
     isModalOpen,
     setIsModalOpen,
@@ -38,16 +39,34 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase }) => {
     typeFilter,
     setTypeFilter,
     filteredCases,
-    resetFilters
+    resetFilters,
+    addCase
   } = useCaseList();
 
   const [view, setView] = useState<CaseView>('active');
   const [isDocketModalOpen, setIsDocketModalOpen] = useState(false);
 
-  const handleDocketImport = (data: any) => {
-    console.log("Imported Docket Data:", data);
-    alert(`Successfully imported case: ${data.caseInfo?.title}. Created ${data.parties?.length} parties and ${data.docketEntries?.length} docket entries.`);
-    // In a real app, this would dispatch to a store/context
+  const handleDocketImport = async (data: any) => {
+    try {
+      const newCase: Partial<Case> = {
+        title: data.caseInfo?.title || 'Imported Case',
+        client: 'New Client',
+        status: CaseStatus.Discovery,
+        filingDate: new Date().toISOString(),
+        description: `Imported from Docket. Case No: ${data.caseInfo?.caseNumber}`,
+        matterType: 'Litigation',
+        court: data.caseInfo?.court,
+        judge: data.caseInfo?.judge,
+        createdBy: currentUser?.id
+      };
+      
+      await addCase(newCase);
+      
+      alert(`Successfully imported case: ${newCase.title}. Created ${data.parties?.length} parties and ${data.docketEntries?.length} docket entries.`);
+    } catch (error) {
+      console.error("Failed to import docket", error);
+      alert("Failed to import docket.");
+    }
   };
 
   const menuItems = [
@@ -126,7 +145,17 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase }) => {
           <p className="text-sm text-slate-500 mb-4">Select a practice area to apply the correct workflow template.</p>
           <div className="space-y-2">
             {['Litigation', 'M&A', 'IP', 'Real Estate'].map((type) => (
-              <button key={type} onClick={() => setIsModalOpen(false)} 
+              <button key={type} onClick={() => {
+                  addCase({
+                      title: `New ${type} Matter`,
+                      client: 'Pending Client',
+                      status: CaseStatus.Discovery,
+                      matterType: type as any,
+                      filingDate: new Date().toISOString(),
+                      description: 'Created via New Matter Wizard',
+                      createdBy: currentUser?.id
+                  });
+              }} 
                 className="w-full text-left p-3 border rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors flex items-center group">
                 <Briefcase className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-500" />
                 <span className="font-medium text-slate-700 group-hover:text-blue-700">{type} Template</span>

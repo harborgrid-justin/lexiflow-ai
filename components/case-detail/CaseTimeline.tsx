@@ -34,7 +34,7 @@ export const CaseTimeline: React.FC<CaseTimelineProps> = ({ events, onEventClick
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-full max-h-[calc(100vh-12rem)] overflow-hidden sticky top-6">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
       <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
         <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide">Case Timeline</h3>
         <span className="text-xs text-slate-400">{events.length} Events</span>

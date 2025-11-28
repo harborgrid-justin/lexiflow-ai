@@ -1,16 +1,30 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { ExternalLink } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
+import { Jurisdiction } from '../../types';
 
 export const JurisdictionFederal: React.FC = () => {
-  const courts = [
-    { name: 'U.S. Supreme Court', circuit: 'SCOTUS', type: 'Highest', judges: 9, status: 'Active Session' },
-    { name: '9th Circuit Court of Appeals', circuit: '9th', type: 'Appellate', judges: 29, status: 'Recess' },
-    { name: 'N.D. California', circuit: '9th', type: 'District', judges: 14, status: 'Active' },
-    { name: 'S.D. New York', circuit: '2nd', type: 'District', judges: 28, status: 'Active' },
-  ];
+  const [courts, setCourts] = useState<Jurisdiction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await ApiService.getJurisdictions('Federal');
+        setCourts(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading) return <div className="p-4">Loading federal courts...</div>;
 
   return (
     <div className="space-y-4">
@@ -29,15 +43,15 @@ export const JurisdictionFederal: React.FC = () => {
           <TableHead className="text-right">Rules</TableHead>
         </TableHeader>
         <TableBody>
-          {courts.map((court, i) => (
-            <TableRow key={i}>
+          {courts.map((court) => (
+            <TableRow key={court.id}>
               <TableCell className="font-bold text-slate-900">{court.name}</TableCell>
-              <TableCell>{court.circuit}</TableCell>
-              <TableCell><Badge variant="neutral">{court.type}</Badge></TableCell>
-              <TableCell>{court.judges}</TableCell>
+              <TableCell>{court.metadata.circuit}</TableCell>
+              <TableCell><Badge variant="neutral">{court.metadata.courtType}</Badge></TableCell>
+              <TableCell>{court.metadata.judges}</TableCell>
               <TableCell>
-                <span className={`text-xs font-bold ${court.status === 'Active' || court.status === 'Active Session' ? 'text-green-600' : 'text-amber-600'}`}>
-                  {court.status}
+                <span className={`text-xs font-bold ${court.metadata.status === 'Active' || court.metadata.status === 'Active Session' ? 'text-green-600' : 'text-amber-600'}`}>
+                  {court.metadata.status}
                 </span>
               </TableCell>
               <TableCell className="text-right">

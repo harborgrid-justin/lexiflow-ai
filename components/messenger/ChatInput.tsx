@@ -1,7 +1,7 @@
 
 import React, { useRef } from 'react';
 import { Paperclip, Send, X, FileText, Clock } from 'lucide-react';
-import { Attachment } from '../../hooks/useSecureMessenger';
+import { Attachment } from '../../types';
 
 interface ChatInputProps {
   inputText: string;

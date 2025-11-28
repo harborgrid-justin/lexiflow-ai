@@ -1,9 +1,16 @@
 
-import React from 'react';
-import { ChevronLeft, ChevronRight, Briefcase, CheckSquare, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, Briefcase, CheckSquare, Shield, Calendar, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { useCalendarView } from '../../hooks/useCalendarView';
+import { Modal } from '../common/Modal';
+import { Button } from '../common/Button';
+import { Badge } from '../common/Badge';
 
-export const CalendarMaster: React.FC = () => {
+interface CalendarMasterProps {
+  onNavigateToCase?: (caseId: string) => void;
+}
+
+export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase }) => {
   const {
     getEventsForDay,
     changeMonth,
@@ -11,6 +18,8 @@ export const CalendarMaster: React.FC = () => {
     daysInMonth,
     firstDay
   } = useCalendarView();
+  
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   const getEventStyle = (type: string, priority: string) => {
     if (type === 'case') return 'bg-purple-50 border-purple-100 text-purple-700';
@@ -58,7 +67,11 @@ export const CalendarMaster: React.FC = () => {
                 
                 <div className="mt-1 space-y-2 md:space-y-1">
                   {dayEvents.map((evt, idx) => (
-                    <div key={`${evt.id}-${idx}`} className={`text-xs p-2 md:p-1 rounded border truncate cursor-pointer flex items-center ${getEventStyle(evt.type, evt.priority as string)}`}>
+                    <div 
+                      key={`${evt.id}-${idx}`} 
+                      onClick={() => setSelectedEvent(evt)}
+                      className={`text-xs p-2 md:p-1 rounded border truncate cursor-pointer flex items-center hover:opacity-80 transition-opacity ${getEventStyle(evt.type, evt.priority as string)}`}
+                    >
                       <span className="shrink-0">{getEventIcon(evt.type)}</span>
                       <span className="truncate ml-1">{evt.title}</span>
                     </div>
@@ -75,6 +88,71 @@ export const CalendarMaster: React.FC = () => {
           <div className="flex items-center"><div className="w-3 h-3 bg-red-100 border border-red-200 rounded mr-2"></div> High Priority</div>
           <div className="flex items-center"><div className="w-3 h-3 bg-amber-100 border border-amber-200 rounded mr-2"></div> Compliance</div>
       </div>
+
+      <Modal isOpen={!!selectedEvent} onClose={() => setSelectedEvent(null)} title="Event Details">
+        {selectedEvent && (
+          <div className="space-y-6 p-2">
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-lg ${
+                selectedEvent.type === 'case' ? 'bg-purple-100 text-purple-600' : 
+                selectedEvent.type === 'compliance' ? 'bg-amber-100 text-amber-600' : 
+                'bg-blue-100 text-blue-600'
+              }`}>
+                {selectedEvent.type === 'case' ? <Briefcase className="h-6 w-6"/> : 
+                 selectedEvent.type === 'compliance' ? <Shield className="h-6 w-6"/> : 
+                 <CheckSquare className="h-6 w-6"/>}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">{selectedEvent.title}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant={selectedEvent.priority === 'High' ? 'warning' : 'neutral'}>{selectedEvent.priority} Priority</Badge>
+                  <span className="text-xs text-slate-500 uppercase font-bold">{selectedEvent.type}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 p-3 rounded border border-slate-100">
+                <p className="text-xs text-slate-500 font-bold uppercase mb-1">Date</p>
+                <div className="flex items-center gap-2 text-slate-900 font-medium">
+                  <Calendar className="h-4 w-4 text-slate-400"/>
+                  {selectedEvent.date}
+                </div>
+              </div>
+              <div className="bg-slate-50 p-3 rounded border border-slate-100">
+                <p className="text-xs text-slate-500 font-bold uppercase mb-1">Time</p>
+                <div className="flex items-center gap-2 text-slate-900 font-medium">
+                  <Clock className="h-4 w-4 text-slate-400"/>
+                  All Day
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0"/>
+                <p>This event is synced with the Master Calendar. Any changes will be reflected in Outlook and the firm-wide docket.</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button variant="secondary" onClick={() => setSelectedEvent(null)}>Close</Button>
+              {selectedEvent.caseId && onNavigateToCase && (
+                <Button 
+                  variant="primary" 
+                  icon={ArrowRight} 
+                  onClick={() => {
+                    onNavigateToCase(selectedEvent.caseId);
+                    setSelectedEvent(null);
+                  }}
+                >
+                  Go to Case
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, Shield, Link, Database, Network } from 'lucide-react';
-import { MOCK_AUDIT_LOGS } from '../data/mockAdmin';
+import { ApiService } from '../services/apiService';
+import { AuditLogEntry } from '../types';
 import { AdminAuditLog } from './admin/AdminAuditLog';
 import { AdminPlatformManager } from './admin/AdminPlatformManager';
 import { AdminHierarchy } from './admin/AdminHierarchy';
@@ -9,8 +10,13 @@ import { PageHeader } from './common/PageHeader';
 
 export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('hierarchy');
+  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
 
-  const logs = MOCK_AUDIT_LOGS;
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      ApiService.getAuditLogs().then(setLogs).catch(console.error);
+    }
+  }, [activeTab]);
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">

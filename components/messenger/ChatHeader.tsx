@@ -3,7 +3,7 @@ import React from 'react';
 import { ArrowLeft, Phone, Video, Info, Lock, AlertTriangle } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { Button } from '../common/Button';
-import { Conversation } from '../../hooks/useSecureMessenger';
+import { Conversation } from '../../types';
 
 interface ChatHeaderProps {
   conversation: Conversation;

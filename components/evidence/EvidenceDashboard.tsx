@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { MOCK_EVIDENCE } from '../../data/mockEvidence';
+import { ApiService } from '../../services/apiService';
+import { EvidenceItem } from '../../types';
 import { ShieldCheck, AlertTriangle, HardDrive, Box, Activity } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
@@ -11,10 +12,24 @@ interface EvidenceDashboardProps {
 }
 
 export const EvidenceDashboard: React.FC<EvidenceDashboardProps> = ({ onNavigate }) => {
-  const totalItems = MOCK_EVIDENCE.length;
-  const digitalItems = MOCK_EVIDENCE.filter(e => e.type === 'Digital').length;
-  const physicalItems = MOCK_EVIDENCE.filter(e => e.type === 'Physical').length;
-  const challengedItems = MOCK_EVIDENCE.filter(e => e.admissibility === 'Challenged').length;
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+
+  useEffect(() => {
+    const fetchEvidence = async () => {
+        try {
+            const data = await ApiService.getEvidence();
+            setEvidence(data);
+        } catch (e) {
+            console.error("Failed to fetch evidence", e);
+        }
+    };
+    fetchEvidence();
+  }, []);
+
+  const totalItems = evidence.length;
+  const digitalItems = evidence.filter(e => e.type === 'Digital').length;
+  const physicalItems = evidence.filter(e => e.type === 'Physical').length;
+  const challengedItems = evidence.filter(e => e.admissibility === 'Challenged').length;
 
   const data = [
     { name: 'Physical', value: physicalItems, color: '#d97706' }, // amber-600
@@ -22,7 +37,7 @@ export const EvidenceDashboard: React.FC<EvidenceDashboardProps> = ({ onNavigate
     { name: 'Document', value: totalItems - digitalItems - physicalItems, color: '#475569' }, // slate-600
   ];
 
-  const recentCustodyEvents = MOCK_EVIDENCE.flatMap(e => 
+  const recentCustodyEvents = evidence.flatMap(e => 
     e.chainOfCustody.map(c => ({ ...c, itemTitle: e.title, itemId: e.id }))
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 

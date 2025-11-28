@@ -1,12 +1,25 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { AlertCircle, Plus, User, Building2, Calendar } from 'lucide-react';
-import { MOCK_LEGAL_HOLDS } from '../../data/mockDiscovery';
+import { ApiService } from '../../services/apiService';
 
 export const LegalHolds: React.FC = () => {
+  const [holds, setHolds] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchHolds = async () => {
+        try {
+            const data = await ApiService.getLegalHolds();
+            setHolds(data);
+        } catch (e) {
+            console.error("Failed to fetch legal holds", e);
+        }
+    };
+    fetchHolds();
+  }, []);
   return (
     <div className="animate-fade-in space-y-4">
        <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mb-4 flex gap-3">
@@ -33,7 +46,7 @@ export const LegalHolds: React.FC = () => {
               <TableHead className="text-right">Actions</TableHead>
             </TableHeader>
             <TableBody>
-              {MOCK_LEGAL_HOLDS.map((hold) => (
+              {holds.map((hold) => (
                  <TableRow key={hold.id}>
                     <TableCell className="font-medium text-slate-900">{hold.custodian}</TableCell>
                     <TableCell>{hold.dept}</TableCell>
@@ -55,7 +68,7 @@ export const LegalHolds: React.FC = () => {
 
        {/* Mobile Card View */}
        <div className="md:hidden space-y-4">
-         {MOCK_LEGAL_HOLDS.map(hold => (
+         {holds.map(hold => (
            <div key={hold.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
              <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">

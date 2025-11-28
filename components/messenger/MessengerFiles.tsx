@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Search, ImageIcon, FileText, Download } from 'lucide-react';
-import { Attachment } from '../../hooks/useSecureMessenger';
+import { Attachment } from '../../types';
 
 interface MessengerFilesProps {
   files: Attachment[];

@@ -4,10 +4,11 @@ import { PenTool, Cpu, Book, AlertTriangle, Check, Wand2, Search, History } from
 import { GeminiService } from '../../services/geminiService';
 import { Clause } from '../../types';
 import { AdvancedEditor } from '../AdvancedEditor';
-import { MOCK_CLAUSES } from '../../data/mockClauses';
+import { ApiService } from '../../services/apiService';
 import { ClauseHistoryModal } from '../ClauseHistoryModal';
 
 interface CaseDraftingProps {
+  caseId: string;
   caseTitle: string;
   draftPrompt: string;
   setDraftPrompt: (s: string) => void;
@@ -17,6 +18,7 @@ interface CaseDraftingProps {
 }
 
 export const CaseDrafting: React.FC<CaseDraftingProps> = ({ 
+  caseId,
   caseTitle,
   draftPrompt,
   setDraftPrompt,
@@ -28,10 +30,23 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   const [reviewResult, setReviewResult] = useState('');
   const [activeMode, setActiveMode] = useState<'edit' | 'review' | 'clauses'>('edit');
   const [loading, setLoading] = useState(false);
+  const [clauses, setClauses] = useState<Clause[]>([]);
   
   // Clause Library State
   const [clauseSearch, setClauseSearch] = useState('');
   const [selectedClauseHistory, setSelectedClauseHistory] = useState<Clause | null>(null);
+
+  useEffect(() => {
+    const fetchClauses = async () => {
+        try {
+            const data = await ApiService.getClauses();
+            setClauses(data);
+        } catch (e) {
+            console.error("Failed to fetch clauses", e);
+        }
+    };
+    fetchClauses();
+  }, []);
 
   useEffect(() => {
     if (draftResult) {
@@ -40,12 +55,12 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   }, [draftResult]);
 
   const filteredClauses = useMemo(() => {
-    return MOCK_CLAUSES.filter(c => 
+    return clauses.filter(c => 
       c.name.toLowerCase().includes(clauseSearch.toLowerCase()) || 
       c.content.toLowerCase().includes(clauseSearch.toLowerCase()) ||
       c.category.toLowerCase().includes(clauseSearch.toLowerCase())
     );
-  }, [clauseSearch]);
+  }, [clauseSearch, clauses]);
 
   const handleReview = async () => {
     if(!content) return;
@@ -62,13 +77,39 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
     setContent(prev => prev + clauseHtml);
   };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full relative">
-      {selectedClauseHistory && (
-        <ClauseHistoryModal clause={selectedClauseHistory} onClose={() => setSelectedClauseHistory(null)} />
-      )}
+  const handleSaveDocument = async (newHtml: string) => {
+    setContent(newHtml);
+    try {
+      await ApiService.createDocument({
+        caseId,
+        title: `Draft - ${new Date().toLocaleString()}`,
+        type: 'Draft',
+        status: 'Draft',
+        uploadDate: new Date().toISOString(),
+        summary: 'Drafted in Case Drafting module',
+        riskScore: 0,
+        lastModified: new Date().toISOString(),
+        sourceModule: 'Drafting',
+        isEncrypted: false,
+        sharedWithClient: false,
+        fileSize: '0 KB' // Placeholder
+      });
+      alert('Document saved to case file.');
+    } catch (error) {
+      console.error("Failed to save document", error);
+      alert("Failed to save document.");
+    }
+  };
 
-      <div className="lg:col-span-2 flex flex-col h-full space-y-4">
+  return (
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="flex-1 overflow-hidden pr-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full relative">
+          {selectedClauseHistory && (
+            <ClauseHistoryModal clause={selectedClauseHistory} onClose={() => setSelectedClauseHistory(null)} />
+          )}
+
+          <div className="lg:col-span-2 flex flex-col h-full space-y-4">
         <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex gap-2 items-center">
              <div className="bg-purple-100 p-2 rounded-md"><Wand2 className="h-5 w-5 text-purple-600"/></div>
              <input 
@@ -87,15 +128,14 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
             </button>
         </div>
 
-        <AdvancedEditor 
-          key={content.length} 
-          initialContent={content} 
-          onSave={(newHtml) => {
-            setContent(newHtml);
-            alert('Document saved to case file.');
-          }}
-          placeholder="Begin drafting your legal document here..." 
-        />
+        <div className="flex-1 min-h-0">
+          <AdvancedEditor 
+            key={content.length} 
+            initialContent={content} 
+            onSave={handleSaveDocument}
+            placeholder="Begin drafting your legal document here..." 
+          />
+        </div>
       </div>
       
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
@@ -198,6 +238,8 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
             </div>
           )}
         </div>
+      </div>
+    </div>
       </div>
     </div>
   );

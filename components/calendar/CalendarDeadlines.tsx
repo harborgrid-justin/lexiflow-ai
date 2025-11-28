@@ -1,15 +1,41 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Calendar, AlertCircle, Clock } from 'lucide-react';
+import { ApiService } from '../../services/apiService';
+
+interface Deadline {
+  id: number | string;
+  date: string;
+  matter: string;
+  event: string;
+  type: string;
+  status: string;
+}
 
 export const CalendarDeadlines: React.FC = () => {
-  const deadlines = [
-    { id: 1, date: '2024-03-15', matter: 'Martinez v. TechCorp', event: 'Motion to Dismiss', type: 'Filing', status: 'Pending' },
-    { id: 2, date: '2024-03-22', matter: 'OmniGlobal Merger', event: 'Discovery Cutoff', type: 'Cutoff', status: 'Critical' },
-    { id: 3, date: '2024-04-01', matter: 'Estate of Smith', event: 'Tax Filing', type: 'Admin', status: 'Done' },
-  ];
+  const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDeadlines = async () => {
+      try {
+        const data = await ApiService.getCalendarDeadlines();
+        setDeadlines(data);
+      } catch (error) {
+        console.error('Failed to fetch deadlines:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeadlines();
+  }, []);
+
+  if (loading) {
+    return <div className="p-4 text-center text-slate-500">Loading deadlines...</div>;
+  }
 
   return (
     <div className="space-y-4">

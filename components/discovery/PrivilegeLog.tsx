@@ -1,12 +1,25 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Wand2, Plus, Shield, Mail } from 'lucide-react';
-import { MOCK_PRIVILEGE_LOG } from '../../data/mockDiscovery';
+import { ApiService } from '../../services/apiService';
 
 export const PrivilegeLog: React.FC = () => {
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+        try {
+            const data = await ApiService.getPrivilegeLogs();
+            setLogs(data);
+        } catch (e) {
+            console.error("Failed to fetch privilege logs", e);
+        }
+    };
+    fetchLogs();
+  }, []);
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50 p-4 rounded-lg border border-slate-200 gap-4">
@@ -31,7 +44,7 @@ export const PrivilegeLog: React.FC = () => {
             <TableHead>Description (Rule 26)</TableHead>
           </TableHeader>
           <TableBody>
-            {MOCK_PRIVILEGE_LOG.map((item) => (
+            {logs.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-xs">{item.id}</TableCell>
                 <TableCell>{item.date}</TableCell>
@@ -51,7 +64,7 @@ export const PrivilegeLog: React.FC = () => {
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
-        {MOCK_PRIVILEGE_LOG.map(item => (
+        {logs.map(item => (
           <div key={item.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-2">

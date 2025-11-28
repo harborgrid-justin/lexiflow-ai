@@ -1,6 +1,6 @@
 
-import { useState, useMemo } from 'react';
-import { MOCK_EVIDENCE } from '../data/mockEvidence';
+import { useState, useMemo, useEffect } from 'react';
+import { ApiService } from '../services/apiService';
 import { EvidenceItem, ChainOfCustodyEvent } from '../types';
 
 export type ViewMode = 'dashboard' | 'inventory' | 'custody' | 'intake' | 'detail';
@@ -24,8 +24,20 @@ export const useEvidenceVault = () => {
   const [view, setView] = useState<ViewMode>('dashboard');
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [selectedItem, setSelectedItem] = useState<EvidenceItem | null>(null);
-  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>(MOCK_EVIDENCE);
+  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
   
+  useEffect(() => {
+    const fetchEvidence = async () => {
+      try {
+        const items = await ApiService.getEvidence();
+        setEvidenceItems(items);
+      } catch (error) {
+        console.error("Failed to fetch evidence", error);
+      }
+    };
+    fetchEvidence();
+  }, []);
+
   const [filters, setFilters] = useState<EvidenceFilters>({
     search: '',
     type: '',
@@ -51,22 +63,35 @@ export const useEvidenceVault = () => {
     setView('inventory');
   };
 
-  const handleIntakeComplete = (newItem: EvidenceItem) => {
-    setEvidenceItems([newItem, ...evidenceItems]);
-    alert("Item logged successfully."); 
-    setView('inventory');
+  const handleIntakeComplete = async (newItem: EvidenceItem) => {
+    try {
+      const createdItem = await ApiService.createEvidence(newItem);
+      setEvidenceItems([createdItem, ...evidenceItems]);
+      alert("Item logged successfully."); 
+      setView('inventory');
+    } catch (error) {
+      console.error("Failed to create evidence item", error);
+      alert("Failed to log item.");
+    }
   };
 
-  const handleCustodyUpdate = (newEvent: ChainOfCustodyEvent) => {
+  const handleCustodyUpdate = async (newEvent: ChainOfCustodyEvent) => {
     if (!selectedItem) return;
 
-    const updatedItem = {
-      ...selectedItem,
-      chainOfCustody: [newEvent, ...selectedItem.chainOfCustody]
-    };
+    try {
+      const updatedChain = [newEvent, ...selectedItem.chainOfCustody];
+      const updatedItem = {
+        ...selectedItem,
+        chainOfCustody: updatedChain
+      };
 
-    setEvidenceItems(prev => prev.map(item => item.id === selectedItem.id ? updatedItem : item));
-    setSelectedItem(updatedItem);
+      await ApiService.updateEvidence(selectedItem.id, { chainOfCustody: updatedChain });
+
+      setEvidenceItems(prev => prev.map(item => item.id === selectedItem.id ? updatedItem : item));
+      setSelectedItem(updatedItem);
+    } catch (error) {
+      console.error("Failed to update custody", error);
+    }
   };
 
   const filteredItems = useMemo(() => {

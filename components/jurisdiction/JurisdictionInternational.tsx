@@ -1,14 +1,29 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Globe, Plane } from 'lucide-react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
+import { ApiService } from '../../services/apiService';
+import { Jurisdiction } from '../../types';
 
 export const JurisdictionInternational: React.FC = () => {
-  const treaties = [
-    { name: 'Hague Service Convention', type: 'Service of Process', status: 'Ratified', parties: 79 },
-    { name: 'New York Convention', type: 'Arbitration Enforcement', status: 'Ratified', parties: 172 },
-    { name: 'GDPR (EU)', type: 'Data Privacy', status: 'Enforcement Active', parties: 27 },
-  ];
+  const [treaties, setTreaties] = useState<Jurisdiction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await ApiService.getJurisdictions('International');
+        setTreaties(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading) return <div className="p-4">Loading international treaties...</div>;
 
   return (
     <div className="space-y-6">
@@ -28,12 +43,12 @@ export const JurisdictionInternational: React.FC = () => {
           <TableHead>Signatory Count</TableHead>
         </TableHeader>
         <TableBody>
-          {treaties.map((t, i) => (
-            <TableRow key={i}>
+          {treaties.map((t) => (
+            <TableRow key={t.id}>
               <TableCell className="font-bold text-slate-900">{t.name}</TableCell>
-              <TableCell>{t.type}</TableCell>
-              <TableCell><span className="text-green-600 font-bold">{t.status}</span></TableCell>
-              <TableCell>{t.parties}</TableCell>
+              <TableCell>{t.metadata.subjectMatter}</TableCell>
+              <TableCell><span className="text-green-600 font-bold">{t.metadata.status}</span></TableCell>
+              <TableCell>{t.metadata.parties}</TableCell>
             </TableRow>
           ))}
         </TableBody>

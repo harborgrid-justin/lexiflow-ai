@@ -1,23 +1,45 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { CheckSquare, FileText, Scale, ArrowRight } from 'lucide-react';
-import { MOCK_DISCOVERY, MOCK_LEGAL_HOLDS, MOCK_PRIVILEGE_LOG } from '../../data/mockDiscovery';
+import { ApiService } from '../../services/apiService';
 
 interface DiscoveryDashboardProps {
     onNavigate: (view: any, id?: string) => void;
 }
 
 export const DiscoveryDashboard: React.FC<DiscoveryDashboardProps> = ({ onNavigate }) => {
+  const [discovery, setDiscovery] = useState<any[]>([]);
+  const [holds, setHolds] = useState<any[]>([]);
+  const [privilege, setPrivilege] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [d, h, p] = await Promise.all([
+                ApiService.getDiscovery(),
+                ApiService.getLegalHolds(),
+                ApiService.getPrivilegeLogs()
+            ]);
+            setDiscovery(d);
+            setHolds(h);
+            setPrivilege(p);
+        } catch (e) {
+            console.error("Failed to fetch discovery dashboard data", e);
+        }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card noPadding className="border-l-4 border-l-blue-600">
           <div className="p-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => onNavigate('requests')}>
             <p className="text-xs font-bold text-slate-500 uppercase">Pending Requests</p>
-            <p className="text-2xl font-bold text-slate-900">{MOCK_DISCOVERY.filter(r => r.status === 'Served').length}</p>
+            <p className="text-2xl font-bold text-slate-900">{discovery.filter(r => r.status === 'Served').length}</p>
           </div>
         </Card>
         <Card noPadding className="border-l-4 border-l-amber-500">
@@ -29,13 +51,13 @@ export const DiscoveryDashboard: React.FC<DiscoveryDashboardProps> = ({ onNaviga
         <Card noPadding className="border-l-4 border-l-red-600">
           <div className="p-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => onNavigate('holds')}>
             <p className="text-xs font-bold text-slate-500 uppercase">Legal Hold Pending</p>
-            <p className="text-2xl font-bold text-slate-900">{MOCK_LEGAL_HOLDS.filter(h => h.status === 'Pending').length}</p>
+            <p className="text-2xl font-bold text-slate-900">{holds.filter(h => h.status === 'Pending').length}</p>
           </div>
         </Card>
         <Card noPadding className="border-l-4 border-l-purple-600">
           <div className="p-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => onNavigate('privilege')}>
             <p className="text-xs font-bold text-slate-500 uppercase">Privileged Items</p>
-            <p className="text-2xl font-bold text-slate-900">{MOCK_PRIVILEGE_LOG.length}</p>
+            <p className="text-2xl font-bold text-slate-900">{privilege.length}</p>
           </div>
         </Card>
       </div>

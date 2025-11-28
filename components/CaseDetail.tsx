@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Case, TimelineEvent } from '../types';
+import { Case, TimelineEvent, User } from '../types';
 import { ArrowLeft, MapPin, DollarSign } from 'lucide-react';
 import { CaseOverview } from './case-detail/CaseOverview';
 import { CaseDocuments } from './case-detail/CaseDocuments';
@@ -14,16 +14,18 @@ import { CaseDiscovery } from './case-detail/CaseDiscovery';
 import { CaseMessages } from './case-detail/CaseMessages';
 import { CaseParties } from './case-detail/CaseParties';
 import { CaseMotions } from './case-detail/CaseMotions';
+import { CaseTeam } from './case-detail/CaseTeam';
 import { useCaseDetail } from '../hooks/useCaseDetail';
 
 interface CaseDetailProps {
   caseData: Case;
   onBack: () => void;
+  currentUser?: User;
 }
 
-const TABS = ['Overview', 'Motions', 'Parties', 'Documents', 'Evidence', 'Discovery', 'Messages', 'Workflow', 'Drafting', 'Contract Review', 'Billing'];
+const TABS = ['Overview', 'Team', 'Motions', 'Parties', 'Documents', 'Evidence', 'Discovery', 'Messages', 'Workflow', 'Drafting', 'Contract Review', 'Billing'];
 
-export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack }) => {
+export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, currentUser }) => {
   const {
     activeTab,
     setActiveTab,
@@ -43,7 +45,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack }) => {
     timelineEvents,
     handleAnalyze,
     handleDraft,
-    handleGenerateWorkflow
+    handleGenerateWorkflow,
+    addTimeEntry,
+    toggleTask,
+    createDocument
   } = useCaseDetail(caseData);
 
   const handleTimelineClick = (event: TimelineEvent) => {
@@ -110,16 +115,17 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack }) => {
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:col-span-9 h-full overflow-y-auto pr-0 md:pr-2 pb-10">
-                {activeTab === 'Overview' && <CaseOverview caseData={{...caseData, parties}} onTimeEntryAdded={(e) => setBillingEntries([e, ...billingEntries])} />}
-                {activeTab === 'Motions' && <CaseMotions caseId={caseData.id} caseTitle={caseData.title} />}
+            <div className="lg:col-span-9 h-full flex flex-col overflow-hidden pr-0 md:pr-2">
+                {activeTab === 'Overview' && <CaseOverview caseData={{...caseData, parties}} onTimeEntryAdded={addTimeEntry} currentUser={currentUser} />}
+                {activeTab === 'Team' && <CaseTeam caseId={caseData.id} />}
+                {activeTab === 'Motions' && <CaseMotions caseId={caseData.id} caseTitle={caseData.title} currentUser={currentUser} />}
                 {activeTab === 'Parties' && <CaseParties parties={parties} onUpdate={setParties} />}
-                {activeTab === 'Documents' && <CaseDocuments documents={documents} analyzingId={analyzingId} onAnalyze={handleAnalyze} onDocumentCreated={(d) => { setDocuments([...documents, d]); setActiveTab('Documents'); }} />}
-                {activeTab === 'Evidence' && <CaseEvidence caseId={caseData.id} />}
+                {activeTab === 'Documents' && <CaseDocuments documents={documents} analyzingId={analyzingId} onAnalyze={handleAnalyze} onDocumentCreated={(d) => { createDocument(d); setActiveTab('Documents'); }} currentUser={currentUser} />}
+                {activeTab === 'Evidence' && <CaseEvidence caseId={caseData.id} currentUser={currentUser} />}
                 {activeTab === 'Discovery' && <CaseDiscovery caseId={caseData.id} />}
                 {activeTab === 'Messages' && <CaseMessages caseData={caseData} />}
-                {activeTab === 'Drafting' && <CaseDrafting caseTitle={caseData.title} draftPrompt={draftPrompt} setDraftPrompt={setDraftPrompt} draftResult={draftResult} isDrafting={isDrafting} onDraft={handleDraft} />}
-                {activeTab === 'Workflow' && <CaseWorkflow stages={stages} generatingWorkflow={generatingWorkflow} onGenerateWorkflow={handleGenerateWorkflow} onNavigateToModule={(module) => setActiveTab(module)} />}
+                {activeTab === 'Drafting' && <CaseDrafting caseId={caseData.id} caseTitle={caseData.title} draftPrompt={draftPrompt} setDraftPrompt={setDraftPrompt} draftResult={draftResult} isDrafting={isDrafting} onDraft={handleDraft} />}
+                {activeTab === 'Workflow' && <CaseWorkflow stages={stages} generatingWorkflow={generatingWorkflow} onGenerateWorkflow={handleGenerateWorkflow} onNavigateToModule={(module) => setActiveTab(module)} onToggleTask={toggleTask} />}
                 {activeTab === 'Contract Review' && <CaseContractReview />}
                 {activeTab === 'Billing' && <CaseBilling billingModel={caseData.billingModel || 'Hourly'} value={caseData.value} entries={billingEntries} />}
             </div>

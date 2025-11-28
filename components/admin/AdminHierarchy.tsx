@@ -1,24 +1,46 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, Users, User, ChevronRight, Shield, Globe, Briefcase, 
   MoreVertical, Plus, CheckCircle, XCircle 
 } from 'lucide-react';
-import { MOCK_ORGS, MOCK_GROUPS, HIERARCHY_USERS } from '../../data/mockHierarchy';
+import { ApiService } from '../../services/apiService';
 import { Organization, Group, User as UserType } from '../../types';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { UserAvatar } from '../common/UserAvatar';
 
 export const AdminHierarchy: React.FC = () => {
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(MOCK_ORGS[0].id);
+  const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  const selectedOrg = MOCK_ORGS.find(o => o.id === selectedOrgId);
-  const orgGroups = MOCK_GROUPS.filter(g => g.orgId === selectedOrgId);
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [o, g, u] = await Promise.all([
+                ApiService.getOrganizations(),
+                ApiService.getGroups(),
+                ApiService.getUsers()
+            ]);
+            setOrgs(o);
+            setGroups(g);
+            setUsers(u);
+            if (o.length > 0 && !selectedOrgId) setSelectedOrgId(o[0].id);
+        } catch (e) {
+            console.error("Failed to fetch hierarchy data", e);
+        }
+    };
+    fetchData();
+  }, []);
+
+  const selectedOrg = orgs.find(o => o.id === selectedOrgId);
+  const orgGroups = groups.filter(g => g.orgId === selectedOrgId);
   
   // Users in the selected group OR if no group selected, all users in the org
-  const displayedUsers = HIERARCHY_USERS.filter(u => 
+  const displayedUsers = users.filter(u => 
     u.orgId === selectedOrgId && 
     (!selectedGroupId || u.groupIds?.includes(selectedGroupId))
   );
@@ -44,7 +66,7 @@ export const AdminHierarchy: React.FC = () => {
             Organizations
           </div>
           <div className="flex-1 overflow-y-auto">
-            {MOCK_ORGS.map(org => (
+            {orgs.map(org => (
               <div 
                 key={org.id}
                 onClick={() => { setSelectedOrgId(org.id); setSelectedGroupId(null); }}

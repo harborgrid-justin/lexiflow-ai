@@ -1,17 +1,29 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Client } from '../types';
+import { ApiService } from '../services/apiService';
 import { UserPlus, Mail, PieChart, Lock } from 'lucide-react';
 import { ClientIntakeModal } from './ClientIntakeModal';
 import { ClientPortalModal } from './ClientPortalModal';
-import { MOCK_CLIENTS } from '../data/mockClients';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 
 export const ClientCRM: React.FC = () => {
   const [showIntake, setShowIntake] = useState(false);
   const [selectedClientPortal, setSelectedClientPortal] = useState<Client | null>(null);
-  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
+  const [clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+        try {
+            const data = await ApiService.getClients();
+            setClients(data);
+        } catch (e) {
+            console.error("Failed to fetch clients", e);
+        }
+    };
+    fetchClients();
+  }, []);
 
   const handleAddClient = (clientName: string) => {
       const newClient: Client = {

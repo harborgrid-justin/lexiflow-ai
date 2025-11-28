@@ -9,12 +9,14 @@ import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 import { LayoutDashboard, Box, Link, Plus, ScanLine } from 'lucide-react';
 import { useEvidenceVault, ViewMode } from '../hooks/useEvidenceVault';
+import { User } from '../types';
 
 interface EvidenceVaultProps {
   onNavigateToCase?: (caseId: string) => void;
+  currentUser?: User;
 }
 
-export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase }) => {
+export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, currentUser }) => {
   const {
     view,
     setView,
@@ -104,6 +106,7 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase }
           <EvidenceIntake 
             handleBack={handleBack}
             onComplete={handleIntakeComplete}
+            currentUser={currentUser}
           />
         )}
       </div>

@@ -1,31 +1,29 @@
 
 import React, { useState } from 'react';
-import { Case, TimeEntry } from '../../types';
+import { Case, TimeEntry, User } from '../../types';
 import { Clock, FileText, Globe, Gavel, Users, DollarSign, Scale, Briefcase } from 'lucide-react';
 import { TimeEntryModal } from '../TimeEntryModal';
 
 interface CaseOverviewProps {
   caseData: Case;
-  onTimeEntryAdded: (entry: TimeEntry) => void;
+  onTimeEntryAdded: (entry: any) => void;
+  currentUser?: User;
 }
 
-export const CaseOverview: React.FC<CaseOverviewProps> = ({ caseData, onTimeEntryAdded }) => {
+export const CaseOverview: React.FC<CaseOverviewProps> = ({ caseData, onTimeEntryAdded, currentUser }) => {
   const [showTimeModal, setShowTimeModal] = useState(false);
 
   const handleSaveTime = (rawEntry: any) => {
-      // In a real app, this would be an API call returning the new ID
-      const newEntry: TimeEntry = {
-          id: `t-${Date.now()}`,
-          ...rawEntry
-      };
-      onTimeEntryAdded(newEntry);
+      onTimeEntryAdded({ ...rawEntry, userId: currentUser?.id });
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <TimeEntryModal isOpen={showTimeModal} onClose={() => setShowTimeModal(false)} caseId={caseData.title} onSave={handleSaveTime} />
-      
-      <div className="col-span-2 space-y-6">
+    <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
+      <div className="flex-1 overflow-y-auto pr-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <TimeEntryModal isOpen={showTimeModal} onClose={() => setShowTimeModal(false)} caseId={caseData.title} onSave={handleSaveTime} />
+        
+        <div className="col-span-2 space-y-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Matter Details</h3>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
@@ -87,6 +85,8 @@ export const CaseOverview: React.FC<CaseOverviewProps> = ({ caseData, onTimeEntr
             <button className="w-full flex items-center px-4 py-3 bg-slate-50 hover:bg-slate-100 rounded-md text-sm font-medium text-slate-700 border border-slate-200"><FileText className="h-4 w-4 mr-2 text-emerald-500" /> Upload Doc</button>
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );

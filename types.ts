@@ -42,6 +42,28 @@ export interface User {
   avatar?: string;
 }
 
+export interface UserProfile {
+  userId: string;
+  bio?: string;
+  phone?: string;
+  skills?: string[];
+  notifications?: {
+    email: boolean;
+    push: boolean;
+    digest: 'daily' | 'weekly' | 'never';
+  };
+  themePreference?: 'light' | 'dark' | 'system';
+  lastActive?: string;
+}
+
+export interface CaseMember {
+  caseId: string;
+  userId: string;
+  role: 'Lead' | 'Associate' | 'Paralegal' | 'Observer';
+  joinedAt: string;
+  user?: User; // Hydrated user object
+}
+
 export interface Party { 
   id: string; 
   name: string; 
@@ -73,6 +95,7 @@ export interface TimeEntry {
   rate: number;
   total: number;
   status: 'Unbilled' | 'Billed';
+  userId?: string;
 }
 
 export interface ClauseVersion {
@@ -103,6 +126,7 @@ export interface Case {
   // Hierarchy Links
   ownerOrgId?: string;
   assignedGroupIds?: string[];
+  createdBy?: string;
 }
 
 export interface DocumentVersion {
@@ -128,6 +152,7 @@ export interface LegalDocument {
   isEncrypted?: boolean;
   sharedWithClient?: boolean;
   fileSize?: string;
+  uploadedBy?: string;
 }
 
 export interface WorkflowTask {
@@ -144,6 +169,7 @@ export interface WorkflowTask {
   relatedModule?: 'Documents' | 'Billing' | 'Discovery' | 'Motions' | 'Evidence';
   actionLabel?: string;
   description?: string;
+  createdBy?: string;
 }
 
 export interface WorkflowStage {
@@ -155,6 +181,7 @@ export interface SearchResult { title: string; url: string; snippet: string; }
 export interface ResearchSession {
   id: string; query: string; response: string; sources: SearchResult[];
   timestamp: string; feedback?: 'positive'|'negative';
+  userId?: string;
 }
 
 export interface TimelineEvent {
@@ -219,6 +246,7 @@ export interface Motion {
   assignedAttorney?: string;
   oppositionDueDate?: string;
   replyDueDate?: string;
+  createdBy?: string;
 }
 
 // --- DISCOVERY & EVIDENCE ---
@@ -270,6 +298,7 @@ export interface EvidenceItem {
   description: string;
   collectionDate: string;
   collectedBy: string;
+  collectedByUserId?: string;
   custodian: string;
   location: string;
   admissibility: AdmissibilityStatus;
@@ -277,3 +306,64 @@ export interface EvidenceItem {
   tags: string[];
   chunks?: FileChunk[]; // New: Split documents
 }
+
+// --- MESSAGING ---
+
+export interface Attachment {
+  name: string;
+  type: 'doc' | 'image';
+  size: string;
+  sender?: string;
+  date?: string;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: string;
+  status: 'sent' | 'delivered' | 'read';
+  attachments?: Attachment[];
+  isPrivileged?: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  name: string;
+  role: string;
+  isExternal: boolean;
+  unread: number;
+  status: 'online' | 'offline' | 'away';
+  draft?: string;
+  messages: Message[];
+}
+
+export interface Jurisdiction {
+  id: string;
+  name: string;
+  type: 'Federal' | 'State' | 'Regulatory';
+  parentId?: string;
+  metadata: any;
+}
+
+export interface KnowledgeItem {
+  id: string;
+  title: string;
+  category: 'Playbook' | 'Q&A' | 'Precedent';
+  summary: string;
+  content: string;
+  tags: string[];
+  author: string;
+  lastUpdated: string;
+  metadata: any;
+}
+
+export interface ResearchSession {
+  id: string;
+  query: string;
+  response: string;
+  sources: { title: string; url: string; snippet: string }[];
+  timestamp: string;
+  feedback?: 'positive' | 'negative';
+}
+

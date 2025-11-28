@@ -1,14 +1,35 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
-import { MOCK_JUDGE, MOCK_COUNSEL, MOCK_JUDGE_STATS, MOCK_OUTCOME_DATA } from '../data/mockAnalytics';
+import { ApiService } from '../services/apiService';
 import { JudgeAnalytics } from './analytics/JudgeAnalytics';
 import { CounselAnalytics } from './analytics/CounselAnalytics';
 import { CasePrediction } from './analytics/CasePrediction';
+import { JudgeProfile, OpposingCounselProfile } from '../types';
 
 export const AnalyticsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('judge');
+  const [judgeData, setJudgeData] = useState<{profile: JudgeProfile, stats: any[]} | null>(null);
+  const [counselData, setCounselData] = useState<{profile: OpposingCounselProfile, outcomes: any[]} | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const [j, c] = await Promise.all([
+                ApiService.getJudgeAnalytics(),
+                ApiService.getCounselAnalytics()
+            ]);
+            setJudgeData(j);
+            setCounselData(c);
+        } catch (e) {
+            console.error("Failed to fetch analytics", e);
+        }
+    };
+    fetchData();
+  }, []);
+
+  if (!judgeData || !counselData) return <div className="p-8 text-center text-slate-500">Loading analytics...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -24,9 +45,9 @@ export const AnalyticsDashboard: React.FC = () => {
         }
       />
 
-      {activeTab === 'judge' && <JudgeAnalytics judge={MOCK_JUDGE} stats={MOCK_JUDGE_STATS} />}
-      {activeTab === 'counsel' && <CounselAnalytics counsel={MOCK_COUNSEL} />}
-      {activeTab === 'prediction' && <CasePrediction outcomeData={MOCK_OUTCOME_DATA} />}
+      {activeTab === 'judge' && <JudgeAnalytics judge={judgeData.profile} stats={judgeData.stats} />}
+      {activeTab === 'counsel' && <CounselAnalytics counsel={counselData.profile} />}
+      {activeTab === 'prediction' && <CasePrediction outcomeData={counselData.outcomes} />}
     </div>
   );
 };
