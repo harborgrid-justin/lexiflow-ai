@@ -1,0 +1,23 @@
+// Model exports for LexiFlow AI Legal Management System
+export { Organization } from './organization.model';
+export { User } from './user.model';
+export { Case } from './case.model';
+export { Document } from './document.model';
+export { Evidence } from './evidence.model';
+export { Message, Conversation } from './message.model';
+export { WorkflowStage, WorkflowTask } from './workflow.model';
+export { Motion } from './motion.model';
+export { TimeEntry } from './billing.model';
+export { DiscoveryRequest } from './discovery.model';
+export { Client } from './client.model';
+export { Analytics } from './analytics.model';
+export { ComplianceRecord } from './compliance.model';
+export { KnowledgeArticle } from './knowledge.model';
+export { Jurisdiction } from './jurisdiction.model';
+export { CalendarEvent } from './calendar.model';
+export { Task } from './task.model';
+export { Clause } from './clause.model';
+export { DocumentEmbedding } from './document-embedding.model';
+export { LegalCitation } from './legal-citation.model';
+export { DocumentAnalysis } from './document-analysis.model';
+export { SearchQuery } from './search-query.model';
