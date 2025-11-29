@@ -15,9 +15,9 @@ export class BillingService {
   }
 
   async findTimeEntries(caseId?: string, userId?: string): Promise<TimeEntry[]> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
-    if (userId) whereClause.user_id = userId;
+    const whereClause: Record<string, string> = {};
+    if (caseId) {whereClause.case_id = caseId;}
+    if (userId) {whereClause.user_id = userId;}
 
     return this.timeEntryModel.findAll({
       where: whereClause,
@@ -63,9 +63,9 @@ export class BillingService {
     }
   }
 
-  async getBillingStats(caseId?: string, startDate?: Date, endDate?: Date): Promise<any> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
+  async getBillingStats(caseId?: string, startDate?: Date, endDate?: Date): Promise<Record<string, unknown>> {
+    const whereClause: Record<string, unknown> = {};
+    if (caseId) {whereClause.case_id = caseId;}
     if (startDate && endDate) {
       whereClause.date = {
         [Op.between]: [startDate, endDate],

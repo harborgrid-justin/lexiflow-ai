@@ -57,7 +57,9 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
+  // eslint-disable-next-line no-console
   console.log(`🚀 LexiFlow API is running on: http://localhost:${port}`);
+  // eslint-disable-next-line no-console
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
 }
 

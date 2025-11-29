@@ -15,8 +15,8 @@ export class CalendarService {
   }
 
   async findAll(caseId?: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
+    const whereClause: Record<string, unknown> = {};
+    if (caseId) {whereClause.case_id = caseId;}
     if (startDate && endDate) {
       whereClause.start_time = {
         [Op.between]: [startDate, endDate],

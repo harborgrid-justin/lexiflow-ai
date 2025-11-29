@@ -39,8 +39,8 @@ export class KnowledgeService {
         $or: [
           { title: { $iLike: `%${query}%` } },
           { content: { $iLike: `%${query}%` } },
-          { tags: { $iLike: `%${query}%` } }
-        ]
+          { tags: { $iLike: `%${query}%` } },
+        ],
       },
       include: ['author', 'modifier', 'organization'],
     });

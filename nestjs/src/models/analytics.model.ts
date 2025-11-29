@@ -36,7 +36,7 @@ export class Analytics extends Model {
 
   @ApiProperty({ example: { prediction: 'favorable', confidence: 0.85 }, description: 'Analytics data' })
   @Column(DataType.JSONB)
-  data?: any;
+  data?: Record<string, unknown>;
 
   @ApiProperty({ example: 'monthly', description: 'Aggregation period' })
   @Column(DataType.STRING)

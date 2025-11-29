@@ -11,6 +11,8 @@ import {
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from './organization.model';
+import { Party } from './party.model';
+import { CaseMember } from './case-member.model';
 
 @Table({
   tableName: 'cases',
@@ -20,29 +22,29 @@ import { Organization } from './organization.model';
   indexes: [
     {
       fields: ['owner_org_id'],
-      name: 'idx_cases_owner_org_id'
+      name: 'idx_cases_owner_org_id',
     },
     {
       fields: ['status'],
-      name: 'idx_cases_status'
+      name: 'idx_cases_status',
     },
     {
       fields: ['client_name'],
-      name: 'idx_cases_client_name'
+      name: 'idx_cases_client_name',
     },
     {
       fields: ['matter_type'],
-      name: 'idx_cases_matter_type'
+      name: 'idx_cases_matter_type',
     },
     {
       fields: ['filing_date'],
-      name: 'idx_cases_filing_date'
+      name: 'idx_cases_filing_date',
     },
     {
       fields: ['jurisdiction'],
-      name: 'idx_cases_jurisdiction'
-    }
-  ]
+      name: 'idx_cases_jurisdiction',
+    },
+  ],
 })
 export class Case extends Model {
   @ApiProperty({ example: 'case-123', description: 'Unique case ID' })
@@ -105,6 +107,10 @@ export class Case extends Model {
   @Column(DataType.UUID)
   owner_org_id?: string;
 
+  @ApiProperty({ example: 'user-123', description: 'User who created the case' })
+  @Column(DataType.UUID)
+  created_by?: string;
+
   @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -117,33 +123,9 @@ export class Case extends Model {
   organization?: Organization;
 
   // HasMany relationships - these will be loaded when including related models
-  // @HasMany(() => Document, 'case_id')
-  // documents?: Document[];
+  @HasMany(() => Party, 'case_id')
+  parties?: Party[];
 
-  // @HasMany(() => Evidence, 'case_id') 
-  // evidence?: Evidence[];
-
-  // @HasMany(() => Motion, 'case_id')
-  // motions?: Motion[];
-
-  // @HasMany(() => CalendarEvent, 'case_id')
-  // calendarEvents?: CalendarEvent[];
-
-  // @HasMany(() => Task, 'case_id')
-  // tasks?: Task[];
-
-  // @HasMany(() => WorkflowStage, 'case_id')
-  // workflowStages?: WorkflowStage[];
-
-  // @HasMany(() => TimeEntry, 'case_id')
-  // timeEntries?: TimeEntry[];
-
-  // @HasMany(() => DiscoveryRequest, 'case_id')
-  // discoveryRequests?: DiscoveryRequest[];
-
-  // @HasMany(() => Analytics, 'case_id')
-  // analytics?: Analytics[];
-
-  // @HasMany(() => ComplianceRecord, 'case_id')
-  // complianceRecords?: ComplianceRecord[];
+  @HasMany(() => CaseMember, 'case_id')
+  caseMembers?: CaseMember[];
 }

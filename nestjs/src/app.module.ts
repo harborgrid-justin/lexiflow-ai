@@ -28,6 +28,21 @@ import {
   LegalCitation,
   DocumentAnalysis,
   SearchQuery,
+  // New models
+  Party,
+  CaseMember,
+  UserProfile,
+  Group,
+  UserGroup,
+  ConflictCheck,
+  EthicalWall,
+  AuditLogEntry,
+  JudgeProfile,
+  OpposingCounselProfile,
+  ChainOfCustodyEvent,
+  FileChunk,
+  Playbook,
+  DocumentVersion,
 } from './models';
 
 // Import all modules
@@ -52,6 +67,18 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { ClausesModule } from './modules/clauses/clauses.module';
 import { SearchModule } from './modules/search/search.module';
 
+// New modules
+import { PartiesModule } from './modules/parties/parties.module';
+import { UserProfilesModule } from './modules/user-profiles/user-profiles.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { GroupsModule } from './modules/groups/groups.module';
+import { ConflictCheckModule } from './modules/conflict-check/conflict-check.module';
+import { EthicalWallModule } from './modules/ethical-wall/ethical-wall.module';
+import { JudgeProfileModule } from './modules/judge-profile/judge-profile.module';
+import { OpposingCounselModule } from './modules/opposing-counsel/opposing-counsel.module';
+import { DocumentVersionsModule } from './modules/document-versions/document-versions.module';
+import { PlaybooksModule } from './modules/playbooks/playbooks.module';
+
 @Module({
   imports: [
     // Configuration
@@ -63,11 +90,13 @@ import { SearchModule } from './modules/search/search.module';
     // Database
     SequelizeModule.forRoot({
       dialect: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'password',
-      database: process.env.DB_NAME || 'lexiflow',
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      },
+      uri: process.env.DATABASE_URL,
       models: [
         Organization,
         User,
@@ -93,10 +122,34 @@ import { SearchModule } from './modules/search/search.module';
         LegalCitation,
         DocumentAnalysis,
         SearchQuery,
+        // New models
+        Party,
+        CaseMember,
+        UserProfile,
+        Group,
+        UserGroup,
+        ConflictCheck,
+        EthicalWall,
+        AuditLogEntry,
+        JudgeProfile,
+        OpposingCounselProfile,
+        ChainOfCustodyEvent,
+        FileChunk,
+        Playbook,
+        DocumentVersion,
       ],
-      autoLoadModels: true,
-      synchronize: true, // Only for development
+      autoLoadModels: false, // Disable auto-loading models
+      synchronize: true, // Temporarily enable sync to create tables
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+      retry: {
+        max: 3,
+      },
     }),
 
     // Feature modules
@@ -120,6 +173,18 @@ import { SearchModule } from './modules/search/search.module';
     TasksModule,
     ClausesModule,
     SearchModule,
+    
+    // New modules
+    PartiesModule,
+    UserProfilesModule,
+    AuditModule,
+    GroupsModule,
+    ConflictCheckModule,
+    EthicalWallModule,
+    JudgeProfileModule,
+    OpposingCounselModule,
+    DocumentVersionsModule,
+    PlaybooksModule,
   ],
 })
 export class AppModule {}

@@ -32,7 +32,7 @@ export class CalendarController {
   findAll(
     @Query('caseId') caseId?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+    @Query('endDate') endDate?: string,
   ): Promise<CalendarEvent[]> {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;

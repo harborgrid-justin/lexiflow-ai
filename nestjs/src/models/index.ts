@@ -21,3 +21,19 @@ export { DocumentEmbedding } from './document-embedding.model';
 export { LegalCitation } from './legal-citation.model';
 export { DocumentAnalysis } from './document-analysis.model';
 export { SearchQuery } from './search-query.model';
+
+// New models for frontend requirements
+export { Party } from './party.model';
+export { CaseMember } from './case-member.model';
+export { UserProfile } from './user-profile.model';
+export { Group } from './group.model';
+export { UserGroup } from './user-group.model';
+export { ConflictCheck } from './conflict-check.model';
+export { EthicalWall } from './ethical-wall.model';
+export { AuditLogEntry } from './audit-log-entry.model';
+export { JudgeProfile } from './judge-profile.model';
+export { OpposingCounselProfile } from './opposing-counsel-profile.model';
+export { ChainOfCustodyEvent } from './chain-of-custody-event.model';
+export { FileChunk } from './file-chunk.model';
+export { Playbook } from './playbook.model';
+export { DocumentVersion } from './document-version.model';

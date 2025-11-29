@@ -42,7 +42,7 @@ export class SearchQuery extends Model {
 
   @ApiProperty({ example: { 'document_types': ['contract', 'agreement'], 'date_range': '2023-2024' }, description: 'Search filters' })
   @Column(DataType.JSONB)
-  filters?: any;
+  filters?: Record<string, unknown>;
 
   @ApiProperty({ example: 15, description: 'Number of results returned' })
   @Column(DataType.INTEGER)

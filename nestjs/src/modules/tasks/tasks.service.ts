@@ -14,9 +14,9 @@ export class TasksService {
   }
 
   async findAll(caseId?: string, assigneeId?: string): Promise<Task[]> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
-    if (assigneeId) whereClause.assignee_id = assigneeId;
+    const whereClause: Record<string, string> = {};
+    if (caseId) {whereClause.case_id = caseId;}
+    if (assigneeId) {whereClause.assignee_id = assigneeId;}
 
     return this.taskModel.findAll({
       where: whereClause,

@@ -38,6 +38,34 @@ export class Motion extends Model {
   @Column(DataType.STRING)
   motion_type: string;
 
+  @ApiProperty({ example: 'Summary Judgment', description: 'Motion type for frontend' })
+  @Column(DataType.STRING)
+  type: string;
+
+  @ApiProperty({ example: '2024-02-01', description: 'Filing date string' })
+  @Column(DataType.STRING)
+  filing_date?: string;
+
+  @ApiProperty({ example: 'doc-123,doc-456', description: 'Linked document IDs (comma-separated)' })
+  @Column(DataType.TEXT)
+  documents?: string;
+
+  @ApiProperty({ example: 'John Smith', description: 'Assigned attorney name' })
+  @Column(DataType.STRING)
+  assigned_attorney?: string;
+
+  @ApiProperty({ example: '2024-02-15', description: 'Opposition due date string' })
+  @Column(DataType.STRING)
+  opposition_due_date?: string;
+
+  @ApiProperty({ example: '2024-02-25', description: 'Reply due date string' })
+  @Column(DataType.STRING)
+  reply_due_date?: string;
+
+  @ApiProperty({ example: 'user-789', description: 'User who created this motion' })
+  @Column(DataType.UUID)
+  created_by?: string;
+
   @ApiProperty({ example: 'Motion seeking summary judgment on all claims', description: 'Motion description' })
   @Column(DataType.TEXT)
   description?: string;

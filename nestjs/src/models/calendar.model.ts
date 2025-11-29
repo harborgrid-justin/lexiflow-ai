@@ -21,29 +21,29 @@ import { Case } from './case.model';
   indexes: [
     {
       fields: ['case_id'],
-      name: 'idx_calendar_events_case_id'
+      name: 'idx_calendar_events_case_id',
     },
     {
       fields: ['organizer_id'],
-      name: 'idx_calendar_events_organizer_id'
+      name: 'idx_calendar_events_organizer_id',
     },
     {
       fields: ['start_time'],
-      name: 'idx_calendar_events_start_time'
+      name: 'idx_calendar_events_start_time',
     },
     {
       fields: ['type'],
-      name: 'idx_calendar_events_type'
+      name: 'idx_calendar_events_type',
     },
     {
       fields: ['status'],
-      name: 'idx_calendar_events_status'
+      name: 'idx_calendar_events_status',
     },
     {
       fields: ['start_time', 'end_time'],
-      name: 'idx_calendar_events_time_range'
-    }
-  ]
+      name: 'idx_calendar_events_time_range',
+    },
+  ],
 })
 export class CalendarEvent extends Model {
   @ApiProperty({ example: 'cal-123', description: 'Unique calendar event ID' })

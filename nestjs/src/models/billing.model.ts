@@ -39,6 +39,14 @@ export class TimeEntry extends Model {
   @Column(DataType.DATEONLY)
   work_date: Date;
 
+  @ApiProperty({ example: '2024-01-15', description: 'Date string for frontend compatibility' })
+  @Column(DataType.STRING)
+  date: string;
+
+  @ApiProperty({ example: 210, description: 'Duration in minutes' })
+  @Column(DataType.INTEGER)
+  duration: number;
+
   @ApiProperty({ example: 3.5, description: 'Hours worked' })
   @Column(DataType.FLOAT)
   hours: number;
@@ -54,11 +62,11 @@ export class TimeEntry extends Model {
 
   @ApiProperty({ example: 350.00, description: 'Billable rate per hour' })
   @Column(DataType.DECIMAL(10, 2))
-  rate?: number;
+  rate: number;
 
   @ApiProperty({ example: 1225.00, description: 'Total amount' })
   @Column(DataType.DECIMAL(10, 2))
-  amount?: number;
+  total: number;
 
   @ApiProperty({ example: 'draft', description: 'Entry status' })
   @Default('draft')

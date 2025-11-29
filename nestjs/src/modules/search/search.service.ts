@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import {
   DocumentEmbedding,
@@ -84,7 +84,7 @@ export class SearchService {
   async createDocumentAnalysis(
     documentId: string,
     analysisType: string,
-    results: any,
+    results: Record<string, unknown>,
     user: User,
   ) {
     return this.documentAnalysisModel.create({
@@ -110,9 +110,9 @@ export class SearchService {
   }
 
   async getLegalCitations(documentId?: string, organizationId?: string) {
-    const whereClause: any = {};
-    if (documentId) whereClause.document_id = documentId;
-    if (organizationId) whereClause.owner_org_id = organizationId;
+    const whereClause: Record<string, string> = {};
+    if (documentId) {whereClause.document_id = documentId;}
+    if (organizationId) {whereClause.owner_org_id = organizationId;}
 
     return this.legalCitationModel.findAll({
       where: whereClause,

@@ -12,20 +12,24 @@ export class CasesService {
   ) {}
 
   async create(createCaseDto: CreateCaseDto): Promise<Case> {
-    return this.caseModel.create(createCaseDto);
+    const caseData = {
+      ...createCaseDto,
+      filing_date: createCaseDto.filing_date ? new Date(createCaseDto.filing_date) : undefined,
+    };
+    return this.caseModel.create(caseData as unknown as Partial<Case>);
   }
 
   async findAll(orgId?: string): Promise<Case[]> {
     const whereClause = orgId ? { owner_org_id: orgId } : {};
     return this.caseModel.findAll({
       where: whereClause,
-      include: ['organization'],
+      include: ['organization', 'parties', 'caseMembers'],
     });
   }
 
   async findOne(id: string): Promise<Case> {
     const caseRecord = await this.caseModel.findByPk(id, {
-      include: ['organization'],
+      include: ['organization', 'parties', 'caseMembers'],
     });
 
     if (!caseRecord) {

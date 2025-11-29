@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { DocumentEmbedding } from '../models/document-embedding.model';
 import { SearchQuery } from '../models/search-query.model';
 import { Sequelize, QueryTypes, Op } from 'sequelize';
+import { InjectConnection } from '@nestjs/sequelize';
 
 export interface VectorSearchOptions {
   query: string;
@@ -20,7 +21,7 @@ export interface VectorSearchResult {
   content: string;
   similarity: number;
   document_id: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 @Injectable()
@@ -30,6 +31,7 @@ export class VectorSearchService {
     private embeddingModel: typeof DocumentEmbedding,
     @InjectModel(SearchQuery)
     private searchQueryModel: typeof SearchQuery,
+    @InjectConnection()
     private sequelize: Sequelize,
   ) {}
 
@@ -43,7 +45,7 @@ export class VectorSearchService {
     const { limit = 10, threshold = 0.7, filters } = options;
     
     let whereClause = '';
-    const replacements: any = {
+    const replacements: Record<string, unknown> = {
       embedding: `[${queryEmbedding.join(',')}]`,
       limit,
       threshold,
@@ -90,7 +92,7 @@ export class VectorSearchService {
     content: string,
     embedding: number[],
     chunkIndex: number,
-    metadata?: any,
+    metadata?: Record<string, unknown>,
     userId?: string,
     organizationId?: string,
   ): Promise<DocumentEmbedding> {
@@ -173,7 +175,7 @@ export class VectorSearchService {
     const { limit = 10, filters } = options;
     
     let whereClause = '';
-    const replacements: any = {
+    const replacements: Record<string, unknown> = {
       queryText: `%${queryText}%`,
       embedding: `[${queryEmbedding.join(',')}]`,
       limit,
@@ -222,7 +224,7 @@ export class VectorSearchService {
     startDate?: Date,
     endDate?: Date,
   ) {
-    const whereClause: any = { organization_id: organizationId };
+    const whereClause: Record<string, unknown> = { organization_id: organizationId };
     
     if (startDate && endDate) {
       whereClause.created_at = {

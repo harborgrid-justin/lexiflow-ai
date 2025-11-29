@@ -5,7 +5,6 @@ import {
   DataType,
   PrimaryKey,
   Default,
-  HasMany,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -17,17 +16,17 @@ import { ApiProperty } from '@nestjs/swagger';
   indexes: [
     {
       fields: ['name'],
-      name: 'idx_organizations_name'
+      name: 'idx_organizations_name',
     },
     {
       fields: ['status'],
-      name: 'idx_organizations_status'
+      name: 'idx_organizations_status',
     },
     {
       fields: ['type'],
-      name: 'idx_organizations_type'
-    }
-  ]
+      name: 'idx_organizations_type',
+    },
+  ],
 })
 export class Organization extends Model {
   @ApiProperty({ example: 'org-123', description: 'Unique organization ID' })
@@ -40,7 +39,15 @@ export class Organization extends Model {
   @Column({ type: DataType.STRING, allowNull: false })
   name: string;
 
-  @ApiProperty({ example: 'Law Firm', description: 'Type of organization' })
+  @ApiProperty({ example: 'smithlaw.com', description: 'Organization domain' })
+  @Column(DataType.STRING)
+  domain?: string;
+
+  @ApiProperty({ example: 'https://example.com/logo.png', description: 'Organization logo URL' })
+  @Column(DataType.STRING)
+  logo?: string;
+
+  @ApiProperty({ example: 'LawFirm', description: 'Type of organization' })
   @Column(DataType.STRING)
   type?: string;
 

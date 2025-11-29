@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CaseList } from './components/CaseList';
@@ -24,55 +25,174 @@ import { Case, User } from './types';
 import { ApiService } from './services/apiService';
 import { Bell, User as UserIcon, Search, Menu } from 'lucide-react';
 
-const App: React.FC = () => {
+const LoginForm: React.FC = () => {
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    const success = await login(email, password);
+    if (!success) {
+      setError('Invalid credentials');
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      <div className="rounded-md shadow-sm -space-y-px">
+        <div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="relative block w-full px-3 py-2 border border-gray-300 rounded-t-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Email address"
+          />
+        </div>
+        <div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="relative block w-full px-3 py-2 border border-gray-300 rounded-b-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Password"
+          />
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-red-600 text-sm">{error}</div>
+      )}
+
+      <div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {isLoading ? 'Signing in...' : 'Sign in'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
+  const { logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-2"
+      >
+        <UserIcon className="w-5 h-5" />
+        {user.avatar && (
+          <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+        )}
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+          <div className="px-4 py-2 border-b">
+            <p className="text-sm font-medium text-gray-900">{user.name}</p>
+            <p className="text-sm text-gray-500">{user.email}</p>
+          </div>
+          <button
+            onClick={() => {
+              logout();
+              setIsOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AppContent: React.FC = () => {
+  const { user, loading, isAuthenticated } = useAuth();
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentUserIndex, setCurrentUserIndex] = useState(0);
-  const [users, setUsers] = useState<User[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
         try {
-            const [u, c] = await Promise.all([
-                ApiService.getUsers(),
-                ApiService.getCases()
-            ]);
-            setUsers(u);
-            setCases(c);
+            const casesData = await ApiService.getCases();
+            setCases(casesData);
         } catch (e) {
-            console.error("Failed to fetch app data", e);
+            console.error("Failed to fetch cases", e);
         }
     };
-    fetchData();
-  }, []);
+    
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
 
-  const currentUser = users[currentUserIndex] || { name: 'Loading...', role: 'Loading...' };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Sign in to LexiFlow AI
+            </h2>
+          </div>
+          <LoginForm />
+        </div>
+      </div>
+    );
+  }
 
   const handleSelectCaseById = (caseId: string) => {
     const found = cases.find(c => c.id === caseId);
     if (found) {
       setSelectedCase(found);
-    } else {
-      // If passing from EvidenceVault, we might need to switch view to 'cases' even if case detail isn't immediately found (though it should be)
-      // or just ensure we switch to cases view context
     }
   };
 
   const renderContent = () => {
-    if (selectedCase) return <CaseDetail caseData={selectedCase} onBack={() => setSelectedCase(null)} currentUser={currentUser} />;
+    if (!user) return null;
+    
+    if (selectedCase) return <CaseDetail caseData={selectedCase} onBack={() => setSelectedCase(null)} currentUser={user} />;
     switch (activeView) {
       case 'dashboard': return <Dashboard onSelectCase={handleSelectCaseById} />;
-      case 'cases': return <CaseList onSelectCase={setSelectedCase} currentUser={currentUser} />;
-      case 'messages': return <SecureMessenger currentUserId={currentUser.id} />;
+      case 'cases': return <CaseList onSelectCase={setSelectedCase} currentUser={user} />;
+      case 'messages': return <SecureMessenger currentUserId={user.id} />;
       case 'discovery': return <DiscoveryPlatform />;
-      case 'evidence': return <EvidenceVault onNavigateToCase={handleSelectCaseById} currentUser={currentUser} />;
+      case 'evidence': return <EvidenceVault onNavigateToCase={handleSelectCaseById} currentUser={user} />;
       case 'calendar': return <CalendarView onNavigateToCase={handleSelectCaseById} />;
       case 'billing': return <BillingDashboard navigateTo={setActiveView} />;
       case 'crm': return <ClientCRM />;
-      case 'research': return <ResearchTool currentUser={currentUser} />;
-      case 'documents': return <DocumentManager currentUserRole={currentUser.role} />;
+      case 'research': return <ResearchTool currentUser={user} />;
+      case 'documents': return <DocumentManager currentUserRole={user.role} />;
       case 'library': return <KnowledgeBase />;
       case 'analytics': return <AnalyticsDashboard />;
       case 'compliance': return <ComplianceDashboard />;
@@ -80,7 +200,7 @@ const App: React.FC = () => {
       case 'jurisdiction': return <JurisdictionManager />;
       case 'workflows': return <MasterWorkflow />;
       case 'clauses': return <ClauseLibrary />;
-      case 'profile': return <UserProfile userId={currentUser.id} />;
+      case 'profile': return <UserProfile userId={user.id} />;
       default: return <div className="flex justify-center items-center h-full text-slate-400">Under Construction</div>;
     }
   };
@@ -88,26 +208,52 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
       {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur" onClick={() => setIsSidebarOpen(false)} />}
-      <Sidebar activeView={selectedCase ? 'cases' : activeView} setActiveView={(v) => { setActiveView(v); setSelectedCase(null); setIsSidebarOpen(false); }} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser as any} onSwitchUser={() => setCurrentUserIndex((prev) => (prev + 1) % (users.length || 1))} />
+      <Sidebar 
+        activeView={selectedCase ? 'cases' : activeView} 
+        setActiveView={(v) => { setActiveView(v); setSelectedCase(null); setIsSidebarOpen(false); }} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        currentUser={user} 
+      />
       <div className="flex-1 flex flex-col md:ml-64 h-full transition-all w-full">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shadow-sm z-30 shrink-0">
           <div className="flex items-center flex-1 gap-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded"><Menu className="h-6 w-6" /></button>
-            <div className="relative w-full hidden sm:block max-w-xl"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /><input type="text" placeholder="Search..." className="w-full pl-10 pr-4 py-2 bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-200 rounded text-sm outline-none" /></div>
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors md:hidden">
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="text-xl font-semibold text-slate-800 capitalize">
+              {selectedCase ? `${selectedCase.title}` : activeView === 'dashboard' ? 'Dashboard' : activeView}
+            </h1>
           </div>
-          <div className="flex items-center space-x-6">
-            <button className="relative p-2 text-slate-400 hover:text-slate-600"><Bell className="h-5 w-5" /><span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-white"></span></button>
-            <div className="flex items-center space-x-3 border-l pl-6 cursor-pointer hover:bg-slate-50 p-1 rounded" onClick={() => setActiveView('profile')}>
-                <div className="text-right hidden md:block"><p className="text-sm font-semibold">{currentUser.name}</p><p className="text-xs text-slate-500">{currentUser.role}</p></div>
-                <div className="h-9 w-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold border border-blue-200 overflow-hidden">
-                    {currentUser.avatar ? <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover"/> : <UserIcon className="h-5 w-5" />}
-                </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-sm">
+              <span className="text-slate-600">Welcome,</span>
+              <span className="font-medium">{user.name}</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-500">{user.role}</span>
             </div>
+            <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+            <UserProfileDropdown user={user} />
           </div>
         </header>
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 md:p-8 relative"><div className="max-w-7xl mx-auto h-full">{renderContent()}</div></main>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 md:p-8 relative">
+          <div className="max-w-7xl mx-auto h-full">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 export default App;

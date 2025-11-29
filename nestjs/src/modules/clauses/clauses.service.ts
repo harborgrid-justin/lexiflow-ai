@@ -14,9 +14,9 @@ export class ClausesService {
   }
 
   async findAll(category?: string, type?: string): Promise<Clause[]> {
-    const whereClause: any = {};
-    if (category) whereClause.category = category;
-    if (type) whereClause.type = type;
+    const whereClause: Record<string, string> = {};
+    if (category) {whereClause.category = category;}
+    if (type) {whereClause.type = type;}
 
     return this.clauseModel.findAll({
       where: whereClause,
@@ -58,8 +58,8 @@ export class ClausesService {
         $or: [
           { title: { $iLike: `%${query}%` } },
           { content: { $iLike: `%${query}%` } },
-          { tags: { $iLike: `%${query}%` } }
-        ]
+          { tags: { $iLike: `%${query}%` } },
+        ],
       },
       include: ['author', 'modifier', 'organization'],
     });
