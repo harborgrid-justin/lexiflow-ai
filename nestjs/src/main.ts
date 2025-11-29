@@ -47,6 +47,7 @@ async function bootstrap() {
     .addTag('calendar')
     .addTag('tasks')
     .addTag('clauses')
+    .addTag('search')
     .addBearerAuth()
     .build();
 

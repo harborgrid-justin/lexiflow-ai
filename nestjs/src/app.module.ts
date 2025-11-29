@@ -50,6 +50,7 @@ import { JurisdictionsModule } from './modules/jurisdictions/jurisdictions.modul
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { ClausesModule } from './modules/clauses/clauses.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -118,6 +119,7 @@ import { ClausesModule } from './modules/clauses/clauses.module';
     CalendarModule,
     TasksModule,
     ClausesModule,
+    SearchModule,
   ],
 })
 export class AppModule {}
