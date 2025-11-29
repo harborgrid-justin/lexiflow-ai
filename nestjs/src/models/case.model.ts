@@ -115,4 +115,35 @@ export class Case extends Model {
 
   @BelongsTo(() => Organization, 'owner_org_id')
   organization?: Organization;
+
+  // HasMany relationships - these will be loaded when including related models
+  // @HasMany(() => Document, 'case_id')
+  // documents?: Document[];
+
+  // @HasMany(() => Evidence, 'case_id') 
+  // evidence?: Evidence[];
+
+  // @HasMany(() => Motion, 'case_id')
+  // motions?: Motion[];
+
+  // @HasMany(() => CalendarEvent, 'case_id')
+  // calendarEvents?: CalendarEvent[];
+
+  // @HasMany(() => Task, 'case_id')
+  // tasks?: Task[];
+
+  // @HasMany(() => WorkflowStage, 'case_id')
+  // workflowStages?: WorkflowStage[];
+
+  // @HasMany(() => TimeEntry, 'case_id')
+  // timeEntries?: TimeEntry[];
+
+  // @HasMany(() => DiscoveryRequest, 'case_id')
+  // discoveryRequests?: DiscoveryRequest[];
+
+  // @HasMany(() => Analytics, 'case_id')
+  // analytics?: Analytics[];
+
+  // @HasMany(() => ComplianceRecord, 'case_id')
+  // complianceRecords?: ComplianceRecord[];
 }

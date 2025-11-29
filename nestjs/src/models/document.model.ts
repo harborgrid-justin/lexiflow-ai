@@ -141,4 +141,14 @@ export class Document extends Model {
 
   @BelongsTo(() => Organization, 'owner_org_id')
   organization?: Organization;
+
+  // HasMany relationships for AI features
+  // @HasMany(() => DocumentEmbedding, 'document_id')
+  // embeddings?: DocumentEmbedding[];
+
+  // @HasMany(() => LegalCitation, 'document_id')
+  // legalCitations?: LegalCitation[];
+
+  // @HasMany(() => DocumentAnalysis, 'document_id')
+  // analyses?: DocumentAnalysis[];
 }
