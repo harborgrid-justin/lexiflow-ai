@@ -9,6 +9,7 @@ import { Modal } from './common/Modal';
 import { useDocumentManager } from '../hooks/useDocumentManager';
 import { DocumentTable } from './document/DocumentTable';
 import { DocumentFilters } from './document/DocumentFilters';
+import { ensureTagsArray } from '../utils/type-transformers';
 
 interface DocumentManagerProps {
   currentUserRole?: UserRole;
@@ -55,8 +56,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
             <div className="mb-4">
                 <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Current Tags</label>
                 <div className="flex flex-wrap gap-2">
-                    {taggingDoc?.tags.length === 0 && <span className="text-sm text-slate-400 italic">No tags assigned.</span>}
-                    {taggingDoc?.tags.map(tag => (
+                    {ensureTagsArray(taggingDoc?.tags).length === 0 && <span className="text-sm text-slate-400 italic">No tags assigned.</span>}
+                    {ensureTagsArray(taggingDoc?.tags).map(tag => (
                         <span key={tag} className="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-blue-700 text-sm border border-blue-100">
                             {tag}
                             <button onClick={() => removeTag(taggingDoc!.id, tag)} className="ml-2 text-blue-400 hover:text-blue-600"><X className="h-3 w-3"/></button>
@@ -87,7 +88,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
             <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Suggested / Recent</label>
                 <div className="flex flex-wrap gap-2">
-                    {allTags.filter(t => !taggingDoc?.tags.includes(t)).slice(0, 8).map(t => (
+                    {allTags.filter(t => !ensureTagsArray(taggingDoc?.tags).includes(t)).slice(0, 8).map(t => (
                         <button key={t} onClick={() => addTag(taggingDoc!.id, t)} className="text-xs px-2 py-1 border border-slate-200 rounded hover:bg-slate-50 text-slate-600 flex items-center">
                             <Plus className="h-3 w-3 mr-1"/> {t}
                         </button>

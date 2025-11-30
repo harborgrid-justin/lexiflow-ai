@@ -7,6 +7,7 @@ import { EvidenceItem } from '../../types';
 import { GeminiService } from '../../services/geminiService';
 import { User, Activity, MapPin, Link, Sparkles } from 'lucide-react';
 import { Button } from '../common/Button';
+import { ensureTagsArray } from '../../utils/type-transformers';
 
 interface EvidenceOverviewProps {
   selectedItem: EvidenceItem;
@@ -83,7 +84,7 @@ export const EvidenceOverview: React.FC<EvidenceOverviewProps> = ({ selectedItem
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Tags & Metadata</label>
             <div className="flex flex-wrap gap-2">
-              {selectedItem.tags.map(t => (
+              {ensureTagsArray(selectedItem.tags).map(t => (
                 <span key={t} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs border border-slate-200 flex items-center">
                   <Activity className="h-3 w-3 mr-1 opacity-50"/> {t}
                 </span>

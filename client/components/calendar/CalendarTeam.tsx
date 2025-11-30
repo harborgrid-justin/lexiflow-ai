@@ -17,9 +17,10 @@ export const CalendarTeam: React.FC = () => {
     const fetchTeam = async () => {
       try {
         const data = await ApiService.getCalendarTeam();
-        setTeam(data);
+        setTeam(data || []);
       } catch (error) {
         console.error('Failed to fetch team availability:', error);
+        setTeam([]);
       } finally {
         setLoading(false);
       }
@@ -57,7 +58,7 @@ export const CalendarTeam: React.FC = () => {
               </div>
               
               <div className="col-span-1 md:col-span-7 grid grid-cols-7 gap-2">
-                {member.schedule.map((status, i) => (
+                {(member.schedule || []).map((status, i) => (
                     <div key={i} className="flex flex-col items-center gap-1">
                         <span className="md:hidden text-[10px] text-slate-400 uppercase font-bold">{days[i].charAt(0)}</span>
                         <div className={`h-8 w-full rounded-md ${status ? 'bg-green-100 border border-green-200' : 'bg-slate-50 border border-slate-100'} flex items-center justify-center`}>

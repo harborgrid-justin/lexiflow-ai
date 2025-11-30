@@ -18,10 +18,12 @@ export const CaseListDocket: React.FC = () => {
                 ApiService.getCases(),
                 ApiService.getMotions()
             ]);
-            setCases(c);
-            setMotions(m);
+            setCases(c || []);
+            setMotions(m || []);
         } catch (e) {
             console.error("Failed to fetch docket data", e);
+            setCases([]);
+            setMotions([]);
         }
     };
     fetchData();
@@ -32,7 +34,7 @@ export const CaseListDocket: React.FC = () => {
     const items: any[] = [];
 
     // Add Hearings from Motions
-    motions.forEach(m => {
+    (motions || []).forEach(m => {
       if (m.hearingDate) {
         const relatedCase = cases.find(c => c.id === m.caseId);
         items.push({

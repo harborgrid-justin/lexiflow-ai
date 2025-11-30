@@ -1,0 +1,49 @@
+name: lexiflow-ai
+region: nyc
+services:
+  - name: backend
+    github:
+      repo: your-org/lexiflow-ai
+      branch: main
+      deploy_on_push: true
+    source_dir: /server
+    build_command: npm install && npm run build
+    run_command: npm run start:prod
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+        type: SECRET
+      - key: JWT_SECRET
+        value: ${JWT_SECRET}
+        type: SECRET
+      - key: PORT
+        value: "3001"
+    http_port: 3001
+    instance_count: 1
+    instance_size_slug: professional-xs
+    routes:
+      - path: /api
+  
+  - name: frontend
+    github:
+      repo: your-org/lexiflow-ai
+      branch: main
+      deploy_on_push: true
+    source_dir: /client
+    build_command: npm install && npm run build
+    output_dir: /dist
+    envs:
+      - key: VITE_API_URL
+        value: ${backend.PRIVATE_URL}
+    instance_count: 1
+    instance_size_slug: professional-xs
+    routes:
+      - path: /
+
+databases:
+  - name: postgres
+    engine: PG
+    production: true
+    cluster_name: lexiflow-db

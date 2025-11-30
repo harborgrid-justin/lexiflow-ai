@@ -22,7 +22,7 @@ export const ClauseLibrary: React.FC = () => {
     fetchClauses();
   }, []);
 
-  const filtered = clauses.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.category.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filtered = clauses.filter(c => (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || (c.category || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="h-full flex flex-col space-y-6 relative">

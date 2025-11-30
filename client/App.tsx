@@ -21,9 +21,10 @@ import { SecureMessenger } from './components/SecureMessenger';
 import { JurisdictionManager } from './components/JurisdictionManager';
 import { MasterWorkflow } from './components/MasterWorkflow';
 import { UserProfile } from './components/UserProfile';
+import { UserImpersonator as _UserImpersonator } from './components/UserImpersonator';
 import { Case, User } from './types';
 import { ApiService } from './services/apiService';
-import { Bell, User as UserIcon, Menu } from 'lucide-react';
+import { Bell, User as UserIcon, Menu, ShieldAlert } from 'lucide-react';
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
@@ -124,7 +125,7 @@ const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, impersonateUser: _impersonateUser, isImpersonating, stopImpersonating } = useAuth();
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -134,12 +135,13 @@ const AppContent: React.FC = () => {
     const fetchData = async () => {
         try {
             const casesData = await ApiService.getCases();
-            setCases(casesData);
+            setCases(casesData || []);
         } catch (e) {
             console.error("Failed to fetch cases", e);
+            setCases([]);
         }
     };
-    
+
     if (isAuthenticated) {
       fetchData();
     }
@@ -207,15 +209,37 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+      {/* Impersonation Banner */}
+      {isImpersonating && (
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white py-2 px-4 z-50 shadow-lg">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 animate-pulse" />
+              <span className="font-semibold text-sm">
+                🎭 Developer Mode: Viewing as {user?.name} ({user?.role})
+              </span>
+            </div>
+            <button
+              onClick={stopImpersonating}
+              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-xs font-medium transition-colors"
+            >
+              Exit Impersonation
+            </button>
+          </div>
+        </div>
+      )}
+
       {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur" onClick={() => setIsSidebarOpen(false)} />}
-      <Sidebar 
-        activeView={selectedCase ? 'cases' : activeView} 
-        setActiveView={(v) => { setActiveView(v); setSelectedCase(null); setIsSidebarOpen(false); }} 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-        currentUser={user} 
-      />
-      <div className="flex-1 flex flex-col md:ml-64 h-full transition-all w-full">
+      {user && (
+        <Sidebar
+          activeView={selectedCase ? 'cases' : activeView}
+          setActiveView={(v) => { setActiveView(v); setSelectedCase(null); setIsSidebarOpen(false); }}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          currentUser={user}
+        />
+      )}
+      <div className={`flex-1 flex flex-col md:ml-64 h-full transition-all w-full ${isImpersonating ? 'mt-10' : ''}`}>
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shadow-sm z-30 shrink-0">
           <div className="flex items-center flex-1 gap-4">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors md:hidden">
@@ -226,17 +250,21 @@ const AppContent: React.FC = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            {/* User Impersonator - Disabled for now
+            <UserImpersonator onImpersonate={impersonateUser} currentUser={user} />
+            */}
+
             <div className="hidden sm:flex items-center gap-2 text-sm">
               <span className="text-slate-600">Welcome,</span>
-              <span className="font-medium">{user.name}</span>
+              <span className="font-medium">{user?.name}</span>
               <span className="text-slate-400">•</span>
-              <span className="text-slate-500">{user.role}</span>
+              <span className="text-slate-500">{user?.role}</span>
             </div>
             <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
-            <UserProfileDropdown user={user} />
+            <UserProfileDropdown user={user!} />
           </div>
         </header>
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 md:p-8 relative">

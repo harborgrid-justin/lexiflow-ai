@@ -14,17 +14,18 @@ export const EvidenceCustodyLog: React.FC = () => {
     const fetchEvidence = async () => {
         try {
             const data = await ApiService.getEvidence();
-            setEvidence(data);
+            setEvidence(data || []);
         } catch (e) {
             console.error("Failed to fetch evidence", e);
+            setEvidence([]);
         }
     };
     fetchEvidence();
   }, []);
 
   // Flatten all custody events
-  const allEvents = evidence.flatMap(item => 
-    item.chainOfCustody.map(event => ({
+  const allEvents = evidence.flatMap(item =>
+    (item.chainOfCustody || []).map(event => ({
       ...event,
       itemId: item.id,
       itemTitle: item.title,
@@ -32,10 +33,10 @@ export const EvidenceCustodyLog: React.FC = () => {
     }))
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const filteredEvents = allEvents.filter(e => 
-    e.itemTitle.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    e.actor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.action.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEvents = allEvents.filter(e =>
+    (e.itemTitle || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (e.actor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (e.action || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

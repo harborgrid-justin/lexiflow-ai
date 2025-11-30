@@ -23,9 +23,10 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
     const fetchOrgs = async () => {
         try {
             const data = await ApiService.getOrganizations();
-            setOrgs(data);
+            setOrgs(data || []);
         } catch (e) {
             console.error("Failed to fetch orgs", e);
+            setOrgs([]);
         }
     };
     fetchOrgs();

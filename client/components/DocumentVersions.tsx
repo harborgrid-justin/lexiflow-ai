@@ -41,11 +41,11 @@ export const DocumentVersions: React.FC<DocumentVersionsProps> = ({ document, us
              <p className="text-xs text-slate-500 mt-1">Last modified: {document.lastModified}</p>
           </div>
 
-          {document.versions.length === 0 && (
+          {(document.versions || []).length === 0 && (
             <p className="text-center text-slate-500 py-8 italic">No previous versions available.</p>
           )}
 
-          {document.versions.map((version) => (
+          {(document.versions || []).map((version) => (
             <div key={version.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors flex justify-between items-center">
               <div>
                 <h4 className="text-sm font-bold text-slate-900">Version {version.versionNumber}</h4>

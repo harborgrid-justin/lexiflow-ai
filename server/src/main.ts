@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
+import * as jwt from 'jsonwebtoken';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -27,8 +28,32 @@ async function bootstrap() {
     ...corsOriginsEnv,
   ].filter((origin, index, self) => Boolean(origin) && self.indexOf(origin) === index);
 
+  // Dynamic CORS origin handler to support GitHub Codespaces
+  const corsOriginHandler = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, curl, or same-origin)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    // Check static allowed origins
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    // Allow GitHub Codespaces origins (*.app.github.dev and *.github.dev)
+    if (origin.endsWith('.app.github.dev') || origin.endsWith('.github.dev')) {
+      callback(null, true);
+      return;
+    }
+
+    // Reject other origins
+    callback(null, false);
+  };
+
   app.enableCors({
-    origin: allowedOrigins,
+    origin: corsOriginHandler,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -97,7 +122,42 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+
+  // Generate a long-lived dev token for Swagger UI (only in development)
+  const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+  const devToken = jwt.sign(
+    {
+      email: 'admin@lexiflow.com',
+      sub: 'f937bb0d-d9cc-4b76-b18c-0579393a496a', // Admin user ID from seed
+      orgId: '77492804-16e3-4cad-abe5-34fcb57ee308', // Org ID from seed
+    },
+    jwtSecret,
+    { expiresIn: '30d' } // Long expiry for dev convenience
+  );
+
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      authAction: {
+        bearer: {
+          name: 'bearer',
+          schema: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+          value: devToken,
+        },
+      },
+    },
+  });
+
+  logger.log(`Dev token for Swagger: ${devToken.substring(0, 50)}...`);
+
+  // Redirect root path to API docs
+  app.getHttpAdapter().get('/', (_req: unknown, res: { redirect: (url: string) => void }) => {
+    res.redirect('/api/docs');
+  });
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

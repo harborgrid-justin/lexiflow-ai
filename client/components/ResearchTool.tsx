@@ -19,9 +19,10 @@ export const ResearchTool: React.FC<ResearchToolProps> = ({ currentUser }) => {
     const fetchHistory = async () => {
       try {
         const sessions = await ApiService.getResearchHistory();
-        setHistory(sessions);
+        setHistory(sessions || []);
       } catch (error) {
         console.error('Failed to fetch research history:', error);
+        setHistory([]);
       }
     };
     fetchHistory();
@@ -118,11 +119,11 @@ export const ResearchTool: React.FC<ResearchToolProps> = ({ currentUser }) => {
                 {session.response}
               </div>
 
-              {session.sources.length > 0 && (
+              {(session.sources || []).length > 0 && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Cited Sources</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {session.sources.map((source, idx) => (
+                    {(session.sources || []).map((source, idx) => (
                       <a 
                         key={idx}
                         href={source.url}

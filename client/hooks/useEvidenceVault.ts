@@ -2,6 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ApiService, ApiError } from '../services/apiService';
 import { EvidenceItem, ChainOfCustodyEvent } from '../types';
+import { ensureTagsArray } from '../utils/type-transformers';
 
 export type ViewMode = 'dashboard' | 'inventory' | 'custody' | 'intake' | 'detail';
 export type DetailTab = 'overview' | 'custody' | 'admissibility' | 'forensics';
@@ -103,7 +104,7 @@ export const useEvidenceVault = () => {
 
     try {
       setError(null);
-      const updatedChain = [newEvent, ...selectedItem.chainOfCustody];
+      const updatedChain = [newEvent, ...(selectedItem.chainOfCustody || [])];
       const updatedItem = {
         ...selectedItem,
         chainOfCustody: updatedChain
@@ -127,19 +128,19 @@ export const useEvidenceVault = () => {
 
   const filteredItems = useMemo(() => {
     return evidenceItems.filter(e => {
-      const matchesSearch = !filters.search || e.title.toLowerCase().includes(filters.search.toLowerCase()) || e.description.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesSearch = !filters.search || (e.title || '').toLowerCase().includes(filters.search.toLowerCase()) || (e.description || '').toLowerCase().includes(filters.search.toLowerCase());
       const matchesType = !filters.type || e.type === filters.type;
       const matchesAdmissibility = !filters.admissibility || e.admissibility === filters.admissibility;
-      const matchesCaseId = !filters.caseId || e.caseId.toLowerCase().includes(filters.caseId.toLowerCase());
-      const matchesCustodian = !filters.custodian || e.custodian.toLowerCase().includes(filters.custodian.toLowerCase());
-      const matchesDateFrom = !filters.dateFrom || e.collectionDate >= filters.dateFrom;
-      const matchesDateTo = !filters.dateTo || e.collectionDate <= filters.dateTo;
-      const matchesLocation = !filters.location || e.location.toLowerCase().includes(filters.location.toLowerCase());
-      const matchesTags = !filters.tags || e.tags.some(t => t.toLowerCase().includes(filters.tags.toLowerCase()));
-      const matchesCollectedBy = !filters.collectedBy || e.collectedBy.toLowerCase().includes(filters.collectedBy.toLowerCase());
+      const matchesCaseId = !filters.caseId || (e.caseId || '').toLowerCase().includes(filters.caseId.toLowerCase());
+      const matchesCustodian = !filters.custodian || (e.custodian || '').toLowerCase().includes(filters.custodian.toLowerCase());
+      const matchesDateFrom = !filters.dateFrom || (e.collectionDate || '') >= filters.dateFrom;
+      const matchesDateTo = !filters.dateTo || (e.collectionDate || '') <= filters.dateTo;
+      const matchesLocation = !filters.location || (e.location || '').toLowerCase().includes(filters.location.toLowerCase());
+      const matchesTags = !filters.tags || ensureTagsArray(e.tags).some(t => t.toLowerCase().includes(filters.tags.toLowerCase()));
+      const matchesCollectedBy = !filters.collectedBy || (e.collectedBy || '').toLowerCase().includes(filters.collectedBy.toLowerCase());
       const matchesBlockchain = !filters.hasBlockchain || !!e.blockchainHash;
 
-      return matchesSearch && matchesType && matchesAdmissibility && matchesCaseId && matchesCustodian && 
+      return matchesSearch && matchesType && matchesAdmissibility && matchesCaseId && matchesCustodian &&
              matchesDateFrom && matchesDateTo && matchesLocation && matchesTags && matchesCollectedBy && matchesBlockchain;
     });
   }, [filters, evidenceItems]);

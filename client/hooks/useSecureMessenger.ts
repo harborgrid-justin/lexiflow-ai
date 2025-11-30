@@ -52,9 +52,11 @@ export const useSecureMessenger = (currentUserId?: string) => {
   }, [fetchData]);
 
   const sortedConversations = useMemo(() => {
-    return [...conversations].sort((a, b) => {
-      const lastMsgA = a.messages[a.messages.length - 1];
-      const lastMsgB = b.messages[b.messages.length - 1];
+    return [...(conversations || [])].sort((a, b) => {
+      const messagesA = a.messages || [];
+      const messagesB = b.messages || [];
+      const lastMsgA = messagesA[messagesA.length - 1];
+      const lastMsgB = messagesB[messagesB.length - 1];
       if (!lastMsgA) return 1;
       if (!lastMsgB) return -1;
       return new Date(lastMsgB.timestamp).getTime() - new Date(lastMsgA.timestamp).getTime();
@@ -63,24 +65,24 @@ export const useSecureMessenger = (currentUserId?: string) => {
 
   const filteredConversations = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    return sortedConversations.filter(c => 
-      c.name.toLowerCase().includes(term) || 
-      c.role.toLowerCase().includes(term) ||
-      c.messages.some(m => m.text.toLowerCase().includes(term))
+    return sortedConversations.filter(c =>
+      (c.name || '').toLowerCase().includes(term) ||
+      (c.role || '').toLowerCase().includes(term) ||
+      (c.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
     );
   }, [sortedConversations, searchTerm]);
 
   const contacts = useMemo(() => {
-      return contactsList.filter(c => 
-          c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          c.role.toLowerCase().includes(searchTerm.toLowerCase())
+      return contactsList.filter(c =>
+          (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (c.role || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [contactsList, searchTerm]);
 
   const allFiles = useMemo(() => {
       const files: Attachment[] = [];
-      conversations.forEach(c => {
-          c.messages.forEach(m => {
+      (conversations || []).forEach(c => {
+          (c.messages || []).forEach(m => {
               if (m.attachments) {
                   m.attachments.forEach(a => {
                       files.push({
@@ -92,7 +94,7 @@ export const useSecureMessenger = (currentUserId?: string) => {
               }
           });
       });
-      return files.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      return files.filter(f => (f.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
   }, [conversations, searchTerm]);
 
   const activeConversation = conversations.find(c => c.id === activeConvId);
@@ -208,8 +210,10 @@ export const useSecureMessenger = (currentUserId?: string) => {
       }
   };
 
-  const formatTime = (isoString: string) => {
+  const formatTime = (isoString: string | undefined | null) => {
+      if (!isoString) return '';
       const date = new Date(isoString);
+      if (isNaN(date.getTime())) return '';
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 

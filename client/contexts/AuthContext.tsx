@@ -9,6 +9,9 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<boolean>;
   isAuthenticated: boolean;
+  impersonateUser: (user: User) => void;
+  isImpersonating: boolean;
+  stopImpersonating: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +31,8 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [originalUser, setOriginalUser] = useState<User | null>(null);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -73,6 +78,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     ApiService.clearAuthToken();
     setUser(null);
+    setOriginalUser(null);
+    setIsImpersonating(false);
   };
 
   const updateProfile = async (data: Partial<User>): Promise<boolean> => {
@@ -88,6 +95,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const impersonateUser = (impersonatedUser: User) => {
+    if (!isImpersonating && user) {
+      // Save original user before impersonating
+      setOriginalUser(user);
+    }
+    setUser(impersonatedUser);
+    setIsImpersonating(true);
+    console.log('🎭 Impersonating user:', impersonatedUser.name, `(${impersonatedUser.role})`);
+  };
+
+  const stopImpersonating = () => {
+    if (originalUser) {
+      setUser(originalUser);
+      setOriginalUser(null);
+      setIsImpersonating(false);
+      console.log('✅ Stopped impersonating, returned to original user');
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -95,6 +121,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateProfile,
     isAuthenticated: !!user,
+    impersonateUser,
+    isImpersonating,
+    stopImpersonating,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

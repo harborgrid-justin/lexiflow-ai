@@ -31,6 +31,13 @@ export class AnalyticsController {
     return this.analyticsService.findAll(caseId, metricType);
   }
 
+  @Get('dashboard')
+  @ApiOperation({ summary: 'Get dashboard statistics' })
+  @ApiResponse({ status: 200, description: 'Dashboard data retrieved successfully' })
+  getDashboard(): Promise<{ stats: any[]; chartData: any[]; alerts: any[] }> {
+    return this.analyticsService.getDashboard();
+  }
+
   @Get('case-prediction/:caseId')
   @ApiOperation({ summary: 'Get case outcome prediction' })
   @ApiResponse({ status: 200, description: 'Case prediction retrieved successfully', type: [Analytics] })

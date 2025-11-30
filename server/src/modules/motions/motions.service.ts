@@ -17,14 +17,11 @@ export class MotionsService {
     const whereClause = caseId ? { case_id: caseId } : {};
     return this.motionModel.findAll({
       where: whereClause,
-      include: ['case', 'filed_by', 'organization'],
     });
   }
 
   async findOne(id: string): Promise<Motion> {
-    const motion = await this.motionModel.findByPk(id, {
-      include: ['case', 'filed_by', 'organization'],
-    });
+    const motion = await this.motionModel.findByPk(id);
 
     if (!motion) {
       throw new NotFoundException(`Motion with ID ${id} not found`);
@@ -62,7 +59,6 @@ export class MotionsService {
   async findByStatus(status: string): Promise<Motion[]> {
     return this.motionModel.findAll({
       where: { status },
-      include: ['case', 'filed_by', 'organization'],
     });
   }
 }

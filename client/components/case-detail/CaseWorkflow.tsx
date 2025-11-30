@@ -40,8 +40,8 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWo
       }
   };
 
-  const totalTasks = stages.reduce((acc, s) => acc + s.tasks.length, 0);
-  const completedTasks = stages.reduce((acc, s) => acc + s.tasks.filter(t => t.status === 'Done').length, 0);
+  const totalTasks = (stages || []).reduce((acc, s) => acc + (s.tasks || []).length, 0);
+  const completedTasks = (stages || []).reduce((acc, s) => acc + (s.tasks || []).filter(t => t.status === 'Done').length, 0);
   const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
   return (
@@ -113,7 +113,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWo
                                     <h4 className={`font-bold text-lg ${isActive ? 'text-blue-900' : 'text-slate-800'}`}>{stage.title}</h4>
                                     <div className="flex items-center gap-2 text-xs text-slate-500">
                                         <span className={`px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100'}`}>{stage.status}</span>
-                                        <span>• {stage.tasks.length} tasks</span>
+                                        <span>• {(stage.tasks || []).length} tasks</span>
                                     </div>
                                 </div>
                             </div>
@@ -126,7 +126,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWo
                         {isExpanded && (
                             <div className="p-4 pt-0 space-y-3 bg-slate-50/30 rounded-b-xl border-t border-slate-100">
                                 <div className="h-2"></div> {/* Spacer */}
-                                {stage.tasks.map((task) => (
+                                {(stage.tasks || []).map((task) => (
                                     <div key={task.id} className="group relative bg-white p-4 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all flex flex-col md:flex-row gap-4 items-start md:items-center">
                                         {/* Status Checkbox */}
                                         <button 

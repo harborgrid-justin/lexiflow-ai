@@ -3,6 +3,27 @@
  * Convert between snake_case (API) and camelCase (Frontend)
  */
 
+/**
+ * Safely convert tags to array format
+ * Handles: undefined, null, string, array
+ */
+export function ensureTagsArray(tags: unknown): string[] {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags.filter(t => typeof t === 'string');
+  if (typeof tags === 'string') return tags.split(',').map(t => t.trim()).filter(Boolean);
+  return [];
+}
+
+/**
+ * Safely convert a value to a number
+ * Handles: undefined, null, string (DECIMAL from PostgreSQL), number
+ */
+export function toNumber(val: unknown): number {
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseFloat(val) || 0;
+  return 0;
+}
+
 import {
   ApiUser,
   ApiCase,
@@ -16,6 +37,8 @@ import {
   ApiOrganization,
   ApiParty,
   ApiCaseMember,
+  ApiMessage,
+  ApiConversation,
 } from '../shared-types';
 
 import {
@@ -31,6 +54,8 @@ import {
   Organization,
   Party,
   CaseMember,
+  Message,
+  Conversation,
 } from '../types';
 
 /**
@@ -239,7 +264,7 @@ export function transformApiDocument(apiDoc: ApiDocument): LegalDocument {
     summary: apiDoc.summary,
     description: apiDoc.description,
     riskScore: apiDoc.risk_score,
-    tags: apiDoc.tags ? apiDoc.tags.split(',').map(t => t.trim()) : [],
+    tags: ensureTagsArray(apiDoc.tags),
     versions: apiDoc.versions?.map(transformApiDocumentVersion),
     lastModified: typeof apiDoc.last_modified === 'string'
       ? apiDoc.last_modified
@@ -271,25 +296,48 @@ export function transformApiDocument(apiDoc: ApiDocument): LegalDocument {
 
 /**
  * Transform ApiEvidence to frontend EvidenceItem format
+ * Handles the case where custodian is a hydrated User object from Sequelize associations
  */
 export function transformApiEvidence(apiEvidence: ApiEvidence): EvidenceItem {
+  // Extract custodian name - handle both string and User object cases
+  let custodianName = '';
+  if (apiEvidence.custodian && typeof apiEvidence.custodian === 'object') {
+    // Custodian is a hydrated User object
+    custodianName = apiEvidence.custodian.name ||
+      `${apiEvidence.custodian.first_name || ''} ${apiEvidence.custodian.last_name || ''}`.trim();
+  } else if (typeof apiEvidence.collected_by === 'string') {
+    custodianName = apiEvidence.collected_by;
+  }
+
+  // Extract collectedBy - prefer the string field, fallback to custodian name
+  const collectedBy = apiEvidence.collected_by || custodianName;
+
   return {
     id: apiEvidence.id,
-    trackingUuid: apiEvidence.id, // Use ID as tracking UUID for now
+    trackingUuid: apiEvidence.tracking_uuid || apiEvidence.id,
+    blockchainHash: apiEvidence.blockchain_hash,
     caseId: apiEvidence.case_id || '',
     title: apiEvidence.title,
     type: apiEvidence.type as any,
+    fileType: apiEvidence.file_type,
+    fileSize: apiEvidence.file_size,
     description: apiEvidence.description || '',
     collectionDate: typeof apiEvidence.collected_date === 'string'
       ? apiEvidence.collected_date
       : apiEvidence.collected_date?.toISOString() || '',
-    collectedBy: apiEvidence.collected_by || '',
-    collectedByUserId: apiEvidence.custodian_id,
-    custodian: apiEvidence.collected_by || '',
+    collectedBy: collectedBy,
+    collectedByUserId: apiEvidence.collected_by_user_id || apiEvidence.custodian_id,
+    custodian: custodianName,
     location: apiEvidence.location || '',
-    admissibility: 'Pending' as any, // Default value
-    chainOfCustody: [], // Would need separate API call
-    tags: apiEvidence.tags ? apiEvidence.tags.split(',').map(t => t.trim()) : [],
+    admissibility: (apiEvidence.admissibility_status as any) || 'Pending',
+    chainOfCustody: (apiEvidence.chainOfCustody || []).map(event => ({
+      id: event.id,
+      date: typeof event.timestamp === 'string' ? event.timestamp : event.timestamp?.toISOString() || '',
+      action: event.action,
+      actor: event.actor,
+      notes: event.notes,
+    })),
+    tags: ensureTagsArray(apiEvidence.tags),
   };
 }
 
@@ -358,6 +406,43 @@ export function transformApiClient(apiClient: ApiClient): Client {
     status: apiClient.status as any,
     totalBilled: 0, // Not in API response
     matters: [], // Not in API response
+  };
+}
+
+/**
+ * Transform ApiMessage to frontend Message format
+ */
+export function transformApiMessage(apiMessage: ApiMessage): Message {
+  return {
+    id: apiMessage.id,
+    senderId: apiMessage.sender_id,
+    text: apiMessage.content,
+    timestamp: typeof apiMessage.created_at === 'string'
+      ? apiMessage.created_at
+      : apiMessage.created_at?.toISOString() || new Date().toISOString(),
+    status: apiMessage.status as 'sent' | 'delivered' | 'read',
+    attachments: apiMessage.attachments,
+    isPrivileged: false, // Default - not in API
+  };
+}
+
+/**
+ * Transform ApiConversation to frontend Conversation format
+ * Fetches messages separately if needed
+ */
+export function transformApiConversation(
+  apiConv: ApiConversation,
+  messages: ApiMessage[] = []
+): Conversation {
+  return {
+    id: apiConv.id,
+    name: apiConv.title || 'Untitled Conversation',
+    role: apiConv.type || 'Case Discussion',
+    isExternal: apiConv.type === 'external',
+    unread: 0, // Would need to be calculated
+    status: apiConv.status === 'active' ? 'online' : 'offline',
+    messages: messages.map(transformApiMessage),
+    draft: undefined,
   };
 }
 

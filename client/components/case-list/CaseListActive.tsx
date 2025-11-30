@@ -76,7 +76,7 @@ export const CaseListActive: React.FC<CaseListActiveProps> = ({
                   <Badge variant="neutral">{c.matterType}</Badge>
                 </TableCell>
                 <TableCell>{c.client}</TableCell>
-                <TableCell><span className="font-mono text-slate-700">${c.value.toLocaleString()}</span></TableCell>
+                <TableCell><span className="font-mono text-slate-700">${(c.value ?? 0).toLocaleString()}</span></TableCell>
                 <TableCell className="text-right">
                   <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-blue-500 ml-auto" />
                 </TableCell>
@@ -100,7 +100,7 @@ export const CaseListActive: React.FC<CaseListActiveProps> = ({
             </div>
             <div className="flex justify-between items-center pt-3 border-t border-slate-100">
               <div className="flex items-center font-mono font-medium text-slate-700">
-                <DollarSign className="h-3 w-3 mr-1 text-green-600"/> {c.value.toLocaleString()}
+                <DollarSign className="h-3 w-3 mr-1 text-green-600"/> {(c.value ?? 0).toLocaleString()}
               </div>
               <Button size="sm" variant="ghost" className="text-blue-600">Open <ChevronRight className="h-3 w-3 ml-1"/></Button>
             </div>

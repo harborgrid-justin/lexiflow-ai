@@ -26,22 +26,18 @@ export class MessagesService {
 
     return this.conversationModel.findAll({
       where: whereClause,
-      include: ['case', 'creator', 'organization'],
     });
   }
 
   async findMessages(conversationId: string): Promise<Message[]> {
     return this.messageModel.findAll({
       where: { conversation_id: conversationId },
-      include: ['conversation', 'sender'],
       order: [['created_at', 'ASC']],
     });
   }
 
   async findConversation(id: string): Promise<Conversation> {
-    const conversation = await this.conversationModel.findByPk(id, {
-      include: ['case', 'creator', 'organization'],
-    });
+    const conversation = await this.conversationModel.findByPk(id);
 
     if (!conversation) {
       throw new NotFoundException(`Conversation with ID ${id} not found`);
@@ -51,9 +47,7 @@ export class MessagesService {
   }
 
   async findMessage(id: string): Promise<Message> {
-    const message = await this.messageModel.findByPk(id, {
-      include: ['conversation', 'sender'],
-    });
+    const message = await this.messageModel.findByPk(id);
 
     if (!message) {
       throw new NotFoundException(`Message with ID ${id} not found`);

@@ -53,7 +53,7 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
       </div>
 
       <div className="relative border-l-2 border-slate-200 ml-4 space-y-8 py-4">
-        {selectedItem.chainOfCustody.map((event, idx) => (
+        {(selectedItem.chainOfCustody || []).map((event, idx) => (
           <div key={event.id} className="relative pl-8">
             <div className={`absolute -left-[9px] top-0 h-4 w-4 rounded-full border-2 border-white ${idx === 0 ? 'bg-green-500 ring-4 ring-green-100' : 'bg-slate-300'}`}></div>
             <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">

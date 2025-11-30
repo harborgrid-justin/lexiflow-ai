@@ -17,9 +17,10 @@ export const ClientCRM: React.FC = () => {
     const fetchClients = async () => {
         try {
             const data = await ApiService.getClients();
-            setClients(data);
+            setClients(data || []);
         } catch (e) {
             console.error("Failed to fetch clients", e);
+            setClients([]);
         }
     };
     fetchClients();
@@ -58,14 +59,14 @@ export const ClientCRM: React.FC = () => {
         {clients.map(client => (
           <div key={client.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
-              <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center font-bold text-xl text-slate-600">{client.name.substring(0, 2)}</div>
+              <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center font-bold text-xl text-slate-600">{(client.name || '??').substring(0, 2)}</div>
               <span className={`px-2 py-1 text-xs font-bold rounded-full ${client.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100'}`}>{client.status}</span>
             </div>
             <h3 className="font-bold text-lg text-slate-900 mb-1">{client.name}</h3>
             <p className="text-sm text-slate-500 mb-4">{client.industry}</p>
             <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
-              <div><p className="text-slate-400 text-xs">Lifetime Billed</p><p className="font-semibold">${client.totalBilled.toLocaleString()}</p></div>
-              <div><p className="text-slate-400 text-xs">Active Matters</p><p className="font-semibold">{client.matters.length}</p></div>
+              <div><p className="text-slate-400 text-xs">Lifetime Billed</p><p className="font-semibold">${(client.totalBilled || 0).toLocaleString()}</p></div>
+              <div><p className="text-slate-400 text-xs">Active Matters</p><p className="font-semibold">{(client.matters || []).length}</p></div>
             </div>
             <div className="mt-4 flex gap-2">
               <button

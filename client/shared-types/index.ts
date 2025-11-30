@@ -210,12 +210,18 @@ export interface ApiDocument {
  */
 export interface ApiEvidence {
   id: string;
+  tracking_uuid?: string;
+  blockchain_hash?: string;
   title: string;
   type: string;
   status: string;
   description?: string;
+  file_type?: string;
+  file_size?: string;
+  admissibility_status?: string;
   location?: string;
   collected_by?: string;
+  collected_by_user_id?: string;
   collected_date?: Date | string;
   collection_notes?: string;
   tags?: string;
@@ -229,6 +235,13 @@ export interface ApiEvidence {
   case?: ApiCase;
   custodian?: ApiUser;
   organization?: ApiOrganization;
+  chainOfCustody?: Array<{
+    id: string;
+    action: string;
+    actor: string;
+    timestamp: Date | string;
+    notes?: string;
+  }>;
 }
 
 /**
@@ -329,6 +342,45 @@ export interface ApiClient {
   industry?: string;
   created_at: Date | string;
   updated_at: Date | string;
+}
+
+/**
+ * Message entity as returned by the API
+ * Uses snake_case to match backend database schema
+ */
+export interface ApiMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  message_type: string;
+  attachments?: any;
+  status: string;
+  created_at: Date | string;
+  updated_at: Date | string;
+  // Optional hydrated relations
+  sender?: ApiUser;
+}
+
+/**
+ * Conversation entity as returned by the API
+ * Uses snake_case to match backend database schema
+ */
+export interface ApiConversation {
+  id: string;
+  title: string;
+  type: string;
+  case_id?: string;
+  created_by: string;
+  status: string;
+  participants: string[];
+  last_message_at?: Date | string;
+  created_at: Date | string;
+  updated_at: Date | string;
+  // Optional hydrated relations
+  case?: ApiCase;
+  creator?: ApiUser;
+  messages?: ApiMessage[];
 }
 
 // ==================== AUTH TYPES ====================

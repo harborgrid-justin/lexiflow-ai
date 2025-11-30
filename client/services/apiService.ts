@@ -1,6 +1,6 @@
 import { Case, User, LegalDocument, WorkflowStage, Motion, DiscoveryRequest, EvidenceItem, TimelineEvent, TimeEntry, WorkflowTask, ConflictCheck, Conversation, AuditLogEntry, Organization, Group, Client, Clause, JudgeProfile, OpposingCounselProfile, EthicalWall, Jurisdiction, KnowledgeItem, ResearchSession, UserProfile, CaseMember } from '../types';
-import { ApiCase } from '../shared-types';
-import { transformApiCase } from '../utils/type-transformers';
+import { ApiCase, ApiUser, ApiEvidence, ApiConversation, ApiMessage } from '../shared-types';
+import { transformApiCase, transformApiUser, transformApiEvidence, transformApiConversation, transformApiMessage } from '../utils/type-transformers';
 
 // API Base URL configuration
 // In development with Vite proxy, use relative path '/api/v1'
@@ -14,9 +14,13 @@ const getApiBaseUrl = (): string => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  // Default: use proxy in development, full URL otherwise
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return '/api/v1'; // Use Vite proxy
+  // Default: use proxy in development (localhost or GitHub Codespaces)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // Use Vite proxy for localhost and GitHub Codespaces
+    if (hostname === 'localhost' || hostname.endsWith('.app.github.dev') || hostname.endsWith('.github.dev')) {
+      return '/api/v1'; // Use Vite proxy
+    }
   }
   return 'http://localhost:3001/api/v1';
 };
@@ -555,35 +559,64 @@ export const ApiService = {
   },
 
   // ===========================
-  // Evidence
+  // Evidence - with type transformation (snake_case API <-> camelCase Frontend)
   // ===========================
   evidence: {
-    getAll: (caseId?: string) =>
-      fetchJson<EvidenceItem[]>(`/evidence${buildQueryString({ caseId })}`),
+    getAll: async (caseId?: string): Promise<EvidenceItem[]> => {
+      const apiEvidence = await fetchJson<ApiEvidence[]>(`/evidence${buildQueryString({ caseId })}`);
+      return apiEvidence.map(transformApiEvidence);
+    },
 
-    getById: (id: string) =>
-      fetchJson<EvidenceItem>(`/evidence/${id}`),
+    getById: async (id: string): Promise<EvidenceItem> => {
+      const apiEvidence = await fetchJson<ApiEvidence>(`/evidence/${id}`);
+      return transformApiEvidence(apiEvidence);
+    },
 
-    create: (data: Partial<EvidenceItem>) =>
-      postJson<EvidenceItem>('/evidence', data),
+    create: async (data: Partial<EvidenceItem>): Promise<EvidenceItem> => {
+      const apiEvidence = await postJson<ApiEvidence>('/evidence', data);
+      return transformApiEvidence(apiEvidence);
+    },
 
-    update: (id: string, data: Partial<EvidenceItem>) =>
-      putJson<EvidenceItem>(`/evidence/${id}`, data),
+    update: async (id: string, data: Partial<EvidenceItem>): Promise<EvidenceItem> => {
+      const apiEvidence = await putJson<ApiEvidence>(`/evidence/${id}`, data);
+      return transformApiEvidence(apiEvidence);
+    },
 
     delete: (id: string) =>
       deleteJson(`/evidence/${id}`),
   },
 
   // ===========================
-  // Messages & Conversations
+  // Messages & Conversations - with type transformation (snake_case API <-> camelCase Frontend)
   // ===========================
   messages: {
     conversations: {
-      getAll: (caseId?: string, userId?: string) =>
-        fetchJson<Conversation[]>(`/messages/conversations${buildQueryString({ caseId, userId })}`),
+      getAll: async (caseId?: string, userId?: string): Promise<Conversation[]> => {
+        const apiConversations = await fetchJson<ApiConversation[]>(
+          `/messages/conversations${buildQueryString({ caseId, userId })}`
+        );
+        // Fetch messages for each conversation
+        const conversationsWithMessages = await Promise.all(
+          apiConversations.map(async (conv) => {
+            try {
+              const messages = await fetchJson<ApiMessage[]>(
+                `/messages/conversations/${conv.id}/messages`
+              );
+              return transformApiConversation(conv, messages);
+            } catch {
+              // If fetching messages fails, return conversation without messages
+              return transformApiConversation(conv, []);
+            }
+          })
+        );
+        return conversationsWithMessages;
+      },
 
-      getById: (id: string) =>
-        fetchJson<Conversation>(`/messages/conversations/${id}`),
+      getById: async (id: string): Promise<Conversation> => {
+        const apiConv = await fetchJson<ApiConversation>(`/messages/conversations/${id}`);
+        const messages = await fetchJson<ApiMessage[]>(`/messages/conversations/${id}/messages`);
+        return transformApiConversation(apiConv, messages);
+      },
 
       create: (data: Partial<Conversation>) =>
         postJson<Conversation>('/messages/conversations', data),
@@ -591,8 +624,12 @@ export const ApiService = {
       update: (id: string, data: Partial<Conversation>) =>
         putJson<Conversation>(`/messages/conversations/${id}`, data),
 
-      getMessages: (conversationId: string) =>
-        fetchJson<any[]>(`/messages/conversations/${conversationId}/messages`),
+      getMessages: async (conversationId: string) => {
+        const messages = await fetchJson<ApiMessage[]>(
+          `/messages/conversations/${conversationId}/messages`
+        );
+        return messages.map(transformApiMessage);
+      },
     },
 
     create: (data: any) =>
@@ -607,7 +644,10 @@ export const ApiService = {
     sendMessage: (conversationId: string, text: string, senderId?: string) =>
       postJson<void>(`/messages/${conversationId}/send`, { text, senderId }),
 
-    getConversations: () => fetchJson<Conversation[]>('/messages'),
+    getConversations: async (): Promise<Conversation[]> => {
+      const apiConversations = await fetchJson<ApiConversation[]>('/messages');
+      return apiConversations.map(conv => transformApiConversation(conv, []));
+    },
   },
 
   // ===========================
@@ -761,14 +801,20 @@ export const ApiService = {
   // Users
   // ===========================
   users: {
-    getAll: (orgId?: string) =>
-      fetchJson<User[]>(`/users${buildQueryString({ orgId })}`),
+    getAll: async (orgId?: string): Promise<User[]> => {
+      const apiUsers = await fetchJson<ApiUser[]>(`/users${buildQueryString({ orgId })}`);
+      return apiUsers.map(transformApiUser);
+    },
 
-    getById: (id: string) =>
-      fetchJson<User>(`/users/${id}`),
+    getById: async (id: string): Promise<User> => {
+      const apiUser = await fetchJson<ApiUser>(`/users/${id}`);
+      return transformApiUser(apiUser);
+    },
 
-    getByEmail: (email: string) =>
-      fetchJson<User>(`/users/email/${encodeURIComponent(email)}`),
+    getByEmail: async (email: string): Promise<User> => {
+      const apiUser = await fetchJson<ApiUser>(`/users/email/${encodeURIComponent(email)}`);
+      return transformApiUser(apiUser);
+    },
 
     update: (id: string, data: Partial<User>) =>
       putJson<User>(`/users/${id}`, data),
@@ -1013,8 +1059,10 @@ export const ApiService = {
     getDiscovery: (caseId: string) =>
       fetchJson<DiscoveryRequest[]>(`/cases/${caseId}/discovery`),
 
-    getEvidence: (caseId: string) =>
-      fetchJson<EvidenceItem[]>(`/cases/${caseId}/evidence`),
+    getEvidence: async (caseId: string): Promise<EvidenceItem[]> => {
+      const apiEvidence = await fetchJson<ApiEvidence[]>(`/cases/${caseId}/evidence`);
+      return apiEvidence.map(transformApiEvidence);
+    },
 
     getTimeline: (caseId: string) =>
       fetchJson<TimelineEvent[]>(`/cases/${caseId}/timeline`),
@@ -1147,10 +1195,16 @@ export const ApiService = {
   getCase: (id: string) => fetchJson<Case>(`/cases/${id}`),
 
   /** @deprecated Use ApiService.users.getAll() instead */
-  getUsers: (orgId?: string) => fetchJson<User[]>(`/users${buildQueryString({ orgId })}`),
+  getUsers: async (orgId?: string): Promise<User[]> => {
+    const apiUsers = await fetchJson<ApiUser[]>(`/users${buildQueryString({ orgId })}`);
+    return apiUsers.map(transformApiUser);
+  },
 
   /** @deprecated Use ApiService.users.getById() instead */
-  getUser: (id: string) => fetchJson<User>(`/users/${id}`),
+  getUser: async (id: string): Promise<User> => {
+    const apiUser = await fetchJson<ApiUser>(`/users/${id}`);
+    return transformApiUser(apiUser);
+  },
 
   /** @deprecated Use ApiService.documents.getAll() instead */
   getDocuments: (caseId?: string) => fetchJson<LegalDocument[]>(`/documents${buildQueryString({ caseId })}`),
@@ -1175,8 +1229,10 @@ export const ApiService = {
     putJson<void>(`/user-profiles/user/${userId}/last-active`, {}),
 
   /** @deprecated Use ApiService.evidence.getAll() instead */
-  getEvidence: (caseId?: string) =>
-    fetchJson<EvidenceItem[]>(`/evidence${buildQueryString({ caseId })}`),
+  getEvidence: async (caseId?: string): Promise<EvidenceItem[]> => {
+    const apiEvidence = await fetchJson<ApiEvidence[]>(`/evidence${buildQueryString({ caseId })}`);
+    return apiEvidence.map(transformApiEvidence);
+  },
 
   /** @deprecated Use ApiService.motions.getAll() instead */
   getMotions: (caseId?: string) =>
@@ -1261,8 +1317,10 @@ export const ApiService = {
     fetchJson<DiscoveryRequest[]>(`/cases/${caseId}/discovery`),
 
   /** @deprecated Use ApiService.caseOperations.getEvidence() instead */
-  getCaseEvidence: (caseId: string) =>
-    fetchJson<EvidenceItem[]>(`/cases/${caseId}/evidence`),
+  getCaseEvidence: async (caseId: string): Promise<EvidenceItem[]> => {
+    const apiEvidence = await fetchJson<ApiEvidence[]>(`/cases/${caseId}/evidence`);
+    return apiEvidence.map(transformApiEvidence);
+  },
 
   /** @deprecated Use ApiService.caseOperations.getMotions() instead */
   getCaseMotions: (caseId: string) =>

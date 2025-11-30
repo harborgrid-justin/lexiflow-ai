@@ -19,7 +19,7 @@ export const ClauseHistoryModal: React.FC<ClauseHistoryModalProps> = ({ clause, 
             <History className="mr-2 h-5 w-5 text-blue-600" /> History: {clause.name}
           </h3>
           <div className="flex items-center space-x-2">
-            {clause.versions.length > 1 && (
+            {(clause.versions || []).length > 1 && (
               <button
                 onClick={() => setCompareMode(!compareMode)}
                 className={`px-3 py-1.5 text-sm font-medium rounded border ${compareMode ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
@@ -32,7 +32,7 @@ export const ClauseHistoryModal: React.FC<ClauseHistoryModalProps> = ({ clause, 
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {compareMode && clause.versions.length >= 2 ? (
+          {compareMode && (clause.versions || []).length >= 2 ? (
             <div className="grid grid-cols-2 gap-4 h-full">
               <div className="border rounded-lg p-4 bg-slate-50">
                 <div className="flex justify-between items-center mb-2">
@@ -51,7 +51,7 @@ export const ClauseHistoryModal: React.FC<ClauseHistoryModalProps> = ({ clause, 
             </div>
           ) : (
             <div className="space-y-4">
-              {clause.versions.map((v, idx) => (
+              {(clause.versions || []).map((v, idx) => (
                 <div key={v.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>

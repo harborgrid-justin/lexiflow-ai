@@ -29,7 +29,7 @@ export const JudgeAnalytics: React.FC<JudgeAnalyticsProps> = ({ judge, stats }) 
           <div>
             <h4 className="font-semibold text-sm mb-2">Tendencies</h4>
             <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
-              {judge.tendencies.map(t => <li key={t}>{t}</li>)}
+              {(judge.tendencies || []).map(t => <li key={t}>{t}</li>)}
             </ul>
           </div>
         </div>

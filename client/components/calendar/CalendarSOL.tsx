@@ -21,9 +21,10 @@ export const CalendarSOL: React.FC = () => {
     const fetchSOL = async () => {
       try {
         const data = await ApiService.getCalendarSOL();
-        setSolData(data);
+        setSolData(data || []);
       } catch (error) {
         console.error('Failed to fetch SOL data:', error);
+        setSolData([]);
       } finally {
         setLoading(false);
       }

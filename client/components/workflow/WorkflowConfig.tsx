@@ -375,8 +375,8 @@ export const WorkflowConfig: React.FC = () => {
               </div>
               <p className="text-xs text-slate-500 line-clamp-2">{template.description}</p>
               <div className="mt-3 flex items-center gap-4 text-xs text-slate-400">
-                <span className="flex items-center"><Settings className="h-3 w-3 mr-1"/> {template.stages.length} Stages</span>
-                <span className="flex items-center"><CheckSquare className="h-3 w-3 mr-1"/> {template.stages.reduce((acc, s) => acc + s.tasks.length, 0)} Tasks</span>
+                <span className="flex items-center"><Settings className="h-3 w-3 mr-1"/> {(template.stages || []).length} Stages</span>
+                <span className="flex items-center"><CheckSquare className="h-3 w-3 mr-1"/> {(template.stages || []).reduce((acc, s) => acc + (s.tasks || []).length, 0)} Tasks</span>
               </div>
             </div>
           ))}
@@ -405,7 +405,7 @@ export const WorkflowConfig: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              {selectedTemplate.stages.map((stage, index) => (
+              {(selectedTemplate.stages || []).map((stage, index) => (
                 <div key={stage.id} className="relative pl-8 border-l-2 border-slate-200 last:border-l-0">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-100 border-2 border-blue-500"></div>
                   
@@ -415,7 +415,7 @@ export const WorkflowConfig: React.FC = () => {
                   </div>
 
                   <div className="space-y-3">
-                    {stage.tasks.map(task => (
+                    {(stage.tasks || []).map(task => (
                       <div key={task.id} className="bg-slate-50 p-4 rounded border border-slate-200 hover:border-blue-200 transition-colors group">
                         <div className="flex justify-between items-start">
                           <div className="flex items-start gap-3">

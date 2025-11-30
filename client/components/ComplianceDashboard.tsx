@@ -18,10 +18,12 @@ export const ComplianceDashboard: React.FC = () => {
                 ApiService.getConflicts(),
                 ApiService.getWalls()
             ]);
-            setConflicts(c);
-            setWalls(w);
+            setConflicts(c || []);
+            setWalls(w || []);
         } catch (e) {
             console.error("Failed to fetch compliance data", e);
+            setConflicts([]);
+            setWalls([]);
         }
     };
     fetchData();

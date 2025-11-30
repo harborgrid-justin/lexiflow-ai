@@ -2,6 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { LegalDocument, DocumentVersion } from '../types';
 import { ApiService, ApiError } from '../services/apiService';
+import { ensureTagsArray } from '../utils/type-transformers';
 
 export const useDocumentManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,11 +88,11 @@ export const useDocumentManager = () => {
   const addTag = async (docId: string, tag: string) => {
     if (!tag.trim()) return;
     const doc = documents.find(d => d.id === docId);
-    if (!doc || doc.tags.includes(tag.trim())) return;
+    if (!doc || ensureTagsArray(doc.tags).includes(tag.trim())) return;
 
     try {
       setError(null);
-      const updatedTags = [...doc.tags, tag.trim()];
+      const updatedTags = [...ensureTagsArray(doc.tags), tag.trim()];
       await ApiService.documents.update(docId, { tags: updatedTags });
 
       setDocuments(prev => prev.map(d => {
@@ -118,7 +119,7 @@ export const useDocumentManager = () => {
 
     try {
       setError(null);
-      const updatedTags = doc.tags.filter(t => t !== tag);
+      const updatedTags = ensureTagsArray(doc.tags).filter(t => t !== tag);
       await ApiService.documents.update(docId, { tags: updatedTags });
 
       setDocuments(prev => prev.map(d => {
@@ -139,11 +140,11 @@ export const useDocumentManager = () => {
     }
   };
 
-  const allTags = useMemo(() => Array.from(new Set(documents.flatMap(d => d.tags))), [documents]);
+  const allTags = useMemo(() => Array.from(new Set(documents.flatMap(d => ensureTagsArray(d.tags)))), [documents]);
 
   const filtered = useMemo(() => {
     return documents.filter(d => {
-        const matchesSearch = d.title.toLowerCase().includes(searchTerm.toLowerCase()) || d.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSearch = (d.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || ensureTagsArray(d.tags).some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesModule = activeModuleFilter === 'All' || d.sourceModule === activeModuleFilter;
         return matchesSearch && matchesModule;
     });

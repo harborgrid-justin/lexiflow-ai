@@ -89,8 +89,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
                 )}
                 <span className="hidden md:inline text-slate-300">•</span>
                 <span className="flex items-center font-semibold text-slate-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
-                    <DollarSign className="h-3 w-3 mr-0.5 text-green-600"/> 
-                    {caseData.value.toLocaleString()}
+                    <DollarSign className="h-3 w-3 mr-0.5 text-green-600"/>
+                    {(caseData.value ?? 0).toLocaleString()}
                 </span>
             </div>
             </div>

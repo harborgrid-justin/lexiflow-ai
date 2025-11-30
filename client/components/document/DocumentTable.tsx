@@ -3,6 +3,7 @@ import React from 'react';
 import { FileText, Download, Eye, MoreVertical, Clock, CheckSquare, ShieldCheck, Tag } from 'lucide-react';
 import { LegalDocument } from '../../types';
 import { Badge } from '../common/Badge';
+import { ensureTagsArray } from '../../utils/type-transformers';
 
 interface DocumentTableProps {
   documents: LegalDocument[];
@@ -40,7 +41,7 @@ export const DocumentTable: React.FC<DocumentTableProps> = ({
                     <div className="text-sm font-medium text-slate-900 group-hover:text-blue-700">{doc.title}</div>
                     {/* Feature 4: Meta-tagging display & Edit */}
                     <div className="flex gap-1 mt-1 flex-wrap items-center">
-                        {doc.tags.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">{t}</span>)}
+                        {ensureTagsArray(doc.tags).map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">{t}</span>)}
                         <button 
                             onClick={(e) => { e.stopPropagation(); setTaggingDoc(doc); }} 
                             className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600" 

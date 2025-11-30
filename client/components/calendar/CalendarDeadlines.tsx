@@ -22,9 +22,10 @@ export const CalendarDeadlines: React.FC = () => {
     const fetchDeadlines = async () => {
       try {
         const data = await ApiService.getCalendarDeadlines();
-        setDeadlines(data);
+        setDeadlines(data || []);
       } catch (error) {
         console.error('Failed to fetch deadlines:', error);
+        setDeadlines([]);
       } finally {
         setLoading(false);
       }

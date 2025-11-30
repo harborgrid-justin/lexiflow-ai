@@ -60,26 +60,26 @@ export const useCaseDetail = (caseData: Case) => {
     if (caseData.filingDate) {
         events.push({ id: 'init', date: caseData.filingDate, title: 'Case Filed', type: 'milestone', description: `Filed in ${caseData.court}` });
     }
-    
+
     // Documents
-    documents.forEach(d => {
+    (documents || []).forEach(d => {
         events.push({ id: d.id, date: d.uploadDate, title: `Doc Upload: ${d.title}`, type: 'document', description: d.summary || d.type, relatedId: d.id });
     });
-    
+
     // Tasks
-    stages.forEach(s => {
-        s.tasks.forEach(t => {
+    (stages || []).forEach(s => {
+        (s.tasks || []).forEach(t => {
             if(t.status === 'Done') events.push({ id: t.id, date: t.dueDate, title: `Task Completed: ${t.title}`, type: 'task', description: `Assigned to ${t.assignee}`, relatedId: t.id });
         });
     });
-    
+
     // Billing
-    billingEntries.forEach(b => {
+    (billingEntries || []).forEach(b => {
         events.push({ id: b.id, date: b.date, title: 'Billable Time Logged', type: 'billing', description: `${(b.duration/60).toFixed(1)}h - ${b.description}`, relatedId: b.id });
     });
 
     // Motions & Hearings
-    motions.forEach(m => {
+    (motions || []).forEach(m => {
         if(m.filingDate) {
             events.push({ id: `mot-file-${m.id}`, date: m.filingDate, title: `Motion Filed: ${m.title}`, type: 'motion', description: `Type: ${m.type} | Status: ${m.status}`, relatedId: m.id });
         }

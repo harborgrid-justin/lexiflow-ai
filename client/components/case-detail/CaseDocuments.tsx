@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { LegalDocument, User } from '../../types';
 import { FileText, Cpu, Sparkles, Bot, Plus, Wand2, Eye } from 'lucide-react';
 import { DocumentAssembly } from '../DocumentAssembly';
+import { ensureTagsArray } from '../../utils/type-transformers';
 
 interface CaseDocumentsProps {
   documents: LegalDocument[];
@@ -68,7 +69,7 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
                 <div className="bg-red-50 p-3 rounded-lg"><FileText className="h-6 w-6 text-red-600" /></div>
                 <div>
                   <h4 className="font-semibold text-slate-900">{doc.title}</h4>
-                  <div className="text-xs text-slate-500 mt-1">{doc.type} • {doc.uploadDate} • v{doc.versions.length}</div>
+                  <div className="text-xs text-slate-500 mt-1">{doc.type} • {doc.uploadDate} • v{(doc.versions || []).length}</div>
                 </div>
               </div>
               <button onClick={() => onAnalyze(doc)} disabled={analyzingId === doc.id} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium border border-indigo-100 flex items-center">
@@ -83,7 +84,7 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
                         <p className="text-xs font-semibold text-slate-500 uppercase">Content Preview</p>
                     </div>
                     <div className="bg-slate-50 p-3 rounded border border-slate-100 text-sm text-slate-600 font-serif italic line-clamp-3">
-                        "{doc.content.length > 250 ? doc.content.substring(0, 250) + '...' : doc.content}"
+                        "{(doc.content || '').length > 250 ? (doc.content || '').substring(0, 250) + '...' : doc.content}"
                     </div>
                 </div>
             )}
@@ -96,7 +97,7 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
               </div>
             )}
             <div className="flex gap-2 mt-3">
-                {doc.tags.map(t => <span key={t} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs rounded border border-slate-200">{t}</span>)}
+                {ensureTagsArray(doc.tags).map(t => <span key={t} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs rounded border border-slate-200">{t}</span>)}
             </div>
           </div>
         ))}

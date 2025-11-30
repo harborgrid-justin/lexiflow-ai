@@ -9,13 +9,14 @@ import { Case } from '../types';
 import { CaseWorkflowList } from './workflow/CaseWorkflowList';
 import { FirmProcessList } from './workflow/FirmProcessList';
 import { WorkflowConfig } from './workflow/WorkflowConfig';
+import { WorkflowTemplateBuilder } from './workflow/WorkflowTemplateBuilder';
 
 interface MasterWorkflowProps {
   onSelectCase: (caseId: string) => void;
 }
 
 export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) => {
-  const [activeTab, setActiveTab] = useState<'cases' | 'firm' | 'config'>('cases');
+  const [activeTab, setActiveTab] = useState<'cases' | 'firm' | 'templates' | 'config'>('cases');
   const [cases, setCases] = useState<Case[]>([]);
   const [processes, setProcesses] = useState<any[]>([]);
 
@@ -61,7 +62,7 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
         actions={
           <div className="flex gap-2">
             <Tabs 
-              tabs={['cases', 'firm', 'config']} 
+              tabs={['cases', 'firm', 'templates', 'config']} 
               activeTab={activeTab} 
               onChange={(t) => setActiveTab(t as any)} 
             />
@@ -117,6 +118,10 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
           </div>
           <FirmProcessList processes={processes} />
         </div>
+      )}
+
+      {activeTab === 'templates' && (
+        <WorkflowTemplateBuilder />
       )}
 
       {activeTab === 'config' && (

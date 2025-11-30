@@ -19,7 +19,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversation, currentU
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-8 bg-slate-50/30">
-        {conversation.messages.map((msg) => {
+        {(conversation.messages || []).map((msg) => {
           const isMe = msg.senderId === currentUserId;
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group/msg`}>

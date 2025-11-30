@@ -61,7 +61,7 @@ export interface VectorSearchResult {
  * it ideal for multi-tenant legal document search scenarios.
  * 
  * @requires PostgreSQL with pgvector extension
- * @requires Document embeddings pre-generated (typically using OpenAI/Gemini APIs)
+ * @requires Document embeddings pre-generated (using OpenAI text-embedding-ada-002)
  * 
  * @example
  * const service = new VectorSearchService(embeddingModel, queryModel, sequelize);

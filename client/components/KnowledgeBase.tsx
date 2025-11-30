@@ -5,6 +5,7 @@ import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { ApiService } from '../services/apiService';
 import { KnowledgeItem } from '../types';
+import { ensureTagsArray } from '../utils/type-transformers';
 
 export const KnowledgeBase: React.FC = () => {
   const [tab, setTab] = useState<'wiki'|'precedents'|'qa'>('wiki');
@@ -32,9 +33,9 @@ export const KnowledgeBase: React.FC = () => {
     fetchData();
   }, [tab]);
 
-  const filteredItems = items.filter(i => 
-    i.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    i.summary.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredItems = items.filter(i =>
+    (i.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (i.summary || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -84,7 +85,7 @@ export const KnowledgeBase: React.FC = () => {
                         <h3 className="font-bold text-slate-900">{item.title}</h3>
                         <p className="text-sm text-slate-500 mt-2">{item.summary}</p>
                         <div className="mt-3 flex gap-2">
-                            {item.tags.map(tag => (
+                            {ensureTagsArray(item.tags).map(tag => (
                                 <span key={tag} className="text-xs bg-slate-100 px-2 py-1 rounded">{tag}</span>
                             ))}
                         </div>

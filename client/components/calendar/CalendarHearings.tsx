@@ -20,9 +20,10 @@ export const CalendarHearings: React.FC = () => {
     const fetchHearings = async () => {
       try {
         const data = await ApiService.getCalendarHearings();
-        setHearings(data);
+        setHearings(data || []);
       } catch (error) {
         console.error('Failed to fetch hearings:', error);
+        setHearings([]);
       } finally {
         setLoading(false);
       }

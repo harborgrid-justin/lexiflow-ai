@@ -39,8 +39,9 @@ export const MessengerChatList: React.FC<MessengerChatListProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {conversations.map(conv => {
-          const lastMsg = conv.messages[conv.messages.length - 1];
+        {(conversations || []).map(conv => {
+          const messages = conv.messages || [];
+          const lastMsg = messages[messages.length - 1];
           return (
             <div 
               key={conv.id}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { TimeEntry, BillingModel } from '../../types';
 import { Download, Clock, DollarSign } from 'lucide-react';
+import { toNumber } from '../../utils/type-transformers';
 
 interface CaseBillingProps {
     billingModel: BillingModel;
@@ -11,9 +12,9 @@ interface CaseBillingProps {
 
 export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, entries }) => {
     // Calculate totals dynamically based on props
-    const unbilledTotal = entries
+    const unbilledTotal = (entries || [])
         .filter(e => e.status === 'Unbilled')
-        .reduce((sum, e) => sum + e.total, 0);
+        .reduce((sum, e) => sum + toNumber(e.total), 0);
 
     return (
         <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
@@ -51,12 +52,12 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
-                            {entries.length > 0 ? entries.map(e => (
+                            {(entries || []).length > 0 ? (entries || []).map(e => (
                                 <tr key={e.id}>
                                     <td className="px-6 py-4 text-sm text-slate-900">{e.date}</td>
                                     <td className="px-6 py-4 text-sm text-slate-500">{e.description}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-900 text-right">{(e.duration/60).toFixed(1)}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-900 text-right">${e.total.toFixed(2)}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-900 text-right">{(toNumber(e.duration)/60).toFixed(1)}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-900 text-right">${toNumber(e.total).toFixed(2)}</td>
                                     <td className="px-6 py-4 text-right"><span className={`text-xs px-2 py-1 rounded ${e.status==='Billed'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{e.status}</span></td>
                                 </tr>
                             )) : (
@@ -70,7 +71,7 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
 
                 {/* Mobile Cards */}
                 <div className="md:hidden overflow-y-auto flex-1">
-                    {entries.length > 0 ? entries.map(e => (
+                    {(entries || []).length > 0 ? (entries || []).map(e => (
                         <div key={e.id} className="p-4 border-b border-slate-100 last:border-0">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-xs text-slate-500 font-mono">{e.date}</span>
@@ -78,8 +79,8 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                             </div>
                             <p className="text-sm text-slate-900 font-medium mb-2">{e.description}</p>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="flex items-center text-slate-600"><Clock className="h-3 w-3 mr-1"/> {(e.duration/60).toFixed(1)} hrs</span>
-                                <span className="flex items-center font-bold text-slate-900"><DollarSign className="h-3 w-3 mr-1 text-slate-400"/> {e.total.toFixed(2)}</span>
+                                <span className="flex items-center text-slate-600"><Clock className="h-3 w-3 mr-1"/> {(toNumber(e.duration)/60).toFixed(1)} hrs</span>
+                                <span className="flex items-center font-bold text-slate-900"><DollarSign className="h-3 w-3 mr-1 text-slate-400"/> {toNumber(e.total).toFixed(2)}</span>
                             </div>
                         </div>
                     )) : (

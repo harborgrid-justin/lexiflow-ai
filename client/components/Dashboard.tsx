@@ -22,16 +22,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
     const fetchDashboard = async () => {
         try {
             const data = await ApiService.getDashboard();
+            if (!data) return;
             // Map icon strings back to components
-            const mappedStats = data.stats.map((s: any) => ({
+            const mappedStats = (data.stats || []).map((s: any) => ({
                 ...s,
                 icon: s.icon === 'Briefcase' ? Briefcase : s.icon === 'FileText' ? FileText : s.icon === 'Clock' ? Clock : AlertTriangle
             }));
             setStats(mappedStats);
-            setChartData(data.chartData);
-            setAlerts(data.alerts);
+            setChartData(data.chartData || []);
+            setAlerts(data.alerts || []);
         } catch (e) {
             console.error("Failed to fetch dashboard", e);
+            setStats([]);
+            setChartData([]);
+            setAlerts([]);
         }
     };
     fetchDashboard();

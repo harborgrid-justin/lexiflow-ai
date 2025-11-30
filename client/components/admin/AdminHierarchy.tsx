@@ -123,7 +123,7 @@ export const AdminHierarchy: React.FC = () => {
                       <MoreVertical className="h-3 w-3 text-slate-400"/>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {group.permissions.slice(0, 2).map(p => (
+                      {(group.permissions || []).slice(0, 2).map(p => (
                         <span key={p} className="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">{p.replace('_', ' ')}</span>
                       ))}
                     </div>

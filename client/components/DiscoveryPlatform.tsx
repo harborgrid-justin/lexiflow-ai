@@ -27,9 +27,10 @@ export const DiscoveryPlatform: React.FC = () => {
     const fetchDiscovery = async () => {
         try {
             const data = await ApiService.getDiscovery();
-            setRequests(data);
+            setRequests(data || []);
         } catch (e) {
             console.error("Failed to fetch discovery", e);
+            setRequests([]);
         }
     };
     fetchDiscovery();

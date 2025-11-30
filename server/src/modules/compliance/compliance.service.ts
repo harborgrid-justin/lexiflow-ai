@@ -17,14 +17,11 @@ export class ComplianceService {
     const whereClause = orgId ? { owner_org_id: orgId } : {};
     return this.complianceModel.findAll({
       where: whereClause,
-      include: ['case', 'auditor', 'organization'],
     });
   }
 
   async findOne(id: string): Promise<ComplianceRecord> {
-    const compliance = await this.complianceModel.findByPk(id, {
-      include: ['case', 'auditor', 'organization'],
-    });
+    const compliance = await this.complianceModel.findByPk(id);
 
     if (!compliance) {
       throw new NotFoundException(`Compliance record with ID ${id} not found`);
@@ -52,7 +49,6 @@ export class ComplianceService {
   async findByRiskLevel(riskLevel: string): Promise<ComplianceRecord[]> {
     return this.complianceModel.findAll({
       where: { risk_level: riskLevel },
-      include: ['case', 'auditor', 'organization'],
     });
   }
 }

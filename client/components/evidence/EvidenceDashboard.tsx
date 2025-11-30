@@ -18,9 +18,10 @@ export const EvidenceDashboard: React.FC<EvidenceDashboardProps> = ({ onNavigate
     const fetchEvidence = async () => {
         try {
             const data = await ApiService.getEvidence();
-            setEvidence(data);
+            setEvidence(data || []);
         } catch (e) {
             console.error("Failed to fetch evidence", e);
+            setEvidence([]);
         }
     };
     fetchEvidence();
@@ -37,8 +38,8 @@ export const EvidenceDashboard: React.FC<EvidenceDashboardProps> = ({ onNavigate
     { name: 'Document', value: totalItems - digitalItems - physicalItems, color: '#475569' }, // slate-600
   ];
 
-  const recentCustodyEvents = evidence.flatMap(e => 
-    e.chainOfCustody.map(c => ({ ...c, itemTitle: e.title, itemId: e.id }))
+  const recentCustodyEvents = evidence.flatMap(e =>
+    (e.chainOfCustody || []).map(c => ({ ...c, itemTitle: e.title, itemId: e.id }))
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
   return (

@@ -40,9 +40,10 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
     const fetchClauses = async () => {
         try {
             const data = await ApiService.getClauses();
-            setClauses(data);
+            setClauses(data || []);
         } catch (e) {
             console.error("Failed to fetch clauses", e);
+            setClauses([]);
         }
     };
     fetchClauses();
@@ -50,7 +51,7 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
 
   useEffect(() => {
     if (draftResult) {
-      const isDuplicate = content.includes(draftResult.substring(0, 50));
+      const isDuplicate = content.includes((draftResult || '').substring(0, 50));
       if (!isDuplicate) {
         setContent(prev => prev + `<p>${draftResult.replace(/\n/g, '<br/>')}</p>`);
       }
@@ -59,10 +60,10 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   }, [draftResult]);
 
   const filteredClauses = useMemo(() => {
-    return clauses.filter(c => 
-      c.name.toLowerCase().includes(clauseSearch.toLowerCase()) || 
-      c.content.toLowerCase().includes(clauseSearch.toLowerCase()) ||
-      c.category.toLowerCase().includes(clauseSearch.toLowerCase())
+    return clauses.filter(c =>
+      (c.name || '').toLowerCase().includes(clauseSearch.toLowerCase()) ||
+      (c.content || '').toLowerCase().includes(clauseSearch.toLowerCase()) ||
+      (c.category || '').toLowerCase().includes(clauseSearch.toLowerCase())
     );
   }, [clauseSearch, clauses]);
 

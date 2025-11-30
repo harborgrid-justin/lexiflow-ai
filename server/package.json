@@ -17,7 +17,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:sync": "ts-node src/database/scripts/sequelize-sync.ts",
-    "db:seed": "node src/database/scripts/sync-database.js --seed-only"
+    "db:seed": "node src/database/scripts/sync-database.js --seed-only",
+    "db:seed:comprehensive": "ts-node src/database/run-comprehensive-seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
