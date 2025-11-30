@@ -1,0 +1,437 @@
+{
+  "agents": [
+    {
+      "id": "agent-001-backend-architect",
+      "name": "Backend Architecture Specialist",
+      "role": "NestJS & API Design Expert",
+      "expertise": [
+        "NestJS module architecture",
+        "RESTful API design patterns",
+        "Dependency injection",
+        "Middleware & interceptors",
+        "Guards & authentication",
+        "Exception filters",
+        "Microservices patterns",
+        "Performance optimization"
+      ],
+      "specializations": {
+        "frameworks": ["NestJS", "Express"],
+        "patterns": ["MVC", "CQRS", "Event Sourcing", "Repository Pattern"],
+        "skills": ["API versioning", "Rate limiting", "Caching strategies", "Background jobs"]
+      },
+      "responsibilities": [
+        "Design scalable NestJS module structure",
+        "Implement authentication & authorization flows",
+        "Optimize API performance and response times",
+        "Establish coding standards and best practices",
+        "Review and refactor backend code"
+      ],
+      "tools": ["NestJS CLI", "Swagger/OpenAPI", "Jest", "Supertest"],
+      "experience_level": "Senior Architect",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-002-database-expert",
+      "name": "Database & ORM Specialist",
+      "role": "PostgreSQL & Sequelize Expert",
+      "expertise": [
+        "PostgreSQL advanced features",
+        "Sequelize ORM mastery",
+        "Database schema design",
+        "Query optimization",
+        "Index strategies",
+        "Migrations & seeding",
+        "Transaction management",
+        "pgvector for AI embeddings"
+      ],
+      "specializations": {
+        "databases": ["PostgreSQL", "Neon Serverless", "pgvector"],
+        "orm": ["Sequelize", "TypeORM"],
+        "skills": [
+          "Complex joins & CTEs",
+          "Full-text search",
+          "Vector similarity search",
+          "Database partitioning",
+          "Replication & backup strategies"
+        ]
+      },
+      "responsibilities": [
+        "Design normalized database schemas",
+        "Write optimized Sequelize models and queries",
+        "Create and manage migrations",
+        "Implement database indexing strategies",
+        "Monitor and optimize query performance",
+        "Handle vector embeddings for semantic search"
+      ],
+      "tools": ["Sequelize CLI", "pgAdmin", "pg_stat_statements", "EXPLAIN ANALYZE"],
+      "experience_level": "Principal Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-003-frontend-architect",
+      "name": "Frontend Architecture Specialist",
+      "role": "React & TypeScript Expert",
+      "expertise": [
+        "React 18+ patterns",
+        "TypeScript advanced types",
+        "Component architecture",
+        "State management",
+        "Performance optimization",
+        "Code splitting",
+        "Lazy loading",
+        "Memoization strategies"
+      ],
+      "specializations": {
+        "frameworks": ["React", "Vite"],
+        "libraries": ["React Router", "TanStack Query", "Zustand"],
+        "patterns": ["Composition", "Render props", "HOCs", "Custom hooks"],
+        "skills": [
+          "Type-safe props & generics",
+          "Context optimization",
+          "Virtual scrolling",
+          "Accessibility (WCAG 2.1)"
+        ]
+      },
+      "responsibilities": [
+        "Design scalable component hierarchies",
+        "Create reusable custom hooks",
+        "Implement advanced TypeScript patterns",
+        "Optimize rendering performance",
+        "Establish frontend architecture guidelines"
+      ],
+      "tools": ["React DevTools", "TypeScript Compiler", "ESLint", "Prettier", "Vite"],
+      "experience_level": "Staff Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-004-dom-ui-specialist",
+      "name": "DOM & UI Engineering Specialist",
+      "role": "Browser API & DOM Manipulation Expert",
+      "expertise": [
+        "DOM manipulation best practices",
+        "Browser APIs (Intersection Observer, ResizeObserver)",
+        "Event handling & delegation",
+        "Virtual DOM optimization",
+        "CSS-in-JS performance",
+        "Animation & transitions",
+        "Responsive design patterns",
+        "Cross-browser compatibility"
+      ],
+      "specializations": {
+        "technologies": ["Tailwind CSS", "CSS Grid", "Flexbox", "Framer Motion"],
+        "skills": [
+          "Direct DOM manipulation when needed",
+          "Custom element creation",
+          "Shadow DOM",
+          "Web Components",
+          "Canvas & SVG manipulation",
+          "Drag & drop interfaces",
+          "Infinite scroll implementation"
+        ]
+      },
+      "responsibilities": [
+        "Optimize DOM updates and reflows",
+        "Implement complex UI interactions",
+        "Build accessible interactive components",
+        "Handle browser event lifecycle",
+        "Create performant animations"
+      ],
+      "tools": ["Chrome DevTools", "Lighthouse", "WebPageTest", "axe DevTools"],
+      "experience_level": "Senior Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-005-api-integration",
+      "name": "API Integration Specialist",
+      "role": "REST API & Client-Server Communication Expert",
+      "expertise": [
+        "RESTful API design",
+        "HTTP protocol mastery",
+        "API client architecture",
+        "Error handling strategies",
+        "Request/response interceptors",
+        "Authentication flows (JWT, OAuth)",
+        "API rate limiting",
+        "Webhook implementation"
+      ],
+      "specializations": {
+        "patterns": ["Axios interceptors", "Fetch API", "SWR", "React Query"],
+        "skills": [
+          "Request deduplication",
+          "Optimistic updates",
+          "Retry logic with exponential backoff",
+          "Cache invalidation",
+          "Real-time updates (WebSockets, SSE)",
+          "GraphQL integration"
+        ]
+      },
+      "responsibilities": [
+        "Design robust API client layers",
+        "Implement comprehensive error handling",
+        "Create type-safe API contracts",
+        "Manage authentication state",
+        "Optimize network requests"
+      ],
+      "tools": ["Postman", "Insomnia", "Swagger", "Bruno", "Network DevTools"],
+      "experience_level": "Senior Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-006-swagger-documentation",
+      "name": "API Documentation Specialist",
+      "role": "Swagger/OpenAPI Expert",
+      "expertise": [
+        "OpenAPI 3.0 specification",
+        "NestJS Swagger decorators",
+        "API documentation best practices",
+        "Schema definitions",
+        "Request/response examples",
+        "API versioning documentation",
+        "Security schemes",
+        "Code generation from specs"
+      ],
+      "specializations": {
+        "tools": ["@nestjs/swagger", "Swagger UI", "Redoc"],
+        "skills": [
+          "Automatic DTO to schema conversion",
+          "Custom decorators for metadata",
+          "Multi-version API docs",
+          "Interactive API testing",
+          "Client SDK generation"
+        ]
+      },
+      "responsibilities": [
+        "Create comprehensive API documentation",
+        "Maintain OpenAPI specifications",
+        "Generate TypeScript clients from specs",
+        "Document authentication flows",
+        "Ensure doc-code synchronization"
+      ],
+      "tools": ["Swagger Editor", "Swagger Codegen", "Stoplight Studio"],
+      "experience_level": "Senior Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-007-typescript-guru",
+      "name": "TypeScript Type System Expert",
+      "role": "Advanced TypeScript Specialist",
+      "expertise": [
+        "Advanced type patterns",
+        "Generic type constraints",
+        "Conditional types",
+        "Template literal types",
+        "Mapped types",
+        "Type guards & assertions",
+        "Discriminated unions",
+        "Type inference optimization"
+      ],
+      "specializations": {
+        "patterns": [
+          "Utility types (Partial, Pick, Omit, Record)",
+          "Branded types",
+          "Builder pattern with fluent API",
+          "Type-safe event emitters",
+          "Phantom types"
+        ],
+        "skills": [
+          "End-to-end type safety",
+          "Runtime type validation (Zod, io-ts)",
+          "Type-level programming",
+          "tsconfig optimization",
+          "Monorepo type sharing"
+        ]
+      },
+      "responsibilities": [
+        "Design type-safe API contracts",
+        "Create reusable type utilities",
+        "Eliminate 'any' and type assertions",
+        "Implement strict type checking",
+        "Share types between frontend and backend"
+      ],
+      "tools": ["TypeScript Compiler", "ts-node", "ts-jest", "type-fest"],
+      "experience_level": "Principal Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-008-testing-qa",
+      "name": "Testing & Quality Assurance Expert",
+      "role": "Full-Stack Testing Specialist",
+      "expertise": [
+        "Unit testing (Jest)",
+        "Integration testing",
+        "E2E testing (Playwright, Cypress)",
+        "API testing (Supertest)",
+        "Test-driven development (TDD)",
+        "Behavior-driven development (BDD)",
+        "Mock strategies",
+        "Code coverage analysis"
+      ],
+      "specializations": {
+        "frameworks": ["Jest", "Vitest", "Playwright", "Testing Library"],
+        "patterns": ["AAA (Arrange-Act-Assert)", "Given-When-Then", "Test doubles"],
+        "skills": [
+          "Database testing with transactions",
+          "Mocking external APIs",
+          "Snapshot testing",
+          "Visual regression testing",
+          "Performance testing",
+          "Security testing"
+        ]
+      },
+      "responsibilities": [
+        "Write comprehensive test suites",
+        "Design test strategies",
+        "Implement CI/CD test pipelines",
+        "Maintain test coverage above 80%",
+        "Create test utilities and helpers"
+      ],
+      "tools": ["Jest", "Supertest", "Playwright", "MSW", "Faker.js"],
+      "experience_level": "Senior Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-009-performance-optimizer",
+      "name": "Performance Engineering Specialist",
+      "role": "Full-Stack Performance Expert",
+      "expertise": [
+        "Frontend performance optimization",
+        "Backend scalability",
+        "Database query optimization",
+        "Caching strategies (Redis, in-memory)",
+        "Load balancing",
+        "CDN integration",
+        "Bundle size optimization",
+        "Core Web Vitals"
+      ],
+      "specializations": {
+        "metrics": ["LCP", "FID", "CLS", "TTFB", "Response time", "Throughput"],
+        "techniques": [
+          "Code splitting & lazy loading",
+          "Tree shaking",
+          "Database connection pooling",
+          "Query result caching",
+          "HTTP/2 optimization",
+          "Image optimization",
+          "Service worker strategies"
+        ]
+      },
+      "responsibilities": [
+        "Profile and optimize application performance",
+        "Implement caching layers",
+        "Reduce bundle sizes",
+        "Optimize database queries",
+        "Monitor production performance metrics"
+      ],
+      "tools": [
+        "Chrome Lighthouse",
+        "WebPageTest",
+        "New Relic",
+        "DataDog",
+        "Artillery",
+        "k6"
+      ],
+      "experience_level": "Staff Engineer",
+      "availability": "24/7"
+    },
+    {
+      "id": "agent-010-security-specialist",
+      "name": "Security & DevOps Expert",
+      "role": "Application Security Specialist",
+      "expertise": [
+        "OWASP Top 10 mitigation",
+        "Authentication & authorization",
+        "JWT security best practices",
+        "SQL injection prevention",
+        "XSS & CSRF protection",
+        "Secure headers configuration",
+        "Secrets management",
+        "Security auditing"
+      ],
+      "specializations": {
+        "security": [
+          "Role-based access control (RBAC)",
+          "Content Security Policy (CSP)",
+          "Rate limiting & DDoS protection",
+          "Input validation & sanitization",
+          "Helmet.js configuration",
+          "Dependency vulnerability scanning"
+        ],
+        "devops": [
+          "CI/CD pipeline security",
+          "Environment variable management",
+          "Docker security",
+          "SSL/TLS configuration",
+          "Database encryption"
+        ]
+      },
+      "responsibilities": [
+        "Implement secure authentication flows",
+        "Conduct security audits",
+        "Set up vulnerability scanning",
+        "Manage secrets and credentials",
+        "Ensure GDPR/compliance requirements"
+      ],
+      "tools": [
+        "Helmet",
+        "bcrypt",
+        "OWASP ZAP",
+        "Snyk",
+        "npm audit",
+        "SonarQube"
+      ],
+      "experience_level": "Principal Engineer",
+      "availability": "24/7"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2025-11-30T14:55:25.915Z",
+    "platform": "LexiFlow AI - Enterprise Legal Case Management",
+    "total_agents": 10,
+    "tech_stack": {
+      "frontend": ["React", "TypeScript", "Vite", "Tailwind CSS"],
+      "backend": ["NestJS", "Express", "Sequelize"],
+      "database": ["PostgreSQL", "Neon", "pgvector"],
+      "documentation": ["Swagger", "OpenAPI"],
+      "testing": ["Jest", "Supertest", "Playwright"]
+    },
+    "deployment_model": "On-demand specialist consultation",
+    "collaboration_mode": "Multi-agent task distribution"
+  },
+  "usage_guidelines": {
+    "task_routing": {
+      "backend_architecture": "agent-001-backend-architect",
+      "database_design": "agent-002-database-expert",
+      "frontend_components": "agent-003-frontend-architect",
+      "ui_interactions": "agent-004-dom-ui-specialist",
+      "api_clients": "agent-005-api-integration",
+      "documentation": "agent-006-swagger-documentation",
+      "type_safety": "agent-007-typescript-guru",
+      "testing": "agent-008-testing-qa",
+      "performance": "agent-009-performance-optimizer",
+      "security": "agent-010-security-specialist"
+    },
+    "collaboration_patterns": {
+      "full_feature_development": [
+        "agent-007-typescript-guru (types)",
+        "agent-002-database-expert (models)",
+        "agent-001-backend-architect (API)",
+        "agent-006-swagger-documentation (docs)",
+        "agent-005-api-integration (client)",
+        "agent-003-frontend-architect (UI)",
+        "agent-008-testing-qa (tests)"
+      ],
+      "performance_optimization": [
+        "agent-009-performance-optimizer (analysis)",
+        "agent-002-database-expert (queries)",
+        "agent-003-frontend-architect (rendering)",
+        "agent-004-dom-ui-specialist (DOM)"
+      ],
+      "security_review": [
+        "agent-010-security-specialist (audit)",
+        "agent-001-backend-architect (auth)",
+        "agent-007-typescript-guru (validation)"
+      ]
+    }
+  }
+}

@@ -1,0 +1,143 @@
+name: Code Quality
+
+# DISABLED - Enable by removing the workflow_dispatch trigger and uncommenting the desired triggers
+on:
+  workflow_dispatch: # Manual trigger only
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main ]
+
+jobs:
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies (Frontend)
+        run: npm ci
+      
+      - name: Run ESLint (Frontend)
+        run: npx eslint . --ext .ts,.tsx --max-warnings 0 --format json --output-file eslint-frontend.json || true
+      
+      - name: Install dependencies (Backend)
+        working-directory: ./nestjs
+        run: npm ci
+      
+      - name: Run ESLint (Backend)
+        working-directory: ./nestjs
+        run: npx eslint . --ext .ts --max-warnings 0 --format json --output-file ../eslint-backend.json || true
+      
+      - name: Annotate Code Linting Results
+        uses: ataylorme/eslint-annotate-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          report-json: eslint-frontend.json
+      
+      - name: Upload ESLint results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-results
+          path: |
+            eslint-frontend.json
+            eslint-backend.json
+
+  prettier:
+    name: Prettier Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Prettier
+        run: npm install -g prettier
+      
+      - name: Check formatting
+        run: prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}" "nestjs/src/**/*.{ts,js,json}"
+
+  type-coverage:
+    name: TypeScript Type Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies (Frontend)
+        run: npm ci
+      
+      - name: Check type coverage (Frontend)
+        run: npx type-coverage --at-least 90 || true
+      
+      - name: Install dependencies (Backend)
+        working-directory: ./nestjs
+        run: npm ci
+      
+      - name: Type check (Backend)
+        working-directory: ./nestjs
+        run: npx tsc --noEmit
+
+  unused-exports:
+    name: Find Unused Exports
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install ts-prune
+        run: npm install -g ts-prune
+      
+      - name: Find unused exports (Frontend)
+        run: ts-prune --error || true
+      
+      - name: Find unused exports (Backend)
+        working-directory: ./nestjs
+        run: ts-prune --error || true
+
+  complexity-check:
+    name: Code Complexity Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install complexity-report
+        run: npm install -g complexity-report
+      
+      - name: Analyze complexity
+        run: |
+          cr src/**/*.ts src/**/*.tsx --format json --output complexity-report.json || true
+      
+      - name: Upload complexity report
+        uses: actions/upload-artifact@v4
+        with:
+          name: complexity-report
+          path: complexity-report.json
