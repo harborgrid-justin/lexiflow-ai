@@ -4,27 +4,83 @@ import { DocumentEmbedding } from '../models/document-embedding.model';
 import { SearchQuery } from '../models/search-query.model';
 import { Sequelize, QueryTypes, Op } from 'sequelize';
 
+/**
+ * Options for configuring vector similarity search
+ * 
+ * @interface VectorSearchOptions
+ */
 export interface VectorSearchOptions {
+  /** The search query text */
   query: string;
+  /** Maximum number of results to return (default: 10) */
   limit?: number;
+  /** Minimum similarity threshold 0-1 (default: 0.7) */
   threshold?: number;
+  /** Optional filters to narrow search scope */
   filters?: {
+    /** Filter by specific document IDs */
     documentIds?: string[];
+    /** Filter by organization ID */
     organizationId?: string;
+    /** Filter by case ID */
     caseId?: string;
   };
 }
 
+/**
+ * Result from vector similarity search
+ * 
+ * @interface VectorSearchResult
+ */
 export interface VectorSearchResult {
+  /** Unique identifier for the embedding chunk */
   id: string;
+  /** Text content of the matched chunk */
   content: string;
+  /** Cosine similarity score (0-1, higher is better) */
   similarity: number;
+  /** ID of the parent document */
   document_id: string;
+  /** Additional metadata about the chunk */
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Vector Search Service
+ * 
+ * Provides semantic search capabilities using PostgreSQL with pgvector extension.
+ * Enables similarity-based document search using vector embeddings for advanced
+ * legal document discovery and research.
+ * 
+ * @class VectorSearchService
+ * @implements Semantic search using vector embeddings
+ * 
+ * @description
+ * This service leverages pgvector to perform cosine similarity search on document
+ * embeddings. It supports filtering by organization, case, and document, making
+ * it ideal for multi-tenant legal document search scenarios.
+ * 
+ * @requires PostgreSQL with pgvector extension
+ * @requires Document embeddings pre-generated (typically using OpenAI/Gemini APIs)
+ * 
+ * @example
+ * const service = new VectorSearchService(embeddingModel, queryModel, sequelize);
+ * const results = await service.semanticSearch(embedding, {
+ *   query: "contract termination clause",
+ *   limit: 5,
+ *   threshold: 0.8,
+ *   filters: { organizationId: "org-123" }
+ * });
+ */
 @Injectable()
 export class VectorSearchService {
+  /**
+   * Creates an instance of VectorSearchService
+   * 
+   * @param {typeof DocumentEmbedding} embeddingModel - Sequelize model for document embeddings
+   * @param {typeof SearchQuery} searchQueryModel - Sequelize model for search query logging
+   * @param {Sequelize} sequelize - Sequelize connection instance for raw SQL queries
+   */
   constructor(
     @InjectModel(DocumentEmbedding)
     private embeddingModel: typeof DocumentEmbedding,
@@ -36,6 +92,40 @@ export class VectorSearchService {
 
   /**
    * Perform semantic search using vector similarity
+   * 
+   * Executes a cosine similarity search on document embeddings using PostgreSQL's
+   * pgvector extension. Returns the most similar document chunks based on the
+   * provided query embedding.
+   * 
+   * @param {number[]} queryEmbedding - Vector embedding of the search query (typically 1536 dimensions for OpenAI)
+   * @param {VectorSearchOptions} options - Search configuration and filters
+   * @returns {Promise<VectorSearchResult[]>} Array of matching document chunks with similarity scores
+   * 
+   * @algorithm
+   * Uses cosine distance operator (<=> in pgvector) for similarity:
+   * - Distance of 0 = identical vectors
+   * - Similarity score = 1 - distance (so higher is better)
+   * - Results are filtered by minimum threshold and sorted by similarity
+   * 
+   * @performance
+   * - Uses pgvector's HNSW index for fast approximate nearest neighbor search
+   * - Typical query time: 10-50ms for millions of embeddings
+   * 
+   * @example
+   * const queryEmbedding = await openai.createEmbedding("contract termination");
+   * const results = await semanticSearch(queryEmbedding.data[0].embedding, {
+   *   query: "contract termination clause",
+   *   limit: 10,
+   *   threshold: 0.75,
+   *   filters: {
+   *     organizationId: "org-uuid",
+   *     caseId: "case-uuid"
+   *   }
+   * });
+   * 
+   * results.forEach(r => {
+   *   console.log(`${r.similarity.toFixed(3)}: ${r.content.substring(0, 100)}...`);
+   * });
    */
   async semanticSearch(
     queryEmbedding: number[],

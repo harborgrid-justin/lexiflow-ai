@@ -23,7 +23,6 @@ export class WorkflowService {
     const whereClause = caseId ? { case_id: caseId } : {};
     return this.workflowStageModel.findAll({
       where: whereClause,
-      include: ['case', 'organization'],
       order: [['order', 'ASC']],
     });
   }
@@ -35,15 +34,12 @@ export class WorkflowService {
 
     return this.workflowTaskModel.findAll({
       where: whereClause,
-      include: ['stage', 'assignee', 'creator'],
       order: [['created_at', 'ASC']],
     });
   }
 
   async findStage(id: string): Promise<WorkflowStage> {
-    const stage = await this.workflowStageModel.findByPk(id, {
-      include: ['case', 'organization'],
-    });
+    const stage = await this.workflowStageModel.findByPk(id);
 
     if (!stage) {
       throw new NotFoundException(`Workflow stage with ID ${id} not found`);
@@ -53,9 +49,7 @@ export class WorkflowService {
   }
 
   async findTask(id: string): Promise<WorkflowTask> {
-    const task = await this.workflowTaskModel.findByPk(id, {
-      include: ['stage', 'assignee', 'creator'],
-    });
+    const task = await this.workflowTaskModel.findByPk(id);
 
     if (!task) {
       throw new NotFoundException(`Workflow task with ID ${id} not found`);

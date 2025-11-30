@@ -21,14 +21,11 @@ export class BillingService {
 
     return this.timeEntryModel.findAll({
       where: whereClause,
-      include: ['case', 'user', 'organization'],
     });
   }
 
   async findTimeEntry(id: string): Promise<TimeEntry> {
-    const timeEntry = await this.timeEntryModel.findByPk(id, {
-      include: ['case', 'user', 'organization'],
-    });
+    const timeEntry = await this.timeEntryModel.findByPk(id);
 
     if (!timeEntry) {
       throw new NotFoundException(`Time entry with ID ${id} not found`);

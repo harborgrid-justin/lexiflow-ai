@@ -21,7 +21,8 @@
       "Bash(pgrep:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxleGlmbG93LmNvbSIsInN1YiI6ImY5MzdiYjBkLWQ5Y2MtNGI3Ni1iMThjLTA1NzkzOTNhNDk2YSIsIm9yZ0lkIjoiNzc0OTI4MDQtMTZlMy00Y2FkLWFiZTUtMzRmY2I1N2VlMzA4IiwiaWF0IjoxNzY0NTE2Mjk2LCJleHAiOjE3NjQ2MDI2OTZ9.-vCkHIiw0L3YluRC_x5BsVEn2qHxwgaSmIBSY8r079c\")",
       "Bash(fuser:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(printf:*)"
     ],
     "deny": [],
     "ask": []

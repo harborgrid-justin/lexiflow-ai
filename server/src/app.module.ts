@@ -1,3 +1,22 @@
+/**
+ * @fileoverview Main application module for LexiFlow AI Backend
+ * 
+ * This module configures and bootstraps the entire NestJS application including:
+ * - Database connection (PostgreSQL with Sequelize)
+ * - Environment configuration
+ * - All feature modules and controllers
+ * - All Sequelize models
+ * - Global services and providers
+ * 
+ * @module AppModule
+ * @requires NestJS @nestjs/common
+ * @requires Sequelize @nestjs/sequelize
+ * @requires dotenv via @nestjs/config
+ * 
+ * @author LexiFlow Development Team
+ * @version 1.0.0
+ */
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
