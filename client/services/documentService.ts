@@ -1,5 +1,5 @@
 
-import { EvidenceItem, FileChunk } from '../types';
+import { FileChunk } from '../types';
 
 export const DocumentService = {
   // Simulate reading a file and generating a SHA-256 hash
@@ -53,7 +53,7 @@ export const DocumentService = {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   },
 
-  async verifyIntegrity(hash: string): Promise<{ verified: boolean; timestamp: string; block: number }> {
+  async verifyIntegrity(_hash: string): Promise<{ verified: boolean; timestamp: string; block: number }> {
       return new Promise(resolve => {
           setTimeout(() => {
               resolve({

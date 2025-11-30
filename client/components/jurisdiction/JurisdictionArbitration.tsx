@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Gavel, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { Card } from '../common/Card';
 
 export const JurisdictionArbitration: React.FC = () => {

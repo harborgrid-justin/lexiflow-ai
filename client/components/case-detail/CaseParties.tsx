@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Party, Organization } from '../../types';
 import { ApiService } from '../../services/apiService';
-import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
+import { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Button } from '../common/Button';
-import { Plus, Edit2, Trash2, User, Building, Gavel, Mail, Phone, Link } from 'lucide-react';
+import { Plus, Edit2, Trash2, User, Building, Gavel, Mail, Link } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Inputs';
 import { Badge } from '../common/Badge';

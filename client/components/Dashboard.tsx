@@ -23,7 +23,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
         try {
             const data = await ApiService.getDashboard();
             // Map icon strings back to components
-            const mappedStats = data.stats.map(s => ({
+            const mappedStats = data.stats.map((s: any) => ({
                 ...s,
                 icon: s.icon === 'Briefcase' ? Briefcase : s.icon === 'FileText' ? FileText : s.icon === 'Clock' ? Clock : AlertTriangle
             }));

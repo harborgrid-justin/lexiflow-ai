@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
-import { WorkflowStage, WorkflowTask } from '../../types';
+import { WorkflowStage } from '../../types';
 import { 
-  Cpu, Sparkles, Plus, CheckCircle, Clock, BookOpen, Zap, AlertCircle, 
+  Cpu, Sparkles, Plus, CheckCircle, Clock, BookOpen, Zap, 
   ArrowRight, FileText, DollarSign, Scale, Gavel, Layout, ChevronDown, ChevronUp, Box
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { UserAvatar } from '../common/UserAvatar';
-import { ProgressBar } from '../common/ProgressBar';
 
 interface CaseWorkflowProps {
   stages: WorkflowStage[];

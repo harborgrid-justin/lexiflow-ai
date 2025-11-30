@@ -5,7 +5,7 @@ import { Button } from './common/Button';
 import { DiscoveryRequest } from '../types';
 import { ApiService } from '../services/apiService';
 import { 
-  MessageCircle, Plus, Scale, Shield, Users, Lock, Clock, ArrowLeft
+  MessageCircle, Plus, Scale, Shield, Users, Lock, Clock
 } from 'lucide-react';
 
 import { DiscoveryDashboard } from './discovery/DiscoveryDashboard';
@@ -70,12 +70,14 @@ export const DiscoveryPlatform: React.FC = () => {
             return <LegalHolds />;
         case 'doc_viewer':
             return <DiscoveryDocumentViewer docId={contextId || ''} onBack={() => setView('dashboard')} />;
-        case 'response':
+        case 'response': {
             const reqToDraft = requests.find(r => r.id === contextId);
             return <DiscoveryResponse request={reqToDraft || null} onBack={() => setView('requests')} onSave={handleSaveResponse} />;
-        case 'production':
+        }
+        case 'production': {
             const reqToProduce = requests.find(r => r.id === contextId);
             return <DiscoveryProduction request={reqToProduce || null} onBack={() => setView('requests')} />;
+        }
         case 'plan':
             return (
                 <div className="flex flex-col items-center justify-center h-96 text-slate-400 bg-white rounded-lg border border-slate-200 border-dashed">

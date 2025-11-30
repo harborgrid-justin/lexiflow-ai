@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Building2, Users, User, ChevronRight, Shield, Globe, Briefcase, 
-  MoreVertical, Plus, CheckCircle, XCircle 
+  Building2, Users, User, ChevronRight, Shield, Globe, 
+  MoreVertical, Plus, CheckCircle 
 } from 'lucide-react';
 import { ApiService } from '../../services/apiService';
 import { Organization, Group, User as UserType } from '../../types';
 import { Button } from '../common/Button';
-import { Badge } from '../common/Badge';
 import { UserAvatar } from '../common/UserAvatar';
 
 export const AdminHierarchy: React.FC = () => {
@@ -34,7 +33,7 @@ export const AdminHierarchy: React.FC = () => {
         }
     };
     fetchData();
-  }, []);
+  }, [selectedOrgId]);
 
   const selectedOrg = orgs.find(o => o.id === selectedOrgId);
   const orgGroups = groups.filter(g => g.orgId === selectedOrgId);

@@ -16,7 +16,12 @@
       "Bash(node:*)",
       "Bash(npm run db:sync:*)",
       "Bash(curl:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJzdWIiOiJhNGJiNTU1Yy00ZjlkLTQxNjctOGYzYy05YzBkN2YyMzcxNmEiLCJvcmdJZCI6Ijc3NDkyODA0LTE2ZTMtNGNhZC1hYmU1LTM0ZmNiNTdlZTMwOCIsImlhdCI6MTc2NDUxNTkyNywiZXhwIjoxNzY0NjAyMzI3fQ.0BOKtUXhE8gp6KdCceQQzOizZuqiuzj6iSoTNplzjuk\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJzdWIiOiJhNGJiNTU1Yy00ZjlkLTQxNjctOGYzYy05YzBkN2YyMzcxNmEiLCJvcmdJZCI6Ijc3NDkyODA0LTE2ZTMtNGNhZC1hYmU1LTM0ZmNiNTdlZTMwOCIsImlhdCI6MTc2NDUxNTkyNywiZXhwIjoxNzY0NjAyMzI3fQ.0BOKtUXhE8gp6KdCceQQzOizZuqiuzj6iSoTNplzjuk\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxleGlmbG93LmNvbSIsInN1YiI6ImY5MzdiYjBkLWQ5Y2MtNGI3Ni1iMThjLTA1NzkzOTNhNDk2YSIsIm9yZ0lkIjoiNzc0OTI4MDQtMTZlMy00Y2FkLWFiZTUtMzRmY2I1N2VlMzA4IiwiaWF0IjoxNzY0NTE2MjQ5LCJleHAiOjE3NjQ2MDI2NDl9.lo1jxvg0p9E5LTvEt3TOoYHaswvyEeHU6lnkUhlPONg\")",
+      "Bash(pgrep:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxleGlmbG93LmNvbSIsInN1YiI6ImY5MzdiYjBkLWQ5Y2MtNGI3Ni1iMThjLTA1NzkzOTNhNDk2YSIsIm9yZ0lkIjoiNzc0OTI4MDQtMTZlMy00Y2FkLWFiZTUtMzRmY2I1N2VlMzA4IiwiaWF0IjoxNzY0NTE2Mjk2LCJleHAiOjE3NjQ2MDI2OTZ9.-vCkHIiw0L3YluRC_x5BsVEn2qHxwgaSmIBSY8r079c\")",
+      "Bash(fuser:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

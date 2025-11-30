@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '../common/Button';
-import { Lock, User, Layers, Plus, PenTool, CheckCircle } from 'lucide-react';
+import { User, Layers, Plus, PenTool, CheckCircle } from 'lucide-react';
 import { EvidenceItem, ChainOfCustodyEvent } from '../../types';
 import { Modal } from '../common/Modal';
 import { Input, TextArea } from '../common/Inputs';

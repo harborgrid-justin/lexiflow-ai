@@ -3,7 +3,7 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
-import { Search, Plus, Box, Activity, FileText, Fingerprint, Filter, X } from 'lucide-react';
+import { Plus, Box, Activity, FileText, Fingerprint, Filter } from 'lucide-react';
 import { EvidenceItem } from '../../types';
 import { EvidenceFilters } from '../../hooks/useEvidenceVault';
 
@@ -17,7 +17,7 @@ interface EvidenceInventoryProps {
 }
 
 export const EvidenceInventory: React.FC<EvidenceInventoryProps> = ({ 
-  items, filteredItems, filters, setFilters, onItemClick, onIntakeClick 
+  _items, filteredItems, filters, setFilters, onItemClick, onIntakeClick 
 }) => {
   const [showFilters, setShowFilters] = useState(false);
 

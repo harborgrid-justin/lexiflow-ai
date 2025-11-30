@@ -20,7 +20,7 @@ export const EvidenceForensics: React.FC<EvidenceForensicsProps> = ({ selectedIt
           const result = await DocumentService.verifyIntegrity(selectedItem.blockchainHash || '');
           setVerifyData(result);
           setVerificationStatus('verified');
-      } catch (e) {
+      } catch (_e) {
           setVerificationStatus('failed');
       }
   };

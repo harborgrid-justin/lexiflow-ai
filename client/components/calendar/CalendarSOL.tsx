@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, ShieldAlert, MapPin, Scale } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, MapPin } from 'lucide-react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { ApiService } from '../../services/apiService';
 

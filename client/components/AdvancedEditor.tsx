@@ -11,7 +11,7 @@ interface AdvancedEditorProps {
   onInsertRequest?: () => void;
 }
 
-export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, onSave, placeholder, onInsertRequest }) => {
+export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, onSave, placeholder, _onInsertRequest }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [showAiToolbar, setShowAiToolbar] = useState(false);
   const [selectionRange, setSelectionRange] = useState<Range | null>(null);
@@ -19,19 +19,20 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, 
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [wordCount, setWordCount] = useState(0);
 
-  useEffect(() => {
-    if (editorRef.current && initialContent && !editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = initialContent.includes('<') ? initialContent : `<p>${initialContent.replace(/\n/g, '<br/>')}</p>`;
-      updateStats();
-    }
-  }, []);
-
   const updateStats = () => {
     if (editorRef.current) {
         const text = editorRef.current.innerText || '';
         setWordCount(text.trim().split(/\s+/).filter(w => w.length > 0).length);
     }
   };
+
+  useEffect(() => {
+    if (editorRef.current && initialContent && !editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = initialContent.includes('<') ? initialContent : `<p>${initialContent.replace(/\n/g, '<br/>')}</p>`;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      updateStats();
+    }
+  }, [initialContent]);
 
   const execCmd = (command: string, value: string | undefined = undefined) => {
     document.execCommand(command, false, value);

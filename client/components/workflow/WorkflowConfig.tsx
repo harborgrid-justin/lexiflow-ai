@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Plus, Trash2, Save, ChevronRight, GripVertical, FileText, Zap, CheckSquare } from 'lucide-react';
+import { Settings, Plus, Trash2, Save, GripVertical, FileText, Zap, CheckSquare } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 
@@ -336,7 +336,7 @@ const DEFAULT_TEMPLATES: WorkflowTemplate[] = [
 ];
 
 export const WorkflowConfig: React.FC = () => {
-  const [templates, setTemplates] = useState<WorkflowTemplate[]>(DEFAULT_TEMPLATES);
+  const [templates, _setTemplates] = useState<WorkflowTemplate[]>(DEFAULT_TEMPLATES);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(DEFAULT_TEMPLATES[0].id);
   const [isEditing, setIsEditing] = useState(false);
 

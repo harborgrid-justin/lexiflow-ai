@@ -2,13 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Motion, MotionStatus, MotionType, User } from '../../types';
 import { ApiService } from '../../services/apiService';
-import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
+import { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Plus, Gavel, Calendar, Wand2, ArrowRight, RefreshCw, GitGraph, Clock } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Inputs';
-import { GeminiService } from '../../services/geminiService';
 import { MotionDetail } from './MotionDetail';
 
 interface CaseMotionsProps {
@@ -46,13 +45,19 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
         const reply = new Date(hearing);
         reply.setDate(hearing.getDate() - 7); // ~7 calendar days prior
         
-        setNewMotion(prev => ({
-          ...prev,
+        const newDates = {
           oppositionDueDate: opp.toISOString().split('T')[0],
           replyDueDate: reply.toISOString().split('T')[0]
+        };
+        
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setNewMotion(prev => ({
+          ...prev,
+          ...newDates
         }));
       }
     }
+   
   }, [newMotion.hearingDate]);
 
   const handleSave = async () => {

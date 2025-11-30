@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Wand2, Save, FileText } from 'lucide-react';
+import { ArrowLeft, Wand2, Save } from 'lucide-react';
 import { Button } from '../common/Button';
 import { DiscoveryRequest } from '../../types';
 import { GeminiService } from '../../services/geminiService';
@@ -21,6 +21,7 @@ export const DiscoveryResponse: React.FC<DiscoveryResponseProps> = ({ request, o
       if (request && !draftResponse) {
           handleGenerateResponse();
       }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request]);
 
   const handleGenerateResponse = async () => {

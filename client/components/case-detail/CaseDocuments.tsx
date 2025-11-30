@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { LegalDocument, User } from '../../types';
-import { FileText, History, Tag, Cpu, Sparkles, Bot, Plus, Wand2, Eye } from 'lucide-react';
+import { FileText, Cpu, Sparkles, Bot, Plus, Wand2, Eye } from 'lucide-react';
 import { DocumentAssembly } from '../DocumentAssembly';
 
 interface CaseDocumentsProps {

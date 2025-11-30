@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Case, TimeEntry, User } from '../../types';
+import { Case, User } from '../../types';
 import { Clock, FileText, Globe, Gavel, Users, DollarSign, Scale, Briefcase } from 'lucide-react';
 import { TimeEntryModal } from '../TimeEntryModal';
 

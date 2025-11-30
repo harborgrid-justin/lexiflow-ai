@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, UserProfile as IUserProfile } from '../types';
 import { ApiService } from '../services/apiService';
 import { PageHeader } from './common/PageHeader';
-import { User as UserIcon, Mail, Phone, Briefcase, Settings, Save, Loader2 } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Settings, Save } from 'lucide-react';
 import { Button } from './common/Button';
 
 interface UserProfileProps {
@@ -36,7 +36,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
         if (userProfile) {
             setBio(userProfile.bio || '');
             setPhone(userProfile.phone || '');
-            setSkills(userProfile.skills?.join(', ') || '');
+            setSkills(Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills || '');
             setTheme(userProfile.themePreference || 'system');
         }
       } catch (e) {

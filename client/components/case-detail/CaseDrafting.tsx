@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { PenTool, Cpu, Book, AlertTriangle, Check, Wand2, Search, History } from 'lucide-react';
+import { Cpu, Book, AlertTriangle, Check, Wand2, Search, History } from 'lucide-react';
 import { GeminiService } from '../../services/geminiService';
 import { Clause } from '../../types';
 import { AdvancedEditor } from '../AdvancedEditor';
@@ -19,7 +19,7 @@ interface CaseDraftingProps {
 
 export const CaseDrafting: React.FC<CaseDraftingProps> = ({ 
   caseId,
-  caseTitle,
+  _caseTitle,
   draftPrompt,
   setDraftPrompt,
   draftResult,
@@ -50,8 +50,12 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
 
   useEffect(() => {
     if (draftResult) {
-      setContent(prev => prev + `<p>${draftResult.replace(/\n/g, '<br/>')}</p>`);
+      const isDuplicate = content.includes(draftResult.substring(0, 50));
+      if (!isDuplicate) {
+        setContent(prev => prev + `<p>${draftResult.replace(/\n/g, '<br/>')}</p>`);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftResult]);
 
   const filteredClauses = useMemo(() => {

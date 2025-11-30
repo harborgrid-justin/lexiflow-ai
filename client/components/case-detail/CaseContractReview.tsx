@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ShieldAlert, CheckCircle, Upload, FileText, Cpu, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Upload, FileText, Cpu, AlertTriangle } from 'lucide-react';
 import { GeminiService } from '../../services/geminiService';
 
 export const CaseContractReview: React.FC = () => {

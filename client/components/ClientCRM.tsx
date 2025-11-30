@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Client } from '../types';
 import { ApiService } from '../services/apiService';
-import { UserPlus, Mail, PieChart, Lock } from 'lucide-react';
+import { UserPlus, PieChart, Lock } from 'lucide-react';
 import { ClientIntakeModal } from './ClientIntakeModal';
 import { ClientPortalModal } from './ClientPortalModal';
 import { PageHeader } from './common/PageHeader';

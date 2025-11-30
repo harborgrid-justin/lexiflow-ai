@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Users, Search, AlertTriangle, Lock, CheckCircle } from 'lucide-react';
+import { Search, Lock, CheckCircle } from 'lucide-react';
 import { ApiService } from '../services/apiService';
 import { ConflictCheck, EthicalWall } from '../types';
 import { PageHeader } from './common/PageHeader';

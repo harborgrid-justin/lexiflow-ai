@@ -1,6 +1,6 @@
 import { Case, User, LegalDocument, WorkflowStage, Motion, DiscoveryRequest, EvidenceItem, TimelineEvent, TimeEntry, WorkflowTask, ConflictCheck, Conversation, AuditLogEntry, Organization, Group, Client, Clause, JudgeProfile, OpposingCounselProfile, EthicalWall, Jurisdiction, KnowledgeItem, ResearchSession, UserProfile, CaseMember } from '../types';
-import { ApiCase, ApiUser, ApiDocument, ApiEvidence, ApiTask, ApiMotion, ApiDiscoveryRequest, ApiClient, ApiOrganization } from '../shared-types';
-import { transformApiCase, transformApiUser, transformApiDocument, transformApiEvidence, transformApiTask, transformApiMotion, transformApiDiscovery, transformApiClient, transformApiOrganization, objectCamelToSnake } from '../utils/type-transformers';
+import { ApiCase } from '../shared-types';
+import { transformApiCase } from '../utils/type-transformers';
 
 // API Base URL configuration
 // In development with Vite proxy, use relative path '/api/v1'

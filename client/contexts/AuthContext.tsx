@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (currentUser.id) {
             ApiService.userProfiles.updateLastActive(currentUser.id);
           }
-        } catch (error) {
+        } catch (_error) {
           // Token is invalid
           localStorage.removeItem('authToken');
           sessionStorage.removeItem('authToken');

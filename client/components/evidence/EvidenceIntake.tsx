@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { ArrowLeft, UploadCloud, FileText, CheckCircle, Loader2, Link, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, UploadCloud, CheckCircle, Loader2, Link, ShieldCheck } from 'lucide-react';
 import { DocumentService } from '../../services/documentService';
 import { EvidenceItem, User } from '../../types';
 
@@ -13,7 +13,7 @@ interface EvidenceIntakeProps {
 }
 
 export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onComplete, currentUser }) => {
-  const [step, setStep] = useState(1);
+  const [_step, _setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
   const [processStage, setProcessStage] = useState('');
@@ -90,7 +90,7 @@ export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onCo
           <Card>
               <div className="space-y-6">
                   {/* Step 1: Upload */}
-                  <div className={`transition-opacity ${step === 1 ? 'opacity-100' : 'opacity-50 pointer-events-none hidden'}`}>
+                  <div className={`transition-opacity ${_step === 1 ? 'opacity-100' : 'opacity-50 pointer-events-none hidden'}`}>
                     <div 
                         className="border-2 border-dashed border-slate-300 rounded-lg p-10 text-center hover:bg-slate-50 cursor-pointer transition-colors relative overflow-hidden"
                         onClick={() => fileInputRef.current?.click()}

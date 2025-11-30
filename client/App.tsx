@@ -23,7 +23,7 @@ import { MasterWorkflow } from './components/MasterWorkflow';
 import { UserProfile } from './components/UserProfile';
 import { Case, User } from './types';
 import { ApiService } from './services/apiService';
-import { Bell, User as UserIcon, Search, Menu } from 'lucide-react';
+import { Bell, User as UserIcon, Menu } from 'lucide-react';
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();

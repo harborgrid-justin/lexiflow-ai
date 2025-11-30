@@ -23,7 +23,7 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                 ApiService.getBillingStats(),
                 ApiService.getClients()
             ]);
-            setWipData(stats.wip.map(w => ({ month: w.month, wip: w.amount })));
+            setWipData(stats.wip.map((w: any) => ({ month: w.month, wip: w.amount })));
             setRealizationData(stats.realization);
             setClients(c);
         } catch (e) {

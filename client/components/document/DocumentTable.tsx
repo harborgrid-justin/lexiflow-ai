@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Download, Eye, MoreVertical, Clock, CheckSquare, ShieldCheck, Tag, X, Plus } from 'lucide-react';
+import { FileText, Download, Eye, MoreVertical, Clock, CheckSquare, ShieldCheck, Tag } from 'lucide-react';
 import { LegalDocument } from '../../types';
 import { Badge } from '../common/Badge';
 

@@ -195,7 +195,7 @@ export function useAuth() {
       try {
         const currentUser = await ApiService.getCurrentUser();
         setUser(currentUser);
-      } catch (err) {
+      } catch (_err) {
         // User not authenticated
         setUser(null);
       } finally {
@@ -212,7 +212,7 @@ export function useAuth() {
       ApiService.setAuthToken(response.access_token);
       setUser(response.user);
       return true;
-    } catch (err) {
+    } catch (_err) {
       return false;
     }
   };

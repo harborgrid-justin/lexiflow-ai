@@ -4,7 +4,7 @@ import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { DiscoveryRequest } from '../../types';
-import { Wand2, Upload, Clock, AlertCircle } from 'lucide-react';
+import { Wand2, Upload, Clock } from 'lucide-react';
 
 interface DiscoveryRequestsProps {
   onNavigate: (view: any, id?: string) => void;

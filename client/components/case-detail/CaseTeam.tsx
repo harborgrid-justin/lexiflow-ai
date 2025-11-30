@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CaseMember, User } from '../../types';
 import { ApiService } from '../../services/apiService';
-import { Plus, X, User as UserIcon, Shield, Mail } from 'lucide-react';
+import { Plus, X, Shield, Mail } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 
@@ -19,6 +19,7 @@ export const CaseTeam: React.FC<CaseTeamProps> = ({ caseId }) => {
 
   useEffect(() => {
     fetchTeam();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
   const fetchTeam = async () => {

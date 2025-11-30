@@ -12,7 +12,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 @Module({
   imports: [
     SequelizeModule.forFeature([User]),
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

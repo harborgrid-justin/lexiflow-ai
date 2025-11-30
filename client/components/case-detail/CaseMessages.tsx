@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Case } from '../../types';
-import { Send, Paperclip, Lock, Shield, User, FileText } from 'lucide-react';
+import { Send, Paperclip, Lock, Shield, FileText } from 'lucide-react';
 import { Button } from '../common/Button';
 import { UserAvatar } from '../common/UserAvatar';
 

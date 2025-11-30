@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ShieldAlert, Search, AlertCircle, Mic2, Plus, FileCheck, ArrowRight, Archive } from 'lucide-react';
+import { ShieldAlert, Search, Mic2, Plus, FileCheck, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from '../common/Button';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';

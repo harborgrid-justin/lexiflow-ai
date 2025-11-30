@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, ExternalLink, BookOpen, Loader2, ArrowRight, ThumbsUp, ThumbsDown, Book } from 'lucide-react';
+import { Search, ExternalLink, BookOpen, Loader2, ArrowRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { ApiService } from '../services/apiService';
 import { ResearchSession, User } from '../types';

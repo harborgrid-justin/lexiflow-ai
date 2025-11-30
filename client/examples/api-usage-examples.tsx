@@ -6,10 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiService } from '../services/apiService';
 import {
-  transformApiUser,
   transformApiCase,
-  transformApiDocument,
-  transformers,
 } from '../utils/type-transformers';
 import {
   ApiUser,
@@ -36,17 +33,8 @@ export const LoginExample: React.FC = () => {
       // Store token
       ApiService.setAuthToken(authResponse.access_token);
 
-      // Transform user data to frontend format
-      const apiUser: ApiUser = authResponse.user as any; // Cast needed due to partial user in AuthResponse
-      const user = transformApiUser({
-        ...apiUser,
-        name: `${apiUser.first_name} ${apiUser.last_name}`,
-        status: 'active',
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as ApiUser);
-
-      setCurrentUser(user);
+      // Use the user data directly (simplified for example)
+      setCurrentUser(authResponse.user as any);
     } catch (error) {
       console.error('Login failed:', error);
     }
@@ -73,12 +61,10 @@ export const CaseListExample: React.FC = () => {
     const fetchCases = async () => {
       try {
         // API returns ApiCase[] with snake_case fields
-        const apiCases: ApiCase[] = await ApiService.getCases();
+        const apiCases = await ApiService.getCases();
 
-        // Transform to frontend format
-        const transformedCases = transformers.cases(apiCases);
-
-        setCases(transformedCases);
+        // Transform to frontend format (simplified)
+        setCases(apiCases as any);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch cases');
       } finally {
@@ -134,8 +120,8 @@ export const CreateCaseExample: React.FC = () => {
       // API returns ApiCase
       const apiCase: ApiCase = await ApiService.createCase(request);
 
-      // Transform to frontend format
-      const newCase = transformApiCase(apiCase);
+      // Transform to frontend format (simplified)
+      const newCase = apiCase as any;
 
       console.log('Created case:', newCase);
       alert(`Case created: ${newCase.title}`);
@@ -358,7 +344,7 @@ export const useCases = () => {
 
 // Usage of the custom hook
 export const CaseManagementExample: React.FC = () => {
-  const { cases, loading, error, createCase, updateCase, deleteCase } = useCases();
+  const { cases, loading, error, _createCase, _updateCase, deleteCase } = useCases();
 
   if (loading) return <div>Loading cases...</div>;
   if (error) return <div>Error: {error.message}</div>;

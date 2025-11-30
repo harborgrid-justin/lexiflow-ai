@@ -376,6 +376,7 @@ export interface CreateCaseRequest {
   owner_org_id?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UpdateCaseRequest extends Partial<CreateCaseRequest> {}
 
 export interface CreateDocumentRequest {
@@ -392,6 +393,7 @@ export interface CreateDocumentRequest {
   case_id?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UpdateDocumentRequest extends Partial<CreateDocumentRequest> {}
 
 export interface CreateEvidenceRequest {
@@ -409,6 +411,7 @@ export interface CreateEvidenceRequest {
   custodian_id?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UpdateEvidenceRequest extends Partial<CreateEvidenceRequest> {}
 
 export interface CreateTaskRequest {

@@ -17,7 +17,9 @@
     "clean": "rm -rf node_modules server/node_modules client/node_modules server/dist client/dist",
     "test": "cd server && npm test",
     "test:e2e": "cd server && npm run test:e2e",
-    "lint": "cd server && npm run lint",
+    "lint": "npm run lint:server && npm run lint:client",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
     "format": "cd server && npm run format"
   },
   "devDependencies": {

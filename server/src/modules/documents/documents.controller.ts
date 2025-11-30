@@ -24,7 +24,8 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { type Multer } from 'multer';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Multer } from 'multer';
 import { createReadStream, existsSync } from 'fs';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
@@ -100,7 +101,7 @@ export class DocumentsController {
   })
   @ApiResponse({ status: 400, description: 'No file uploaded or invalid file' })
   async uploadDocument(
-    @UploadedFile() file: Multer.File,
+    @UploadedFile() file: Express.Multer.File,
     @Body()
     metadata: {
       title?: string;

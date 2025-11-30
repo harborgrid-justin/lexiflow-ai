@@ -20,7 +20,6 @@ import {
   ApiDiscoveryRequest,
   ApiClient,
   ApiOrganization,
-  LoginRequest,
   RegisterRequest,
   AuthResponse,
   CreateCaseRequest,
