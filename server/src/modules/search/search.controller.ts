@@ -124,4 +124,65 @@ export class SearchController {
   ) {
     return this.searchService.getQueryHistory(user.organization_id, limit);
   }
+
+  @Post('legal-research')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Perform comprehensive legal research using Google Custom Search' })
+  @ApiResponse({ status: 200, description: 'Legal research results returned successfully' })
+  async legalResearch(
+    @Body() body: {
+      query: string;
+      jurisdiction?: string;
+      includeCaseLaw?: boolean;
+      includeStatutes?: boolean;
+      includeArticles?: boolean;
+      includeNews?: boolean;
+    },
+    @CurrentUser() user: User,
+  ) {
+    return this.searchService.performLegalResearch(
+      body.query,
+      user,
+      {
+        jurisdiction: body.jurisdiction,
+        includeCaseLaw: body.includeCaseLaw,
+        includeStatutes: body.includeStatutes,
+        includeArticles: body.includeArticles,
+        includeNews: body.includeNews,
+      }
+    );
+  }
+
+  @Post('case-law')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Search case law using Google Custom Search' })
+  @ApiResponse({ status: 200, description: 'Case law results returned successfully' })
+  async searchCaseLaw(
+    @Body() body: { query: string; jurisdiction?: string },
+    @CurrentUser() user: User,
+  ) {
+    return this.searchService.searchCaseLaw(body.query, body.jurisdiction, user);
+  }
+
+  @Post('statutes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Search statutes and regulations using Google Custom Search' })
+  @ApiResponse({ status: 200, description: 'Statute results returned successfully' })
+  async searchStatutes(
+    @Body() body: { query: string; jurisdiction?: string },
+    @CurrentUser() user: User,
+  ) {
+    return this.searchService.searchStatutes(body.query, body.jurisdiction, user);
+  }
+
+  @Post('legal-news')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Search recent legal news and developments' })
+  @ApiResponse({ status: 200, description: 'Legal news results returned successfully' })
+  async searchLegalNews(
+    @Body() body: { query: string; daysBack?: number },
+    @CurrentUser() user: User,
+  ) {
+    return this.searchService.searchLegalNews(body.query, body.daysBack, user);
+  }
 }

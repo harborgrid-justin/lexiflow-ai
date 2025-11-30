@@ -1132,6 +1132,96 @@ export const ApiService = {
     getQueryHistory: (limit?: number) =>
       fetchJson<any[]>(`/search/query-history${buildQueryString({ limit })}`),
 
+    /**
+     * Perform comprehensive legal research using Google Custom Search
+     */
+    legalResearch: (params: {
+      query: string;
+      jurisdiction?: string;
+      includeCaseLaw?: boolean;
+      includeStatutes?: boolean;
+      includeArticles?: boolean;
+      includeNews?: boolean;
+    }) => postJson<{
+      query: string;
+      jurisdiction?: string;
+      results: {
+        caseLaw?: Array<{
+          title: string;
+          url: string;
+          snippet: string;
+          source: string;
+          relevanceScore?: number;
+        }>;
+        statutes?: Array<{
+          title: string;
+          url: string;
+          snippet: string;
+          source: string;
+          relevanceScore?: number;
+        }>;
+        articles?: Array<{
+          title: string;
+          url: string;
+          snippet: string;
+          source: string;
+          relevanceScore?: number;
+        }>;
+        general?: Array<{
+          title: string;
+          url: string;
+          snippet: string;
+          source: string;
+          relevanceScore?: number;
+        }>;
+        news?: Array<{
+          title: string;
+          url: string;
+          snippet: string;
+          source: string;
+          relevanceScore?: number;
+        }>;
+      };
+      totalResults: number;
+      timestamp: string;
+    }>('/search/legal-research', params),
+
+    /**
+     * Search case law
+     */
+    searchCaseLaw: (query: string, jurisdiction?: string) =>
+      postJson<Array<{
+        title: string;
+        url: string;
+        snippet: string;
+        source: string;
+        relevanceScore?: number;
+      }>>('/search/case-law', { query, jurisdiction }),
+
+    /**
+     * Search statutes and regulations
+     */
+    searchStatutes: (query: string, jurisdiction?: string) =>
+      postJson<Array<{
+        title: string;
+        url: string;
+        snippet: string;
+        source: string;
+        relevanceScore?: number;
+      }>>('/search/statutes', { query, jurisdiction }),
+
+    /**
+     * Search legal news
+     */
+    searchLegalNews: (query: string, daysBack?: number) =>
+      postJson<Array<{
+        title: string;
+        url: string;
+        snippet: string;
+        source: string;
+        relevanceScore?: number;
+      }>>('/search/legal-news', { query, daysBack }),
+
     getResearchHistory: () =>
       fetchJson<ResearchSession[]>('/search/history'),
 

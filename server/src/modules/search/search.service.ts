@@ -9,9 +9,12 @@ import {
   User,
 } from '../../models';
 import { VectorSearchService } from '../../services/vector-search.service';
+import { GoogleCustomSearchService } from '../../services/google-custom-search.service';
 
 @Injectable()
 export class SearchService {
+  private googleSearchService: GoogleCustomSearchService;
+
   constructor(
     @InjectModel(DocumentEmbedding)
     private readonly documentEmbeddingModel: typeof DocumentEmbedding,
@@ -24,7 +27,161 @@ export class SearchService {
     @InjectModel(Document)
     private readonly documentModel: typeof Document,
     private readonly vectorSearchService: VectorSearchService,
-  ) {}
+  ) {
+    this.googleSearchService = new GoogleCustomSearchService();
+  }
+
+  /**
+   * Perform legal research using Google Custom Search API
+   */
+  async performLegalResearch(
+    query: string,
+    user: User,
+    options?: {
+      jurisdiction?: string;
+      includeStatutes?: boolean;
+      includeCaseLaw?: boolean;
+      includeArticles?: boolean;
+      includeNews?: boolean;
+    }
+  ) {
+    // Log the search query
+    await this.searchQueryModel.create({
+      query,
+      search_type: 'legal_research',
+      user_id: user.id,
+      organization_id: user.organization_id,
+      results_count: 0,
+    });
+
+    try {
+      // Perform comprehensive search if no specific options provided
+      if (!options || (!options.includeCaseLaw && !options.includeStatutes && !options.includeArticles && !options.includeNews)) {
+        const results = await this.googleSearchService.comprehensiveResearch(
+          query,
+          options?.jurisdiction
+        );
+
+        return {
+          query,
+          jurisdiction: options?.jurisdiction,
+          results: {
+            caseLaw: results.caseLaw,
+            statutes: results.statutes,
+            articles: results.articles,
+            general: results.general,
+          },
+          totalResults: 
+            results.caseLaw.length + 
+            results.statutes.length + 
+            results.articles.length + 
+            results.general.length,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      // Perform targeted searches based on options
+      const searchPromises: Promise<any>[] = [];
+      const resultTypes: string[] = [];
+
+      if (options.includeCaseLaw) {
+        searchPromises.push(
+          this.googleSearchService.searchCaseLaw(query, options.jurisdiction)
+        );
+        resultTypes.push('caseLaw');
+      }
+
+      if (options.includeStatutes) {
+        searchPromises.push(
+          this.googleSearchService.searchStatutes(query, options.jurisdiction)
+        );
+        resultTypes.push('statutes');
+      }
+
+      if (options.includeArticles) {
+        searchPromises.push(
+          this.googleSearchService.searchLegalArticles(query)
+        );
+        resultTypes.push('articles');
+      }
+
+      if (options.includeNews) {
+        searchPromises.push(
+          this.googleSearchService.searchLegalNews(query)
+        );
+        resultTypes.push('news');
+      }
+
+      const searchResults = await Promise.all(searchPromises);
+      
+      const results: any = {};
+      resultTypes.forEach((type, index) => {
+        results[type] = searchResults[index];
+      });
+
+      return {
+        query,
+        jurisdiction: options.jurisdiction,
+        results,
+        totalResults: Object.values(results).reduce((sum: number, arr: any) => sum + arr.length, 0),
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Legal research error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search case law
+   */
+  async searchCaseLaw(query: string, jurisdiction?: string, user?: User) {
+    if (user) {
+      await this.searchQueryModel.create({
+        query,
+        search_type: 'case_law',
+        user_id: user.id,
+        organization_id: user.organization_id,
+        results_count: 0,
+      });
+    }
+
+    return this.googleSearchService.searchCaseLaw(query, jurisdiction);
+  }
+
+  /**
+   * Search statutes and regulations
+   */
+  async searchStatutes(query: string, jurisdiction?: string, user?: User) {
+    if (user) {
+      await this.searchQueryModel.create({
+        query,
+        search_type: 'statutes',
+        user_id: user.id,
+        organization_id: user.organization_id,
+        results_count: 0,
+      });
+    }
+
+    return this.googleSearchService.searchStatutes(query, jurisdiction);
+  }
+
+  /**
+   * Search legal news
+   */
+  async searchLegalNews(query: string, daysBack?: number, user?: User) {
+    if (user) {
+      await this.searchQueryModel.create({
+        query,
+        search_type: 'legal_news',
+        user_id: user.id,
+        organization_id: user.organization_id,
+        results_count: 0,
+      });
+    }
+
+    return this.googleSearchService.searchLegalNews(query, daysBack);
+  }
 
   async extractLegalCitations(
     text: string,
