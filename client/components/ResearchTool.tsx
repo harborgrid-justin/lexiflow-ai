@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, ExternalLink, BookOpen, Loader2, ArrowRight, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { GeminiService } from '../services/geminiService';
+// GeminiService available for future AI-powered research features
+// import { GeminiService } from '../services/geminiService';
 import { ApiService } from '../services/apiService';
 import { ResearchSession, User } from '../types';
 import { PageHeader } from './common/PageHeader';

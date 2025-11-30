@@ -39,6 +39,7 @@ import {
   ApiCaseMember,
   ApiMessage,
   ApiConversation,
+  ApiWorkflowStage,
 } from '../shared-types';
 
 import {
@@ -48,6 +49,7 @@ import {
   DocumentVersion,
   EvidenceItem,
   WorkflowTask,
+  WorkflowStage,
   Motion,
   DiscoveryRequest,
   Client,
@@ -447,6 +449,28 @@ export function transformApiConversation(
 }
 
 /**
+ * Map API workflow status to frontend status format
+ */
+function mapWorkflowStatus(status: string): 'Pending' | 'Active' | 'Completed' {
+  const lowerStatus = status?.toLowerCase() || 'pending';
+  if (lowerStatus === 'completed') return 'Completed';
+  if (lowerStatus === 'in_progress' || lowerStatus === 'active') return 'Active';
+  return 'Pending';
+}
+
+/**
+ * Transform ApiWorkflowStage to frontend WorkflowStage format
+ */
+export function transformApiWorkflowStage(apiStage: ApiWorkflowStage): WorkflowStage {
+  return {
+    id: apiStage.id,
+    title: apiStage.name || `Stage ${apiStage.order || 0}`,
+    status: mapWorkflowStatus(apiStage.status),
+    tasks: (apiStage.tasks || []).map(transformApiTask),
+  };
+}
+
+/**
  * Transform ApiOrganization to frontend Organization format
  */
 export function transformApiOrganization(apiOrg: ApiOrganization): Organization {
@@ -483,6 +507,7 @@ export const transformers = {
   documentVersions: (apiVersions: ApiDocumentVersion[]): DocumentVersion[] => apiVersions.map(transformApiDocumentVersion),
   evidence: (apiEvidence: ApiEvidence[]): EvidenceItem[] => apiEvidence.map(transformApiEvidence),
   tasks: (apiTasks: ApiTask[]): WorkflowTask[] => apiTasks.map(transformApiTask),
+  workflowStages: (apiStages: ApiWorkflowStage[]): WorkflowStage[] => apiStages.map(transformApiWorkflowStage),
   motions: (apiMotions: ApiMotion[]): Motion[] => apiMotions.map(transformApiMotion),
   discovery: (apiDiscovery: ApiDiscoveryRequest[]): DiscoveryRequest[] => apiDiscovery.map(transformApiDiscovery),
   clients: (apiClients: ApiClient[]): Client[] => apiClients.map(transformApiClient),

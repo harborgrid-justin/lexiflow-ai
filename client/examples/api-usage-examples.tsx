@@ -5,16 +5,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { ApiService } from '../services/apiService';
+// Transformers available for direct use when needed:
+// transformApiCase, transformApiUser, transformers
 import {
-  transformApiCase,
-} from '../utils/type-transformers';
-import {
-  ApiUser,
-  ApiCase,
-  ApiDocument,
   CreateCaseRequest,
   UpdateUserRequest,
-  AuthResponse,
 } from '../shared-types';
 import { User, Case, LegalDocument } from '../types';
 
@@ -27,14 +22,14 @@ export const LoginExample: React.FC = () => {
 
   const handleLogin = async () => {
     try {
-      // API returns AuthResponse with snake_case user data
-      const authResponse: AuthResponse = await ApiService.auth.login(email, password);
+      // API returns { access_token, user }
+      const authResponse = await ApiService.auth.login(email, password);
 
       // Store token
       ApiService.setAuthToken(authResponse.access_token);
 
-      // Use the user data directly (simplified for example)
-      setCurrentUser(authResponse.user as any);
+      // Use the user data directly
+      setCurrentUser(authResponse.user);
     } catch (error) {
       console.error('Login failed:', error);
     }
@@ -117,11 +112,8 @@ export const CreateCaseExample: React.FC = () => {
         status: 'active',
       };
 
-      // API returns ApiCase
-      const apiCase: ApiCase = await ApiService.createCase(request);
-
-      // Transform to frontend format (simplified)
-      const newCase = apiCase as any;
+      // API returns Case (already transformed by apiService)
+      const newCase: Case = await ApiService.createCase(request);
 
       console.log('Created case:', newCase);
       alert(`Case created: ${newCase.title}`);
@@ -175,15 +167,15 @@ export const UpdateUserExample: React.FC<{ userId: string }> = ({ userId }) => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const apiUser: ApiUser = await ApiService.getUser(userId);
-      const transformedUser = transformApiUser(apiUser);
-      setUser(transformedUser);
+      // ApiService.getUser returns transformed User
+      const fetchedUser: User = await ApiService.getUser(userId);
+      setUser(fetchedUser);
 
       // Initialize edit form
       setEditData({
-        phone: apiUser.phone || '',
-        position: apiUser.position || '',
-        expertise: apiUser.expertise || '',
+        phone: fetchedUser.phone || '',
+        position: fetchedUser.position || '',
+        expertise: fetchedUser.expertise || '',
       });
     };
 
@@ -199,11 +191,8 @@ export const UpdateUserExample: React.FC<{ userId: string }> = ({ userId }) => {
         expertise: editData.expertise,
       };
 
-      // API returns updated ApiUser
-      const updatedApiUser: ApiUser = await ApiService.users.update(userId, updateRequest) as unknown as ApiUser;
-
-      // Transform and update state
-      const updatedUser = transformApiUser(updatedApiUser);
+      // API returns updated User (already transformed)
+      const updatedUser: User = await ApiService.users.update(userId, updateRequest as any);
       setUser(updatedUser);
       setEditing(false);
 
@@ -257,13 +246,9 @@ export const CaseDocumentsExample: React.FC<{ caseId: string }> = ({ caseId }) =
 
   useEffect(() => {
     const fetchDocuments = async () => {
-      // API returns ApiDocument[] with optional relations
-      const apiDocs: ApiDocument[] = await ApiService.getCaseDocuments(caseId);
-
-      // Transform all documents
-      const transformedDocs = transformers.documents(apiDocs);
-
-      setDocuments(transformedDocs);
+      // API returns LegalDocument[] (already transformed)
+      const docs: LegalDocument[] = await ApiService.getCaseDocuments(caseId);
+      setDocuments(docs);
     };
 
     fetchDocuments();
@@ -297,9 +282,9 @@ export const useCases = () => {
   const fetchCases = async () => {
     try {
       setLoading(true);
-      const apiCases = await ApiService.getCases();
-      const transformed = transformers.cases(apiCases);
-      setCases(transformed);
+      // ApiService.getCases returns Case[] (already transformed)
+      const fetchedCases = await ApiService.getCases();
+      setCases(fetchedCases);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
@@ -309,15 +294,15 @@ export const useCases = () => {
   };
 
   const createCase = async (request: CreateCaseRequest) => {
-    const apiCase = await ApiService.createCase(request);
-    const newCase = transformApiCase(apiCase);
+    // ApiService.createCase returns Case (already transformed)
+    const newCase = await ApiService.createCase(request);
     setCases((prev) => [...prev, newCase]);
     return newCase;
   };
 
   const updateCase = async (id: string, updates: Partial<CreateCaseRequest>) => {
-    const apiCase = await ApiService.updateCase(id, updates);
-    const updatedCase = transformApiCase(apiCase);
+    // ApiService.updateCase returns Case (already transformed)
+    const updatedCase = await ApiService.updateCase(id, updates);
     setCases((prev) => prev.map((c) => (c.id === id ? updatedCase : c)));
     return updatedCase;
   };
@@ -344,7 +329,7 @@ export const useCases = () => {
 
 // Usage of the custom hook
 export const CaseManagementExample: React.FC = () => {
-  const { cases, loading, error, _createCase, _updateCase, deleteCase } = useCases();
+  const { cases, loading, error, deleteCase } = useCases();
 
   if (loading) return <div>Loading cases...</div>;
   if (error) return <div>Error: {error.message}</div>;

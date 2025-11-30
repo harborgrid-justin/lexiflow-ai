@@ -47,7 +47,7 @@ export class SearchService {
   ) {
     // Log the search query
     await this.searchQueryModel.create({
-      query,
+      query_text: query,
       search_type: 'legal_research',
       user_id: user.id,
       organization_id: user.organization_id,

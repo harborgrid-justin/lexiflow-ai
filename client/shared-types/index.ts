@@ -383,6 +383,30 @@ export interface ApiConversation {
   messages?: ApiMessage[];
 }
 
+/**
+ * Workflow Stage entity as returned by the API
+ * Uses snake_case to match backend database schema
+ */
+export interface ApiWorkflowStage {
+  id: string;
+  case_id: string;
+  name: string;
+  description?: string;
+  status: string; // 'pending' | 'in_progress' | 'completed'
+  order: number;
+  start_date?: Date | string;
+  due_date?: Date | string;
+  completed_date?: Date | string;
+  assigned_to?: string;
+  progress: number;
+  created_at: Date | string;
+  updated_at: Date | string;
+  // Optional hydrated relations
+  case?: ApiCase;
+  assignee?: ApiUser;
+  tasks?: ApiTask[];
+}
+
 // ==================== AUTH TYPES ====================
 
 export interface LoginRequest {

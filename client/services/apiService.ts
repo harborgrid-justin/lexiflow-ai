@@ -1,6 +1,6 @@
 import { Case, User, LegalDocument, WorkflowStage, Motion, DiscoveryRequest, EvidenceItem, TimelineEvent, TimeEntry, WorkflowTask, ConflictCheck, Conversation, AuditLogEntry, Organization, Group, Client, Clause, JudgeProfile, OpposingCounselProfile, EthicalWall, Jurisdiction, KnowledgeItem, ResearchSession, UserProfile, CaseMember } from '../types';
-import { ApiCase, ApiUser, ApiEvidence, ApiConversation, ApiMessage } from '../shared-types';
-import { transformApiCase, transformApiUser, transformApiEvidence, transformApiConversation, transformApiMessage } from '../utils/type-transformers';
+import { ApiCase, ApiUser, ApiEvidence, ApiConversation, ApiMessage, ApiWorkflowStage } from '../shared-types';
+import { transformApiCase, transformApiUser, transformApiEvidence, transformApiConversation, transformApiMessage, transformApiWorkflowStage } from '../utils/type-transformers';
 
 // API Base URL configuration
 // In development with Vite proxy, use relative path '/api/v1'
@@ -655,11 +655,15 @@ export const ApiService = {
   // ===========================
   workflow: {
     stages: {
-      getAll: (caseId?: string) =>
-        fetchJson<WorkflowStage[]>(`/workflow/stages${buildQueryString({ caseId })}`),
+      getAll: async (caseId?: string): Promise<WorkflowStage[]> => {
+        const apiStages = await fetchJson<ApiWorkflowStage[]>(`/workflow/stages${buildQueryString({ caseId })}`);
+        return apiStages.map(transformApiWorkflowStage);
+      },
 
-      getById: (id: string) =>
-        fetchJson<WorkflowStage>(`/workflow/stages/${id}`),
+      getById: async (id: string): Promise<WorkflowStage> => {
+        const apiStage = await fetchJson<ApiWorkflowStage>(`/workflow/stages/${id}`);
+        return transformApiWorkflowStage(apiStage);
+      },
 
       create: (data: Partial<WorkflowStage>) =>
         postJson<WorkflowStage>('/workflow/stages', data),
