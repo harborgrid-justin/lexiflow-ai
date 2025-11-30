@@ -30,14 +30,19 @@ export class SearchController {
   @ApiOperation({ summary: 'Perform semantic search across documents' })
   @ApiResponse({ status: 200, description: 'Search results returned successfully' })
   async semanticSearch(
-    @Body() body: { query: string; limit?: number; threshold?: number },
+    @Body() body: { query: string; limit?: number; threshold?: number; embedding: number[] },
     @CurrentUser() user: User,
   ) {
     return this.vectorSearchService.semanticSearch(
-      body.query,
-      user.organization_id,
-      body.limit,
-      body.threshold,
+      body.embedding,
+      {
+        query: body.query,
+        limit: body.limit,
+        threshold: body.threshold,
+        filters: {
+          organizationId: user.organization_id,
+        },
+      },
     );
   }
 
@@ -46,14 +51,19 @@ export class SearchController {
   @ApiOperation({ summary: 'Perform hybrid search (semantic + keyword)' })
   @ApiResponse({ status: 200, description: 'Hybrid search results returned successfully' })
   async hybridSearch(
-    @Body() body: { query: string; limit?: number; semanticWeight?: number },
+    @Body() body: { query: string; limit?: number; semanticWeight?: number; embedding: number[] },
     @CurrentUser() user: User,
   ) {
     return this.vectorSearchService.hybridSearch(
       body.query,
-      user.organization_id,
-      body.limit,
-      body.semanticWeight,
+      body.embedding,
+      {
+        query: body.query,
+        limit: body.limit,
+        filters: {
+          organizationId: user.organization_id,
+        },
+      },
     );
   }
 
@@ -63,12 +73,10 @@ export class SearchController {
   async findSimilarDocuments(
     @Query('documentId') documentId: string,
     @Query('limit') limit?: number,
-    @CurrentUser() user: User,
   ) {
     return this.vectorSearchService.findSimilarDocuments(
       documentId,
-      user.organization_id,
-      limit,
+      limit ? Number(limit) : 5,
     );
   }
 
@@ -91,8 +99,8 @@ export class SearchController {
   @ApiOperation({ summary: 'Get search query history for analytics' })
   @ApiResponse({ status: 200, description: 'Search history retrieved successfully' })
   async getQueryHistory(
-    @Query('limit') limit?: number,
     @CurrentUser() user: User,
+    @Query('limit') limit?: number,
   ) {
     return this.searchService.getQueryHistory(user.organization_id, limit);
   }

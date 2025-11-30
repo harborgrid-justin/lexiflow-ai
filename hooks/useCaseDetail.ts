@@ -1,43 +1,59 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion } from '../types';
 import { GeminiService } from '../services/geminiService';
-import { ApiService } from '../services/apiService';
+import { ApiService, ApiError } from '../services/apiService';
 
 export const useCaseDetail = (caseData: Case) => {
   const [activeTab, setActiveTab] = useState('Overview');
-  
+
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [stages, setStages] = useState<WorkflowStage[]>([]);
   const [parties, setParties] = useState<Party[]>(caseData.parties || []);
   const [billingEntries, setBillingEntries] = useState<TimeEntry[]>([]);
   const [motions, setMotions] = useState<Motion[]>([]);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [generatingWorkflow, setGeneratingWorkflow] = useState(false);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [draftPrompt, setDraftPrompt] = useState('');
   const [draftResult, setDraftResult] = useState('');
   const [isDrafting, setIsDrafting] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!caseData?.id) return;
-      try {
-        const [docs, wf, bill, mots] = await Promise.all([
-          ApiService.getCaseDocuments(caseData.id),
-          ApiService.getCaseWorkflow(caseData.id),
-          ApiService.getCaseBilling(caseData.id),
-          ApiService.getCaseMotions(caseData.id)
-        ]);
-        setDocuments(docs);
-        setStages(wf);
-        setBillingEntries(bill);
-        setMotions(mots);
-      } catch (error) {
-        console.error("Failed to fetch case details", error);
+  const fetchData = useCallback(async () => {
+    if (!caseData?.id) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [docs, wf, bill, mots] = await Promise.all([
+        ApiService.documents.getAll(caseData.id),
+        ApiService.workflow.stages.getAll(caseData.id),
+        ApiService.billing.timeEntries.getAll(caseData.id),
+        ApiService.motions.getAll(caseData.id)
+      ]);
+
+      setDocuments(docs);
+      setStages(wf);
+      setBillingEntries(bill);
+      setMotions(mots);
+    } catch (err) {
+      console.error('Failed to fetch case details:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to load case details: ${err.statusText}`);
+      } else {
+        setError('Failed to load case details. Please try again.');
       }
-    };
-    fetchData();
+    } finally {
+      setLoading(false);
+    }
   }, [caseData.id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const timelineEvents = useMemo(() => {
     const events: TimelineEvent[] = [];
@@ -79,10 +95,16 @@ export const useCaseDetail = (caseData: Case) => {
     setAnalyzingId(doc.id);
     try {
       const result = await GeminiService.analyzeDocument(doc.content);
-      await ApiService.updateDocument(doc.id, { summary: result.summary, riskScore: result.riskScore });
+      await ApiService.documents.update(doc.id, { summary: result.summary, riskScore: result.riskScore });
       setDocuments(docs => docs.map(d => d.id === doc.id ? { ...d, summary: result.summary, riskScore: result.riskScore } : d));
-    } catch (error) {
-      console.error("Failed to analyze document", error);
+    } catch (err) {
+      console.error('Failed to analyze document:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to analyze document: ${err.statusText}`);
+      } else {
+        setError('Failed to analyze document. Please try again.');
+      }
     } finally {
       setAnalyzingId(null);
     }
@@ -98,12 +120,18 @@ export const useCaseDetail = (caseData: Case) => {
 
   const createDocument = async (doc: Partial<LegalDocument>) => {
     try {
-      const newDoc = await ApiService.createDocument(doc);
+      const newDoc = await ApiService.documents.create(doc);
       setDocuments([...documents, newDoc]);
       return newDoc;
-    } catch (error) {
-      console.error("Failed to create document", error);
-      throw error;
+    } catch (err) {
+      console.error('Failed to create document:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to create document: ${err.statusText}`);
+      } else {
+        setError('Failed to create document. Please try again.');
+      }
+      throw err;
     }
   };
 
@@ -120,24 +148,43 @@ export const useCaseDetail = (caseData: Case) => {
 
   const addTimeEntry = async (entry: Partial<TimeEntry>) => {
     try {
-      const newEntry = await ApiService.createTimeEntry(entry);
+      const newEntry = await ApiService.billing.timeEntries.create(entry);
       setBillingEntries([newEntry, ...billingEntries]);
-    } catch (error) {
-      console.error("Failed to add time entry", error);
+      return newEntry;
+    } catch (err) {
+      console.error('Failed to add time entry:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to add time entry: ${err.statusText}`);
+      } else {
+        setError('Failed to add time entry. Please try again.');
+      }
+      throw err;
     }
   };
 
   const toggleTask = async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
     try {
-      await ApiService.updateTask(taskId, { status });
+      await ApiService.workflow.tasks.update(taskId, { status });
       setStages(prevStages => prevStages.map(stage => ({
         ...stage,
         tasks: stage.tasks.map(t => t.id === taskId ? { ...t, status } : t)
       })));
-    } catch (error) {
-      console.error("Failed to update task", error);
+    } catch (err) {
+      console.error('Failed to update task:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to update task: ${err.statusText}`);
+      } else {
+        setError('Failed to update task. Please try again.');
+      }
+      throw err;
     }
   };
+
+  const refresh = useCallback(() => {
+    return fetchData();
+  }, [fetchData]);
 
   return {
     activeTab,
@@ -150,6 +197,8 @@ export const useCaseDetail = (caseData: Case) => {
     setParties,
     billingEntries,
     setBillingEntries,
+    loading,
+    error,
     generatingWorkflow,
     analyzingId,
     draftPrompt,
@@ -162,6 +211,7 @@ export const useCaseDetail = (caseData: Case) => {
     handleGenerateWorkflow,
     addTimeEntry,
     toggleTask,
-    createDocument
+    createDocument,
+    refresh
   };
 };

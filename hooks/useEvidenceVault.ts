@@ -1,6 +1,6 @@
 
-import { useState, useMemo, useEffect } from 'react';
-import { ApiService } from '../services/apiService';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { ApiService, ApiError } from '../services/apiService';
 import { EvidenceItem, ChainOfCustodyEvent } from '../types';
 
 export type ViewMode = 'dashboard' | 'inventory' | 'custody' | 'intake' | 'detail';
@@ -25,18 +25,32 @@ export const useEvidenceVault = () => {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [selectedItem, setSelectedItem] = useState<EvidenceItem | null>(null);
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
-  
-  useEffect(() => {
-    const fetchEvidence = async () => {
-      try {
-        const items = await ApiService.getEvidence();
-        setEvidenceItems(items);
-      } catch (error) {
-        console.error("Failed to fetch evidence", error);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchEvidence = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const items = await ApiService.evidence.getAll();
+      setEvidenceItems(items);
+    } catch (err) {
+      console.error('Failed to fetch evidence:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to load evidence: ${err.statusText}`);
+      } else {
+        setError('Failed to load evidence. Please try again.');
       }
-    };
-    fetchEvidence();
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchEvidence();
+  }, [fetchEvidence]);
 
   const [filters, setFilters] = useState<EvidenceFilters>({
     search: '',
@@ -65,13 +79,22 @@ export const useEvidenceVault = () => {
 
   const handleIntakeComplete = async (newItem: EvidenceItem) => {
     try {
-      const createdItem = await ApiService.createEvidence(newItem);
+      setError(null);
+      const createdItem = await ApiService.evidence.create(newItem);
       setEvidenceItems([createdItem, ...evidenceItems]);
-      alert("Item logged successfully."); 
+      alert("Item logged successfully.");
       setView('inventory');
-    } catch (error) {
-      console.error("Failed to create evidence item", error);
-      alert("Failed to log item.");
+    } catch (err) {
+      console.error('Failed to create evidence item:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to log item: ${err.statusText}`);
+        alert(`Failed to log item: ${err.statusText}`);
+      } else {
+        setError('Failed to log item. Please try again.');
+        alert('Failed to log item.');
+      }
+      throw err;
     }
   };
 
@@ -79,18 +102,26 @@ export const useEvidenceVault = () => {
     if (!selectedItem) return;
 
     try {
+      setError(null);
       const updatedChain = [newEvent, ...selectedItem.chainOfCustody];
       const updatedItem = {
         ...selectedItem,
         chainOfCustody: updatedChain
       };
 
-      await ApiService.updateEvidence(selectedItem.id, { chainOfCustody: updatedChain });
+      await ApiService.evidence.update(selectedItem.id, { chainOfCustody: updatedChain });
 
       setEvidenceItems(prev => prev.map(item => item.id === selectedItem.id ? updatedItem : item));
       setSelectedItem(updatedItem);
-    } catch (error) {
-      console.error("Failed to update custody", error);
+    } catch (err) {
+      console.error('Failed to update custody:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to update custody: ${err.statusText}`);
+      } else {
+        setError('Failed to update custody. Please try again.');
+      }
+      throw err;
     }
   };
 
@@ -113,6 +144,10 @@ export const useEvidenceVault = () => {
     });
   }, [filters, evidenceItems]);
 
+  const refresh = useCallback(() => {
+    return fetchEvidence();
+  }, [fetchEvidence]);
+
   return {
     view,
     setView,
@@ -123,9 +158,12 @@ export const useEvidenceVault = () => {
     filters,
     setFilters,
     filteredItems,
+    loading,
+    error,
     handleItemClick,
     handleBack,
     handleIntakeComplete,
-    handleCustodyUpdate
+    handleCustodyUpdate,
+    refresh
   };
 };

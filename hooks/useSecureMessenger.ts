@@ -1,9 +1,7 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Conversation, Message, Attachment } from '../types';
-import { ApiService } from '../services/apiService';
-
-
+import { ApiService, ApiError } from '../services/apiService';
 
 export const useSecureMessenger = (currentUserId?: string) => {
   const [view, setView] = useState<'chats' | 'contacts' | 'files' | 'archived'>('chats');
@@ -14,29 +12,44 @@ export const useSecureMessenger = (currentUserId?: string) => {
   const [inputText, setInputText] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [isPrivilegedMode, setIsPrivilegedMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [convs, users] = await Promise.all([
+        ApiService.messages.conversations.getAll(undefined, currentUserId),
+        ApiService.users.getAll()
+      ]);
+
+      setConversations(convs);
+      setContactsList(users.map(u => ({
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        status: 'online', // Mock status for now
+        email: u.email,
+        department: u.role
+      })));
+    } catch (err) {
+      console.error('Failed to fetch messenger data:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to load messages: ${err.statusText}`);
+      } else {
+        setError('Failed to load messages. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [convs, users] = await Promise.all([
-          ApiService.getConversations(),
-          ApiService.getUsers()
-        ]);
-        setConversations(convs);
-        setContactsList(users.map(u => ({
-            id: u.id,
-            name: u.name,
-            role: u.role,
-            status: 'online', // Mock status for now
-            email: u.email,
-            department: u.role
-        })));
-      } catch (error) {
-        console.error("Failed to fetch messenger data", error);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
@@ -133,17 +146,35 @@ export const useSecureMessenger = (currentUserId?: string) => {
     setPendingAttachments([]);
 
     try {
-      await ApiService.sendMessage(activeConvId, newMessage.text, currentUserId);
-      
+      setError(null);
+      await ApiService.messages.create({
+        conversationId: activeConvId,
+        senderId: currentUserId,
+        text: newMessage.text,
+        attachments: pendingAttachments
+      });
+
       // Update status to delivered
-      setConversations(prev => prev.map(c => 
-          c.id === activeConvId 
-          ? { ...c, messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: 'delivered' as const } : m) } 
+      setConversations(prev => prev.map(c =>
+          c.id === activeConvId
+          ? { ...c, messages: c.messages.map(m => m.id === newMessage.id ? { ...m, status: 'delivered' as const } : m) }
           : c
       ));
-    } catch (error) {
-      console.error("Failed to send message", error);
-      // Revert or show error
+    } catch (err) {
+      console.error('Failed to send message:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to send message: ${err.statusText}`);
+      } else {
+        setError('Failed to send message. Please try again.');
+      }
+
+      // Revert optimistic update
+      setConversations(prev => prev.map(c =>
+        c.id === activeConvId
+        ? { ...c, messages: c.messages.filter(m => m.id !== newMessage.id) }
+        : c
+      ));
     }
 
     // Mock reply for demo purposes
@@ -182,6 +213,10 @@ export const useSecureMessenger = (currentUserId?: string) => {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const refresh = useCallback(() => {
+    return fetchData();
+  }, [fetchData]);
+
   return {
     view,
     setView,
@@ -198,11 +233,14 @@ export const useSecureMessenger = (currentUserId?: string) => {
     setIsPrivilegedMode,
     activeConversation,
     filteredConversations,
+    loading,
+    error,
     handleSelectConversation,
     handleSendMessage,
     handleFileSelect,
     formatTime,
     contacts,
-    allFiles
+    allFiles,
+    refresh
   };
 };

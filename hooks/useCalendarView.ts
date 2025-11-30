@@ -1,6 +1,6 @@
 
-import { useState, useMemo, useEffect } from 'react';
-import { ApiService } from '../services/apiService';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { ApiService, ApiError } from '../services/apiService';
 import { WorkflowTask, Case, ConflictCheck } from '../types';
 
 export const useCalendarView = () => {
@@ -8,24 +8,39 @@ export const useCalendarView = () => {
   const [tasks, setTasks] = useState<WorkflowTask[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [conflicts, setConflicts] = useState<ConflictCheck[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [t, c, conf] = await Promise.all([
+        ApiService.tasks.getAll(),
+        ApiService.cases.getAll(),
+        ApiService.compliance.getAll()
+      ]);
+
+      setTasks(t);
+      setCases(c);
+      setConflicts(conf);
+    } catch (err) {
+      console.error('Failed to fetch calendar data:', err);
+
+      if (err instanceof ApiError) {
+        setError(`Failed to load calendar: ${err.statusText}`);
+      } else {
+        setError('Failed to load calendar. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [t, c, conf] = await Promise.all([
-          ApiService.getTasks(),
-          ApiService.getCases(),
-          ApiService.getConflicts()
-        ]);
-        setTasks(t);
-        setCases(c);
-        setConflicts(conf);
-      } catch (error) {
-        console.error("Failed to fetch calendar data", error);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const events = useMemo(() => [
     ...tasks.map(t => ({ id: t.id, title: t.title, date: t.dueDate, type: 'task', priority: t.priority, caseId: t.caseId })),
@@ -47,6 +62,10 @@ export const useCalendarView = () => {
 
   const monthLabel = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
 
+  const refresh = useCallback(() => {
+    return fetchData();
+  }, [fetchData]);
+
   return {
     currentMonth,
     events,
@@ -54,6 +73,9 @@ export const useCalendarView = () => {
     firstDay,
     getEventsForDay,
     changeMonth,
-    monthLabel
+    monthLabel,
+    loading,
+    error,
+    refresh
   };
 };

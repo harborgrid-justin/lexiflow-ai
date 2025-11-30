@@ -1,3 +1,22 @@
+/**
+ * IMPORTANT: FRONTEND TYPES vs API TYPES
+ * ========================================
+ *
+ * These types represent the FRONTEND/UI data structures (camelCase).
+ * The backend API returns snake_case field names.
+ *
+ * For API communication:
+ * - Use types from '../shared-types/index.ts' (ApiUser, ApiCase, etc.)
+ * - Use transformers from '../utils/type-transformers.ts' to convert API responses
+ *
+ * Example:
+ *   const apiUser = await ApiService.getUser(id);  // Returns ApiUser (snake_case)
+ *   const user = transformApiUser(apiUser);        // Converts to User (camelCase)
+ *
+ * Key differences:
+ * - Backend: user.first_name, case.client_name, document.file_path
+ * - Frontend: user.name, case.client, document.uploadDate
+ */
 
 export enum CaseStatus {
   Discovery = 'Discovery',
@@ -7,10 +26,10 @@ export enum CaseStatus {
   Appeal = 'Appeal'
 }
 
-export type UserRole = 'Senior Partner' | 'Associate' | 'Paralegal' | 'Administrator' | 'Client User' | 'Guest';
-export type MatterType = 'Litigation' | 'M&A' | 'IP' | 'Real Estate' | 'General';
+export type UserRole = 'Senior Partner' | 'Associate' | 'Paralegal' | 'Administrator' | 'Client User' | 'Guest' | 'Attorney' | 'Partner';
+export type MatterType = 'Litigation' | 'M&A' | 'IP' | 'Real Estate' | 'General' | 'Commercial Litigation';
 export type BillingModel = 'Hourly' | 'Fixed' | 'Contingency' | 'Hybrid';
-export type OrganizationType = 'LawFirm' | 'Corporate' | 'Government' | 'Court' | 'Vendor';
+export type OrganizationType = 'LawFirm' | 'Corporate' | 'Government' | 'Court' | 'Vendor' | 'Law Firm';
 
 export interface Organization {
   id: string;

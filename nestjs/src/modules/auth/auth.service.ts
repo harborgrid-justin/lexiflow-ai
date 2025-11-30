@@ -1,21 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../models/user.model';
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  organization_id?: string;
-}
+import { LoginDto, RegisterDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -62,11 +50,30 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<User> {
+    // Check if user already exists
+    const existingUser = await this.userModel.findOne({
+      where: { email: registerDto.email }
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-    
+
     return this.userModel.create({
       ...registerDto,
       password_hash: hashedPassword,
     });
+  }
+
+  async getCurrentUser(userId: string): Promise<User> {
+    const user = await this.userModel.findByPk(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
   }
 }

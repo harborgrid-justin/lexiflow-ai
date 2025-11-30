@@ -12,7 +12,7 @@ export class CasesService {
   ) {}
 
   async create(createCaseDto: CreateCaseDto): Promise<Case> {
-    return this.caseModel.create(createCaseDto);
+    return this.caseModel.create(createCaseDto as any);
   }
 
   async findAll(orgId?: string): Promise<Case[]> {
