@@ -21,29 +21,29 @@ import { Case } from './case.model';
   indexes: [
     {
       fields: ['case_id'],
-      name: 'idx_tasks_case_id'
+      name: 'idx_tasks_case_id',
     },
     {
       fields: ['assignee_id'],
-      name: 'idx_tasks_assignee_id'
+      name: 'idx_tasks_assignee_id',
     },
     {
       fields: ['status'],
-      name: 'idx_tasks_status'
+      name: 'idx_tasks_status',
     },
     {
       fields: ['priority'],
-      name: 'idx_tasks_priority'
+      name: 'idx_tasks_priority',
     },
     {
       fields: ['due_date'],
-      name: 'idx_tasks_due_date'
+      name: 'idx_tasks_due_date',
     },
     {
       fields: ['created_by'],
-      name: 'idx_tasks_created_by'
-    }
-  ]
+      name: 'idx_tasks_created_by',
+    },
+  ],
 })
 export class Task extends Model {
   @ApiProperty({ example: 'task-123', description: 'Unique task ID' })

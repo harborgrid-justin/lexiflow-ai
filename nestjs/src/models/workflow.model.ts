@@ -146,6 +146,27 @@ export class WorkflowTask extends Model {
   @Column(DataType.FLOAT)
   actual_hours?: number;
 
+  @ApiProperty({ example: false, description: 'Whether this task has SLA warning' })
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  sla_warning: boolean;
+
+  @ApiProperty({ example: 'deadline_trigger', description: 'Automated trigger that created this task' })
+  @Column(DataType.STRING)
+  automated_trigger?: string;
+
+  @ApiProperty({ example: 'Documents', description: 'Related module' })
+  @Column(DataType.STRING)
+  related_module?: string;
+
+  @ApiProperty({ example: 'Review', description: 'Action button label' })
+  @Column(DataType.STRING)
+  action_label?: string;
+
+  @ApiProperty({ example: 'user-789', description: 'User who created this task' })
+  @Column(DataType.UUID)
+  created_by?: string;
+
   @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;

@@ -14,9 +14,9 @@ export class AnalyticsService {
   }
 
   async findAll(caseId?: string, metricType?: string): Promise<Analytics[]> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
-    if (metricType) whereClause.metric_type = metricType;
+    const whereClause: Record<string, string> = {};
+    if (caseId) {whereClause.case_id = caseId;}
+    if (metricType) {whereClause.metric_type = metricType;}
 
     return this.analyticsModel.findAll({
       where: whereClause,
@@ -40,7 +40,7 @@ export class AnalyticsService {
     return this.analyticsModel.findAll({
       where: { 
         case_id: caseId,
-        metric_type: 'case_outcome_prediction'
+        metric_type: 'case_outcome_prediction',
       },
       include: ['case', 'creator', 'organization'],
     });
@@ -51,8 +51,8 @@ export class AnalyticsService {
       where: { 
         metric_type: 'judge_analytics',
         data: {
-          judge: judgeName
-        }
+          judge: judgeName,
+        },
       },
       include: ['case', 'creator', 'organization'],
     });
@@ -63,8 +63,8 @@ export class AnalyticsService {
       where: { 
         metric_type: 'counsel_performance',
         data: {
-          counsel: counselName
-        }
+          counsel: counselName,
+        },
       },
       include: ['case', 'creator', 'organization'],
     });

@@ -20,21 +20,21 @@ import { Organization } from './organization.model';
     {
       fields: ['email'],
       unique: true,
-      name: 'idx_users_email_unique'
+      name: 'idx_users_email_unique',
     },
     {
       fields: ['organization_id'],
-      name: 'idx_users_organization_id'
+      name: 'idx_users_organization_id',
     },
     {
       fields: ['role'],
-      name: 'idx_users_role'
+      name: 'idx_users_role',
     },
     {
       fields: ['status'],
-      name: 'idx_users_status'
-    }
-  ]
+      name: 'idx_users_status',
+    },
+  ],
 })
 export class User extends Model {
   @ApiProperty({ example: 'user-123', description: 'Unique user ID' })
@@ -86,6 +86,22 @@ export class User extends Model {
   @ApiProperty({ example: 'Corporate law, M&A', description: 'Areas of expertise' })
   @Column(DataType.TEXT)
   expertise?: string;
+
+  @ApiProperty({ example: 'New York Office', description: 'Office location' })
+  @Column(DataType.STRING)
+  office?: string;
+
+  @ApiProperty({ example: 'Internal', description: 'User type' })
+  @Column(DataType.STRING)
+  user_type?: string;
+
+  @ApiProperty({ example: 'https://example.com/avatar.jpg', description: 'User avatar URL' })
+  @Column(DataType.STRING)
+  avatar?: string;
+
+  @ApiProperty({ example: '2024-01-15T10:30:00Z', description: 'Last activity timestamp' })
+  @Column(DataType.DATE)
+  last_active?: Date;
 
   @ApiProperty({ example: 'Active', description: 'Account status' })
   @Default('active')

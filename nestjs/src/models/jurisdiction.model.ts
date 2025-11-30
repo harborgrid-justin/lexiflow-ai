@@ -51,7 +51,7 @@ export class Jurisdiction extends Model {
 
   @ApiProperty({ example: { 'statute_of_limitations': '2 years' }, description: 'Jurisdiction-specific rules' })
   @Column(DataType.JSONB)
-  rules?: any;
+  rules?: Record<string, unknown>;
 
   @ApiProperty({ example: 'https://courts.ca.gov', description: 'Court system website' })
   @Column(DataType.STRING)

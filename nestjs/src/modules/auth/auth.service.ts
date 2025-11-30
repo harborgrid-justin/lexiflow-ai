@@ -14,17 +14,30 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.userModel.findOne({ where: { email } });
+    console.log('Validating user with email:', email);
     
-    if (user && await bcrypt.compare(password, user.password_hash)) {
-      return user;
+    try {
+      const user = await this.userModel.findOne({ where: { email } });
+      console.log('Found user:', user ? 'Yes' : 'No');
+      
+      if (user && await bcrypt.compare(password, user.password_hash)) {
+        console.log('Password valid for user:', user.email);
+        return user;
+      }
+      
+      console.log('User validation failed');
+      return null;
+    } catch (error) {
+      console.error('Error in validateUser:', error);
+      return null;
     }
-    
-    return null;
   }
 
   async login(loginDto: LoginDto) {
+    console.log('Login attempt with:', loginDto);
     const user = await this.validateUser(loginDto.email, loginDto.password);
+    
+    console.log('Validated user:', user ? `User ID: ${user.id}` : 'null');
     
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -33,7 +46,7 @@ export class AuthService {
     const payload = { 
       email: user.email, 
       sub: user.id, 
-      orgId: user.organization_id 
+      orgId: user.organization_id, 
     };
 
     return {

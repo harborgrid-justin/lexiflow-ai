@@ -21,21 +21,21 @@ import { Case } from './case.model';
   indexes: [
     {
       fields: ['case_id'],
-      name: 'idx_conversations_case_id'
+      name: 'idx_conversations_case_id',
     },
     {
       fields: ['created_by'],
-      name: 'idx_conversations_created_by'
+      name: 'idx_conversations_created_by',
     },
     {
       fields: ['owner_org_id'],
-      name: 'idx_conversations_owner_org_id'
+      name: 'idx_conversations_owner_org_id',
     },
     {
       fields: ['status'],
-      name: 'idx_conversations_status'
-    }
-  ]
+      name: 'idx_conversations_status',
+    },
+  ],
 })
 export class Conversation extends Model {
   @ApiProperty({ example: 'conv-123', description: 'Unique conversation ID' })
@@ -101,21 +101,21 @@ export class Conversation extends Model {
   indexes: [
     {
       fields: ['conversation_id'],
-      name: 'idx_messages_conversation_id'
+      name: 'idx_messages_conversation_id',
     },
     {
       fields: ['sender_id'],
-      name: 'idx_messages_sender_id'
+      name: 'idx_messages_sender_id',
     },
     {
       fields: ['created_at'],
-      name: 'idx_messages_created_at'
+      name: 'idx_messages_created_at',
     },
     {
       fields: ['message_type'],
-      name: 'idx_messages_type'
-    }
-  ]
+      name: 'idx_messages_type',
+    },
+  ],
 })
 export class Message extends Model {
   @ApiProperty({ example: 'msg-123', description: 'Unique message ID' })

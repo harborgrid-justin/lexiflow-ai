@@ -42,8 +42,8 @@ export class BillingController {
   getBillingStats(
     @Query('caseId') caseId?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
-  ): Promise<any> {
+    @Query('endDate') endDate?: string,
+  ): Promise<Record<string, unknown>> {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     return this.billingService.getBillingStats(caseId, start, end);

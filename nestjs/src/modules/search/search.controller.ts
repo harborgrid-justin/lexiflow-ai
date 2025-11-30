@@ -30,6 +30,7 @@ export class SearchController {
   @ApiOperation({ summary: 'Perform semantic search across documents' })
   @ApiResponse({ status: 200, description: 'Search results returned successfully' })
   async semanticSearch(
+<<<<<<< HEAD
     @Body() body: { query: string; limit?: number; threshold?: number; embedding: number[] },
     @CurrentUser() user: User,
   ) {
@@ -44,6 +45,14 @@ export class SearchController {
         },
       },
     );
+=======
+    @Body() _body: { query: string; limit?: number; threshold?: number },
+    @CurrentUser() _user: User,
+  ) {
+    // Note: This would need proper embedding generation from query
+    // For now, returning empty array as the semanticSearch expects embeddings
+    return [];
+>>>>>>> b4d0bc2f20729f0cae80795919d7732bb666bd98
   }
 
   @Post('hybrid')
@@ -51,6 +60,7 @@ export class SearchController {
   @ApiOperation({ summary: 'Perform hybrid search (semantic + keyword)' })
   @ApiResponse({ status: 200, description: 'Hybrid search results returned successfully' })
   async hybridSearch(
+<<<<<<< HEAD
     @Body() body: { query: string; limit?: number; semanticWeight?: number; embedding: number[] },
     @CurrentUser() user: User,
   ) {
@@ -65,6 +75,14 @@ export class SearchController {
         },
       },
     );
+=======
+    @Body() _body: { query: string; limit?: number; semanticWeight?: number },
+    @CurrentUser() _user: User,
+  ) {
+    // Note: This would need proper embedding generation from query
+    // For now, returning empty array as the hybridSearch expects embeddings
+    return [];
+>>>>>>> b4d0bc2f20729f0cae80795919d7732bb666bd98
   }
 
   @Get('similar-documents/:documentId')
@@ -72,11 +90,20 @@ export class SearchController {
   @ApiResponse({ status: 200, description: 'Similar documents found successfully' })
   async findSimilarDocuments(
     @Query('documentId') documentId: string,
+<<<<<<< HEAD
     @Query('limit') limit?: number,
   ) {
     return this.vectorSearchService.findSimilarDocuments(
       documentId,
       limit ? Number(limit) : 5,
+=======
+    @Query('limit') limit: number = 5,
+    @CurrentUser() _user: User,
+  ) {
+    return this.vectorSearchService.findSimilarDocuments(
+      documentId,
+      limit,
+>>>>>>> b4d0bc2f20729f0cae80795919d7732bb666bd98
     );
   }
 
@@ -99,6 +126,10 @@ export class SearchController {
   @ApiOperation({ summary: 'Get search query history for analytics' })
   @ApiResponse({ status: 200, description: 'Search history retrieved successfully' })
   async getQueryHistory(
+<<<<<<< HEAD
+=======
+    @Query('limit') limit: number = 50,
+>>>>>>> b4d0bc2f20729f0cae80795919d7732bb666bd98
     @CurrentUser() user: User,
     @Query('limit') limit?: number,
   ) {

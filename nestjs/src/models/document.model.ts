@@ -7,11 +7,13 @@ import {
   Default,
   ForeignKey,
   BelongsTo,
+  HasMany,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from './organization.model';
 import { User } from './user.model';
 import { Case } from './case.model';
+import { DocumentVersion } from './document-version.model';
 
 @Table({
   tableName: 'documents',
@@ -21,29 +23,29 @@ import { Case } from './case.model';
   indexes: [
     {
       fields: ['case_id'],
-      name: 'idx_documents_case_id'
+      name: 'idx_documents_case_id',
     },
     {
       fields: ['owner_org_id'],
-      name: 'idx_documents_owner_org_id'
+      name: 'idx_documents_owner_org_id',
     },
     {
       fields: ['type'],
-      name: 'idx_documents_type'
+      name: 'idx_documents_type',
     },
     {
       fields: ['status'],
-      name: 'idx_documents_status'
+      name: 'idx_documents_status',
     },
     {
       fields: ['created_by'],
-      name: 'idx_documents_created_by'
+      name: 'idx_documents_created_by',
     },
     {
       fields: ['created_at'],
-      name: 'idx_documents_created_at'
-    }
-  ]
+      name: 'idx_documents_created_at',
+    },
+  ],
 })
 export class Document extends Model {
   @ApiProperty({ example: 'doc-123', description: 'Unique document ID' })
@@ -94,9 +96,47 @@ export class Document extends Model {
   @Column(DataType.TEXT)
   description?: string;
 
+  @ApiProperty({ example: 'This document contains...', description: 'Document content/text' })
+  @Column(DataType.TEXT)
+  content?: string;
+
+  @ApiProperty({ example: 'Key contract terms and conditions...', description: 'Document summary' })
+  @Column(DataType.TEXT)
+  summary?: string;
+
+  @ApiProperty({ example: 75, description: 'AI-generated risk score 0-100' })
+  @Column(DataType.INTEGER)
+  risk_score?: number;
+
+  @ApiProperty({ example: 'Evidence', description: 'Source module that created this document' })
+  @Column(DataType.STRING)
+  source_module?: string;
+
+  @ApiProperty({ example: false, description: 'Whether document is encrypted' })
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  is_encrypted: boolean;
+
+  @ApiProperty({ example: false, description: 'Whether document is shared with client' })
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  shared_with_client: boolean;
+
+  @ApiProperty({ example: 'John Doe', description: 'Name of user who uploaded the document' })
+  @Column(DataType.STRING)
+  uploaded_by?: string;
+
   @ApiProperty({ example: 'contract, license, agreement', description: 'Document tags' })
   @Column(DataType.STRING)
   tags?: string;
+
+  @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Document upload date' })
+  @Column(DataType.DATE)
+  upload_date?: Date;
+
+  @ApiProperty({ example: '2024-01-15T10:30:00Z', description: 'Last modified timestamp' })
+  @Column(DataType.DATE)
+  last_modified?: Date;
 
   @ApiProperty({ example: 'Confidential', description: 'Security classification' })
   @Column(DataType.STRING)
@@ -141,6 +181,9 @@ export class Document extends Model {
 
   @BelongsTo(() => Organization, 'owner_org_id')
   organization?: Organization;
+
+  @HasMany(() => DocumentVersion, 'document_id')
+  versions?: DocumentVersion[];
 
   // HasMany relationships for AI features
   // @HasMany(() => DocumentEmbedding, 'document_id')

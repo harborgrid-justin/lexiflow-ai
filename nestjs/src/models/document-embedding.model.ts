@@ -64,7 +64,7 @@ export class DocumentEmbedding extends Model {
 
   @ApiProperty({ example: { 'page': 1, 'section': 'Introduction' }, description: 'Additional metadata' })
   @Column(DataType.JSONB)
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 
   @ApiProperty({ example: 'user-123', description: 'User who created the embedding' })
   @ForeignKey(() => User)

@@ -29,9 +29,9 @@ export class WorkflowService {
   }
 
   async findTasks(stageId?: string, assigneeId?: string): Promise<WorkflowTask[]> {
-    const whereClause: any = {};
-    if (stageId) whereClause.stage_id = stageId;
-    if (assigneeId) whereClause.assignee_id = assigneeId;
+    const whereClause: Record<string, string> = {};
+    if (stageId) {whereClause.stage_id = stageId;}
+    if (assigneeId) {whereClause.assignee_id = assigneeId;}
 
     return this.workflowTaskModel.findAll({
       where: whereClause,

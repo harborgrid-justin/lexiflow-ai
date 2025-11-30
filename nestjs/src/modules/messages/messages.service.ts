@@ -20,9 +20,9 @@ export class MessagesService {
   }
 
   async findConversations(caseId?: string, userId?: string): Promise<Conversation[]> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
-    if (userId) whereClause.created_by = userId;
+    const whereClause: Record<string, string> = {};
+    if (caseId) {whereClause.case_id = caseId;}
+    if (userId) {whereClause.created_by = userId;}
 
     return this.conversationModel.findAll({
       where: whereClause,

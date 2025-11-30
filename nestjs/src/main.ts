@@ -95,10 +95,17 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
+<<<<<<< HEAD
   logger.log(`🚀 LexiFlow API is running on: http://localhost:${port}`);
   logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
   logger.log(`🌐 CORS enabled for: ${allowedOrigins.join(', ')}`);
   logger.log(`🔒 Environment: ${process.env.NODE_ENV || 'development'}`);
+=======
+  // eslint-disable-next-line no-console
+  console.log(`🚀 LexiFlow API is running on: http://localhost:${port}`);
+  // eslint-disable-next-line no-console
+  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+>>>>>>> b4d0bc2f20729f0cae80795919d7732bb666bd98
 }
 
 bootstrap().catch((error) => {

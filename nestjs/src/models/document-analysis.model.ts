@@ -46,7 +46,7 @@ export class DocumentAnalysis extends Model {
 
   @ApiProperty({ example: { 'key_terms': ['liability', 'indemnification'], 'risk_score': 7.5 }, description: 'Analysis results' })
   @Column(DataType.JSONB)
-  results?: any;
+  results?: Record<string, unknown>;
 
   @ApiProperty({ example: 0.95, description: 'Confidence score of the analysis' })
   @Column(DataType.DECIMAL(5, 4))

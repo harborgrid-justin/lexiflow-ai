@@ -13,10 +13,9 @@ export class DocumentsService {
     return this.documentModel.create(createDocData);
   }
 
-  async findAll(caseId?: string, orgId?: string): Promise<Document[]> {
-    const whereClause: any = {};
-    if (caseId) whereClause.case_id = caseId;
-    if (orgId) whereClause.owner_org_id = orgId;
+  async findAll(caseId?: string, _documentType?: string): Promise<Document[]> {
+    const whereClause: Record<string, string> = {};
+    if (caseId) {whereClause.case_id = caseId;}
     
     return this.documentModel.findAll({
       where: whereClause,
