@@ -1,6 +1,12 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { RedisBasicOperations } from './helpers/redis-basic.operations';
+import { RedisHashOperations } from './helpers/redis-hash.operations';
+import { RedisListOperations } from './helpers/redis-list.operations';
+import { RedisSetOperations } from './helpers/redis-set.operations';
+import { RedisPubSubOperations } from './helpers/redis-pubsub.operations';
+import { RedisMessagingOperations } from './helpers/redis-messaging.operations';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -8,6 +14,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis;
   private subscriber: Redis;
   private publisher: Redis;
+  
+  private basicOps: RedisBasicOperations;
+  private hashOps: RedisHashOperations;
+  private listOps: RedisListOperations;
+  private setOps: RedisSetOperations;
+  private pubSubOps: RedisPubSubOperations;
+  private messagingOps: RedisMessagingOperations;
 
   constructor(private configService: ConfigService) {}
 
@@ -16,346 +29,99 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       'redis://default:dxZMLUrfx5ivEjyxaiZfFjambNDvYJgq@redis-12816.c256.us-east-1-2.ec2.cloud.redislabs.com:12816';
 
     try {
-      // Main client for general operations
       this.client = new Redis(redisUrl, {
         maxRetriesPerRequest: 3,
         enableReadyCheck: true,
-        retryStrategy: (times) => {
-          const delay = Math.min(times * 50, 2000);
-          return delay;
-        },
+        retryStrategy: (times) => Math.min(times * 50, 2000),
       });
 
-      // Separate clients for pub/sub
       this.subscriber = new Redis(redisUrl);
       this.publisher = new Redis(redisUrl);
 
-      this.client.on('connect', () => {
-        this.logger.log('✅ Redis client connected successfully');
-      });
-
-      this.client.on('error', (err) => {
-        this.logger.error('❌ Redis client error:', err);
-      });
-
-      this.subscriber.on('connect', () => {
-        this.logger.log('✅ Redis subscriber connected successfully');
-      });
-
-      this.publisher.on('connect', () => {
-        this.logger.log('✅ Redis publisher connected successfully');
-      });
+      this.client.on('connect', () => this.logger.log('✅ Redis client connected'));
+      this.client.on('error', (err) => this.logger.error('❌ Redis error:', err));
 
       await this.client.ping();
-      this.logger.log('🚀 Redis Cloud connection established successfully');
+      this.logger.log('🚀 Redis Cloud connected');
+
+      // Initialize operation helpers
+      this.basicOps = new RedisBasicOperations(this.client);
+      this.hashOps = new RedisHashOperations(this.client);
+      this.listOps = new RedisListOperations(this.client);
+      this.setOps = new RedisSetOperations(this.client);
+      this.pubSubOps = new RedisPubSubOperations(this.publisher, this.subscriber);
+      this.messagingOps = new RedisMessagingOperations(this.basicOps, this.listOps, this.hashOps, this.setOps);
     } catch (error) {
-      this.logger.error('Failed to connect to Redis Cloud:', error);
+      this.logger.error('Failed to connect to Redis:', error);
       throw error;
     }
   }
 
   async onModuleDestroy() {
-    await this.client?.quit();
-    await this.subscriber?.quit();
-    await this.publisher?.quit();
+    await Promise.all([
+      this.client?.quit(),
+      this.subscriber?.quit(),
+      this.publisher?.quit(),
+    ]);
     this.logger.log('Redis connections closed');
   }
 
-  // ==================== BASIC OPERATIONS ====================
+  // Delegate to operation helpers
+  get(key: string) { return this.basicOps.get(key); }
+  set(key: string, value: string, ttl?: number) { return this.basicOps.set(key, value, ttl); }
+  del(key: string) { return this.basicOps.del(key); }
+  exists(key: string) { return this.basicOps.exists(key); }
+  expire(key: string, seconds: number) { return this.basicOps.expire(key, seconds); }
+  ttl(key: string) { return this.basicOps.ttl(key); }
+  keys(pattern: string) { return this.basicOps.keys(pattern); }
+  scan(cursor: string, pattern?: string, count?: number) { return this.basicOps.scan(cursor, pattern, count); }
+  setJson<T>(key: string, value: T, ttl?: number) { return this.basicOps.setJson(key, value, ttl); }
+  getJson<T>(key: string) { return this.basicOps.getJson<T>(key); }
 
-  async get(key: string): Promise<string | null> {
-    return this.client.get(key);
+  hset(key: string, field: string, value: string) { return this.hashOps.hset(key, field, value); }
+  hget(key: string, field: string) { return this.hashOps.hget(key, field); }
+  hgetall(key: string) { return this.hashOps.hgetall(key); }
+  hdel(key: string, ...fields: string[]) { return this.hashOps.hdel(key, ...fields); }
+  hmset(key: string, data: Record<string, string | number>) { return this.hashOps.hmset(key, data); }
+  hsetJson<T>(key: string, field: string, value: T) { return this.hashOps.hsetJson(key, field, value); }
+  hgetJson<T>(key: string, field: string) { return this.hashOps.hgetJson<T>(key, field); }
+
+  lpush(key: string, ...values: string[]) { return this.listOps.lpush(key, ...values); }
+  rpush(key: string, ...values: string[]) { return this.listOps.rpush(key, ...values); }
+  lrange(key: string, start: number, stop: number) { return this.listOps.lrange(key, start, stop); }
+  llen(key: string) { return this.listOps.llen(key); }
+  ltrim(key: string, start: number, stop: number) { return this.listOps.ltrim(key, start, stop); }
+
+  sadd(key: string, ...members: string[]) { return this.setOps.sadd(key, ...members); }
+  smembers(key: string) { return this.setOps.smembers(key); }
+  srem(key: string, ...members: string[]) { return this.setOps.srem(key, ...members); }
+  sismember(key: string, member: string) { return this.setOps.sismember(key, member); }
+  zadd(key: string, score: number, member: string) { return this.setOps.zadd(key, score, member); }
+  zrange(key: string, start: number, stop: number) { return this.setOps.zrange(key, start, stop); }
+  zrangebyscore(key: string, min: number, max: number) { return this.setOps.zrangebyscore(key, min, max); }
+  zrem(key: string, ...members: string[]) { return this.setOps.zrem(key, ...members); }
+  zcard(key: string) { return this.setOps.zcard(key); }
+
+  publish(channel: string, message: string) { return this.pubSubOps.publish(channel, message); }
+  subscribe(channel: string, callback: (message: string) => void) { return this.pubSubOps.subscribe(channel, callback); }
+  unsubscribe(channel: string) { return this.pubSubOps.unsubscribe(channel); }
+
+  addMessageToConversation(conversationId: string, messageData: any) { 
+    return this.messagingOps.addMessageToConversation(conversationId, messageData); 
   }
-
-  async set(key: string, value: string, ttlSeconds?: number): Promise<'OK'> {
-    if (ttlSeconds) {
-      return this.client.setex(key, ttlSeconds, value);
-    }
-    return this.client.set(key, value);
+  getConversationMessages(conversationId: string, limit?: number) { 
+    return this.messagingOps.getConversationMessages(conversationId, limit); 
   }
-
-  async del(key: string): Promise<number> {
-    return this.client.del(key);
+  setUserOnline(userId: string) { return this.messagingOps.setUserOnline(userId); }
+  setUserOffline(userId: string) { return this.messagingOps.setUserOffline(userId); }
+  getOnlineUsers() { return this.messagingOps.getOnlineUsers(); }
+  isUserOnline(userId: string) { return this.messagingOps.isUserOnline(userId); }
+  setTypingIndicator(conversationId: string, userId: string, isTyping: boolean) { 
+    return this.messagingOps.setTypingIndicator(conversationId, userId, isTyping); 
   }
-
-  async exists(key: string): Promise<number> {
-    return this.client.exists(key);
+  getTypingUsers(conversationId: string) { return this.messagingOps.getTypingUsers(conversationId); }
+  cacheUserPresence(userId: string, presenceData: any) { 
+    return this.messagingOps.cacheUserPresence(userId, presenceData); 
   }
-
-  async expire(key: string, seconds: number): Promise<number> {
-    return this.client.expire(key, seconds);
-  }
-
-  async ttl(key: string): Promise<number> {
-    return this.client.ttl(key);
-  }
-
-  // ==================== HASH OPERATIONS ====================
-
-  async hset(key: string, field: string, value: string): Promise<number> {
-    return this.client.hset(key, field, value);
-  }
-
-  async hget(key: string, field: string): Promise<string | null> {
-    return this.client.hget(key, field);
-  }
-
-  async hgetall(key: string): Promise<Record<string, string>> {
-    return this.client.hgetall(key);
-  }
-
-  async hdel(key: string, ...fields: string[]): Promise<number> {
-    return this.client.hdel(key, ...fields);
-  }
-
-  async hmset(key: string, data: Record<string, string | number>): Promise<'OK'> {
-    return this.client.hmset(key, data);
-  }
-
-  // ==================== LIST OPERATIONS ====================
-
-  async lpush(key: string, ...values: string[]): Promise<number> {
-    return this.client.lpush(key, ...values);
-  }
-
-  async rpush(key: string, ...values: string[]): Promise<number> {
-    return this.client.rpush(key, ...values);
-  }
-
-  async lrange(key: string, start: number, stop: number): Promise<string[]> {
-    return this.client.lrange(key, start, stop);
-  }
-
-  async llen(key: string): Promise<number> {
-    return this.client.llen(key);
-  }
-
-  async ltrim(key: string, start: number, stop: number): Promise<'OK'> {
-    return this.client.ltrim(key, start, stop);
-  }
-
-  // ==================== SET OPERATIONS ====================
-
-  async sadd(key: string, ...members: string[]): Promise<number> {
-    return this.client.sadd(key, ...members);
-  }
-
-  async smembers(key: string): Promise<string[]> {
-    return this.client.smembers(key);
-  }
-
-  async srem(key: string, ...members: string[]): Promise<number> {
-    return this.client.srem(key, ...members);
-  }
-
-  async sismember(key: string, member: string): Promise<number> {
-    return this.client.sismember(key, member);
-  }
-
-  // ==================== SORTED SET OPERATIONS ====================
-
-  async zadd(key: string, score: number, member: string): Promise<number> {
-    return this.client.zadd(key, score, member);
-  }
-
-  async zrange(key: string, start: number, stop: number): Promise<string[]> {
-    return this.client.zrange(key, start, stop);
-  }
-
-  async zrangebyscore(key: string, min: number, max: number): Promise<string[]> {
-    return this.client.zrangebyscore(key, min, max);
-  }
-
-  async zrem(key: string, ...members: string[]): Promise<number> {
-    return this.client.zrem(key, ...members);
-  }
-
-  async zcard(key: string): Promise<number> {
-    return this.client.zcard(key);
-  }
-
-  // ==================== PUB/SUB OPERATIONS ====================
-
-  async publish(channel: string, message: string): Promise<number> {
-    return this.publisher.publish(channel, message);
-  }
-
-  async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
-    await this.subscriber.subscribe(channel);
-    this.subscriber.on('message', (chan, message) => {
-      if (chan === channel) {
-        callback(message);
-      }
-    });
-  }
-
-  async unsubscribe(channel: string): Promise<void> {
-    await this.subscriber.unsubscribe(channel);
-  }
-
-  // ==================== PATTERN OPERATIONS ====================
-
-  async keys(pattern: string): Promise<string[]> {
-    return this.client.keys(pattern);
-  }
-
-  async scan(cursor: string, pattern?: string, count?: number): Promise<[string, string[]]> {
-    const args: Array<string | number> = [cursor];
-    if (pattern) {
-      args.push('MATCH', pattern);
-    }
-    if (count) {
-      args.push('COUNT', count);
-    }
-    return this.client.scan(cursor, ...(args.slice(1) as []));
-  }
-
-  // ==================== JSON HELPER METHODS ====================
-
-  async setJson<T>(key: string, value: T, ttlSeconds?: number): Promise<'OK'> {
-    return this.set(key, JSON.stringify(value), ttlSeconds);
-  }
-
-  async getJson<T>(key: string): Promise<T | null> {
-    const value = await this.get(key);
-    return value ? JSON.parse(value) : null;
-  }
-
-  async hsetJson<T>(key: string, field: string, value: T): Promise<number> {
-    return this.hset(key, field, JSON.stringify(value));
-  }
-
-  async hgetJson<T>(key: string, field: string): Promise<T | null> {
-    const value = await this.hget(key, field);
-    return value ? JSON.parse(value) : null;
-  }
-
-  // ==================== MESSAGING SPECIFIC OPERATIONS ====================
-
-  /**
-   * Store a message in a conversation's message list
-   */
-  async addMessageToConversation(conversationId: string, messageData: any): Promise<void> {
-    const messageKey = `conversation:${conversationId}:messages`;
-    const messageJson = JSON.stringify({
-      ...messageData,
-      timestamp: new Date().toISOString(),
-    });
-    
-    // Add to list
-    await this.rpush(messageKey, messageJson);
-    
-    // Keep only last 1000 messages in Redis
-    await this.ltrim(messageKey, -1000, -1);
-    
-    // Set expiry to 7 days
-    await this.expire(messageKey, 7 * 24 * 60 * 60);
-  }
-
-  /**
-   * Get recent messages from a conversation
-   */
-  async getConversationMessages(conversationId: string, limit: number = 100): Promise<any[]> {
-    const messageKey = `conversation:${conversationId}:messages`;
-    const messages = await this.lrange(messageKey, -limit, -1);
-    return messages.map(msg => JSON.parse(msg));
-  }
-
-  /**
-   * Mark user as online
-   */
-  async setUserOnline(userId: string): Promise<void> {
-    const onlineKey = 'users:online';
-    const userKey = `user:${userId}:status`;
-    
-    await this.sadd(onlineKey, userId);
-    await this.setJson(userKey, { status: 'online', lastSeen: new Date().toISOString() }, 300); // 5 min TTL
-  }
-
-  /**
-   * Mark user as offline
-   */
-  async setUserOffline(userId: string): Promise<void> {
-    const onlineKey = 'users:online';
-    const userKey = `user:${userId}:status`;
-    
-    await this.srem(onlineKey, userId);
-    await this.setJson(userKey, { status: 'offline', lastSeen: new Date().toISOString() }, 86400); // 24 hour TTL
-  }
-
-  /**
-   * Get online users
-   */
-  async getOnlineUsers(): Promise<string[]> {
-    return this.smembers('users:online');
-  }
-
-  /**
-   * Check if user is online
-   */
-  async isUserOnline(userId: string): Promise<boolean> {
-    const result = await this.sismember('users:online', userId);
-    return result === 1;
-  }
-
-  /**
-   * Store typing indicator
-   */
-  async setTypingIndicator(conversationId: string, userId: string, isTyping: boolean): Promise<void> {
-    const typingKey = `conversation:${conversationId}:typing`;
-    
-    if (isTyping) {
-      await this.hset(typingKey, userId, new Date().toISOString());
-      await this.expire(typingKey, 10); // Auto-expire after 10 seconds
-    } else {
-      await this.hdel(typingKey, userId);
-    }
-  }
-
-  /**
-   * Get users currently typing in a conversation
-   */
-  async getTypingUsers(conversationId: string): Promise<string[]> {
-    const typingKey = `conversation:${conversationId}:typing`;
-    const typingUsers = await this.hgetall(typingKey);
-    
-    // Filter out users whose typing indicator expired (>5 seconds old)
-    const now = new Date().getTime();
-    return Object.entries(typingUsers)
-      .filter(([_, timestamp]) => {
-        const typingTime = new Date(timestamp).getTime();
-        return (now - typingTime) < 5000; // 5 seconds
-      })
-      .map(([userId]) => userId);
-  }
-
-  /**
-   * Cache user presence data
-   */
-  async cacheUserPresence(userId: string, presenceData: any): Promise<void> {
-    const presenceKey = `user:${userId}:presence`;
-    await this.setJson(presenceKey, presenceData, 300); // 5 min cache
-  }
-
-  /**
-   * Get cached user presence
-   */
-  async getUserPresence(userId: string): Promise<any | null> {
-    const presenceKey = `user:${userId}:presence`;
-    return this.getJson(presenceKey);
-  }
-
-  // ==================== UTILITY METHODS ====================
-
-  getClient(): Redis {
-    return this.client;
-  }
-
-  getSubscriber(): Redis {
-    return this.subscriber;
-  }
-
-  getPublisher(): Redis {
-    return this.publisher;
-  }
+  getUserPresence(userId: string) { return this.messagingOps.getUserPresence(userId); }
 }
