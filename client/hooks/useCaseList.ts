@@ -1,25 +1,24 @@
 
 import { useState, useMemo } from 'react';
 import { Case } from '../types';
-import { ApiService, ApiError } from '../services/apiService';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiRequest, useApiMutation } from '../enzyme';
 import { useLatestCallback, useIsMounted } from '@missionfabric-js/enzyme/hooks';
 
 export const useCaseList = () => {
-  // TanStack Query - automatic caching, refetching, and loading states
+  // ✅ ENZYME: useApiRequest - automatic caching, refetching, and loading states
   const { 
     data: cases = [], 
     isLoading: loading, 
     error: queryError,
     refetch 
-  } = useQuery({
-    queryKey: ['/api/v1/cases'],
-    queryFn: () => ApiService.cases.getAll(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true,
+  } = useApiRequest<Case[]>({
+    endpoint: '/api/v1/cases',
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: true,
+    }
   });
 
-  const queryClient = useQueryClient();
   const isMounted = useIsMounted();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,36 +40,37 @@ export const useCaseList = () => {
     setTypeFilter('All');
   });
 
-  // TanStack Query mutations for create/delete/update
-  const createCaseMutation = useMutation({
-    mutationFn: (newCase: Partial<Case>) => ApiService.cases.create(newCase),
+  // ✅ ENZYME: useApiMutation - automatic invalidation and refetching
+  const createCaseMutation = useApiMutation({
+    endpoint: '/api/v1/cases',
+    method: 'POST',
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v1/cases'] });
+      refetch();
       if (isMounted()) {
         setIsModalOpen(false);
       }
     },
   });
 
-  // Delete mutation
-  const deleteCaseMutation = useMutation({
-    mutationFn: (id: string) => ApiService.cases.delete(id),
+  const deleteCaseMutation = useApiMutation({
+    endpoint: '/api/v1/cases/:id',
+    method: 'DELETE',
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v1/cases'] });
+      refetch();
     },
   });
 
-  // Update mutation
-  const updateCaseMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Case> }) => ApiService.cases.update(id, updates),
+  const updateCaseMutation = useApiMutation({
+    endpoint: '/api/v1/cases/:id',
+    method: 'PUT',
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v1/cases'] });
+      refetch();
     },
   });
 
   const addCase = useLatestCallback(async (newCase: Partial<Case>) => {
     try {
-      const createdCase = await createCaseMutation.mutateAsync(newCase);
+      const createdCase = await createCaseMutation.mutate(newCase);
       return createdCase;
     } catch (err) {
       console.error('Failed to create case:', err);
@@ -80,7 +80,7 @@ export const useCaseList = () => {
 
   const deleteCase = useLatestCallback(async (caseId: string) => {
     try {
-      await deleteCaseMutation.mutateAsync(caseId);
+      await deleteCaseMutation.mutate({ id: caseId });
     } catch (err) {
       console.error('Failed to delete case:', err);
       throw err;
@@ -89,7 +89,7 @@ export const useCaseList = () => {
 
   const updateCase = useLatestCallback(async (caseId: string, updates: Partial<Case>) => {
     try {
-      const updatedCase = await updateCaseMutation.mutateAsync({ id: caseId, updates });
+      const updatedCase = await updateCaseMutation.mutate({ id: caseId, ...updates });
       return updatedCase;
     } catch (err) {
       console.error('Failed to update case:', err);
@@ -105,7 +105,7 @@ export const useCaseList = () => {
     cases,
     loading,
     error,
-    refreshing: false, // Enzyme handles this internally
+    refreshing: false,
     isModalOpen,
     setIsModalOpen,
     statusFilter,
@@ -117,6 +117,7 @@ export const useCaseList = () => {
     addCase,
     deleteCase,
     updateCase,
-    refresh
+    refresh,
+    isLoading: loading
   };
 };

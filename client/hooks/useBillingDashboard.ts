@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ApiService } from '../services/apiService';
+import { useApiRequest } from '../enzyme';
 import { Client, TimeEntry } from '../types';
 
 interface BillingStats {
@@ -9,17 +8,19 @@ interface BillingStats {
 }
 
 export const useBillingDashboard = () => {
-  // Parallel API requests with TanStack Query - automatic caching
-  const { data: stats } = useQuery<BillingStats>({
-    queryKey: ['billing', 'stats'],
-    queryFn: () => ApiService.billing.getStats(),
-    staleTime: 5 * 60 * 1000, // 5 min cache
+  // ✅ ENZYME: Parallel API requests - automatic caching and refetching
+  const { data: stats } = useApiRequest<BillingStats>({
+    endpoint: '/api/v1/billing/stats',
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 min cache
+    }
   });
 
-  const { data: clients = [] } = useQuery<Client[]>({
-    queryKey: ['clients'],
-    queryFn: () => ApiService.clients.getAll(),
-    staleTime: 10 * 60 * 1000, // 10 min cache
+  const { data: clients = [] } = useApiRequest<Client[]>({
+    endpoint: '/api/v1/clients',
+    options: {
+      staleTime: 10 * 60 * 1000, // 10 min cache
+    }
   });
 
   // Derive data using useMemo for performance

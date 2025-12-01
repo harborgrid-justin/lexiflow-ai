@@ -1,25 +1,58 @@
+/**
+ * DiscoveryPlatform - Discovery Center Component
+ *
+ * Manages discovery requests, legal holds, and FRCP compliance.
+ *
+ * ENZYME MIGRATION:
+ * - Uses useDiscoveryPlatform hook with useApiRequest/useApiMutation
+ * - Added useLatestCallback for stable event handlers
+ * - Added useTrackEvent for analytics
+ * - Added usePageView for page tracking
+ * - Added HydrationBoundary for progressive hydration of heavy sub-components
+ */
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { PageHeader, Button, TabNavigation } from './common';
-import { 
+import {
   MessageCircle, Plus, Scale, Shield, Users, Lock, Clock
 } from 'lucide-react';
-
-import { DiscoveryDashboard } from './discovery/DiscoveryDashboard';
-import { DiscoveryRequests } from './discovery/DiscoveryRequests';
-import { PrivilegeLog } from './discovery/PrivilegeLog';
-import { LegalHolds } from './discovery/LegalHolds';
-import { DiscoveryDocumentViewer } from './discovery/DiscoveryDocumentViewer';
-import { DiscoveryResponse } from './discovery/DiscoveryResponse';
-import { DiscoveryProduction } from './discovery/DiscoveryProduction';
 import { useDiscoveryPlatform } from '../hooks/useDiscoveryPlatform';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  usePageView,
+  useIsMounted,
+  HydrationBoundary,
+  LazyHydration
+} from '../enzyme';
+
+// Lazy load heavy components for better performance
+const DiscoveryDashboard = lazy(() => import('./discovery/DiscoveryDashboard').then(m => ({ default: m.DiscoveryDashboard })));
+const DiscoveryRequests = lazy(() => import('./discovery/DiscoveryRequests').then(m => ({ default: m.DiscoveryRequests })));
+const PrivilegeLog = lazy(() => import('./discovery/PrivilegeLog').then(m => ({ default: m.PrivilegeLog })));
+const LegalHolds = lazy(() => import('./discovery/LegalHolds').then(m => ({ default: m.LegalHolds })));
+const DiscoveryDocumentViewer = lazy(() => import('./discovery/DiscoveryDocumentViewer').then(m => ({ default: m.DiscoveryDocumentViewer })));
+const DiscoveryResponse = lazy(() => import('./discovery/DiscoveryResponse').then(m => ({ default: m.DiscoveryResponse })));
+const DiscoveryProduction = lazy(() => import('./discovery/DiscoveryProduction').then(m => ({ default: m.DiscoveryProduction })));
 
 type DiscoveryView = 'dashboard' | 'requests' | 'privilege' | 'holds' | 'plan' | 'doc_viewer' | 'response' | 'production';
 
+// Loading fallback for lazy components
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-64 bg-white rounded-lg border border-slate-200">
+    <div className="animate-pulse text-slate-400">Loading...</div>
+  </div>
+);
+
 export const DiscoveryPlatform: React.FC = () => {
   const [view, setView] = useState<DiscoveryView>('dashboard');
-  const [contextId, setContextId] = useState<string | null>(null); // To store ID of doc or request being viewed/edited
-  const { requests } = useDiscoveryPlatform();
+  const [contextId, setContextId] = useState<string | null>(null);
+  const { requests, updateRequest, isLoading } = useDiscoveryPlatform();
+  const isMounted = useIsMounted();
+
+  // ENZYME: Analytics tracking
+  const trackEvent = useTrackEvent();
+  usePageView('discovery_platform');
   const primaryTabs: TabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Scale },
     { id: 'requests', label: 'Requests & Responses', icon: MessageCircle },
@@ -28,48 +61,101 @@ export const DiscoveryPlatform: React.FC = () => {
     { id: 'plan', label: 'Discovery Plan (26(f))', icon: Users },
   ];
 
-  const handleNavigate = (targetView: DiscoveryView, id?: string) => {
+  // ENZYME: Stable callbacks with useLatestCallback
+  const handleNavigate = useLatestCallback((targetView: DiscoveryView, id?: string) => {
     if (id) setContextId(id);
     setView(targetView);
-  };
 
-  const handleBack = () => {
+    // Track navigation event
+    trackEvent('discovery_navigate', { targetView, hasContextId: !!id });
+  });
+
+  const handleBack = useLatestCallback(() => {
     setView('dashboard');
     setContextId(null);
-  };
 
-  const handleSaveResponse = async (reqId: string, text: string) => {
-      try {
-        await ApiService.updateDiscoveryRequest(reqId, { status: 'Responded', responsePreview: text });
-        const updatedRequests = requests.map(r => r.id === reqId ? { ...r, status: 'Responded' as const, responsePreview: text } : r);
-        setRequests(updatedRequests);
+    trackEvent('discovery_back_to_dashboard');
+  });
+
+  const handleSaveResponse = useLatestCallback(async (reqId: string, text: string) => {
+    try {
+      await updateRequest(reqId, { status: 'Responded', responsePreview: text });
+
+      if (isMounted()) {
+        trackEvent('discovery_response_saved', { requestId: reqId });
         alert(`Response saved for ${reqId}. Status updated to Responded.`);
         setView('requests');
-      } catch (error) {
-        console.error("Failed to save response", error);
+      }
+    } catch (error) {
+      console.error("Failed to save response", error);
+      if (isMounted()) {
         alert("Failed to save response.");
       }
-  };
+    }
+  });
 
   const renderContent = () => {
+    // ENZYME: Wrap lazy-loaded components in Suspense with HydrationBoundary
     switch (view) {
         case 'dashboard':
-            return <DiscoveryDashboard onNavigate={handleNavigate} />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <HydrationBoundary id="discovery-dashboard" priority="high" trigger="visible">
+                  <DiscoveryDashboard onNavigate={handleNavigate} />
+                </HydrationBoundary>
+              </Suspense>
+            );
         case 'requests':
-            return <DiscoveryRequests items={requests} onNavigate={handleNavigate} />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <HydrationBoundary id="discovery-requests" priority="high" trigger="visible">
+                  <DiscoveryRequests items={requests} onNavigate={handleNavigate} />
+                </HydrationBoundary>
+              </Suspense>
+            );
         case 'privilege':
-            return <PrivilegeLog />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyHydration priority="normal" trigger="visible">
+                  <PrivilegeLog />
+                </LazyHydration>
+              </Suspense>
+            );
         case 'holds':
-            return <LegalHolds />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyHydration priority="normal" trigger="visible">
+                  <LegalHolds />
+                </LazyHydration>
+              </Suspense>
+            );
         case 'doc_viewer':
-            return <DiscoveryDocumentViewer docId={contextId || ''} onBack={() => setView('dashboard')} />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <HydrationBoundary id="discovery-doc-viewer" priority="high" trigger="immediate">
+                  <DiscoveryDocumentViewer docId={contextId || ''} onBack={() => setView('dashboard')} />
+                </HydrationBoundary>
+              </Suspense>
+            );
         case 'response': {
             const reqToDraft = requests.find(r => r.id === contextId);
-            return <DiscoveryResponse request={reqToDraft || null} onBack={() => setView('requests')} onSave={handleSaveResponse} />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <HydrationBoundary id="discovery-response" priority="high" trigger="immediate">
+                  <DiscoveryResponse request={reqToDraft || null} onBack={() => setView('requests')} onSave={handleSaveResponse} />
+                </HydrationBoundary>
+              </Suspense>
+            );
         }
         case 'production': {
             const reqToProduce = requests.find(r => r.id === contextId);
-            return <DiscoveryProduction request={reqToProduce || null} onBack={() => setView('requests')} />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyHydration priority="normal" trigger="visible">
+                  <DiscoveryProduction request={reqToProduce || null} onBack={() => setView('requests')} />
+                </LazyHydration>
+              </Suspense>
+            );
         }
         case 'plan':
             return (
@@ -81,7 +167,13 @@ export const DiscoveryPlatform: React.FC = () => {
                 </div>
             );
         default:
-            return <DiscoveryDashboard onNavigate={handleNavigate} />;
+            return (
+              <Suspense fallback={<LoadingFallback />}>
+                <HydrationBoundary id="discovery-dashboard-default" priority="high" trigger="visible">
+                  <DiscoveryDashboard onNavigate={handleNavigate} />
+                </HydrationBoundary>
+              </Suspense>
+            );
     }
   };
 

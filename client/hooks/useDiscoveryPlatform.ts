@@ -1,24 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useApiRequest, useApiMutation, useLatestCallback } from '../enzyme';
 import { DiscoveryRequest } from '../types';
-import { ApiService } from '../services/apiService';
 
 export const useDiscoveryPlatform = () => {
-  const [requests, setRequests] = useState<DiscoveryRequest[]>([]);
+  // ✅ ENZYME: Fetch discovery requests - automatic caching and error handling
+  const { data: requests = [], isLoading, error, refetch } = useApiRequest<DiscoveryRequest[]>({
+    endpoint: '/api/v1/discovery/requests',
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 min cache
+      retry: 2
+    }
+  });
 
-  useEffect(() => {
-    const fetchDiscovery = async () => {
-      try {
-        const data = await ApiService.getDiscovery();
-        setRequests(data || []);
-      } catch (e) {
-        console.error("Failed to fetch discovery", e);
-        setRequests([]);
-      }
-    };
-    fetchDiscovery();
-  }, []);
+  // ✅ ENZYME: Mutation for updating discovery requests
+  const updateRequestMutation = useApiMutation({
+    endpoint: '/api/v1/discovery/requests/:id',
+    method: 'PUT',
+    onSuccess: () => {
+      refetch();
+    }
+  });
+
+  const updateRequest = useLatestCallback(async (reqId: string, updates: Partial<DiscoveryRequest>) => {
+    try {
+      await updateRequestMutation.mutate({ id: reqId, ...updates });
+    } catch (err) {
+      console.error('Failed to update discovery request:', err);
+      throw err;
+    }
+  });
 
   return {
-    requests
+    requests,
+    isLoading,
+    error,
+    updateRequest,
+    refetch
   };
 };

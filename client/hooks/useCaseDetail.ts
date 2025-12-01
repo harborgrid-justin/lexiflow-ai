@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion, DocketEntry } from '../types';
 import { OpenAIService } from '../services/openAIService';
-import { ApiService, ApiError } from '../services/apiService';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiRequest } from '../enzyme';
 import { useLatestCallback, useIsMounted } from '@missionfabric-js/enzyme/hooks';
 
 export const useCaseDetail = (caseData: Case) => {
@@ -16,42 +15,46 @@ export const useCaseDetail = (caseData: Case) => {
   const [error, setError] = useState<string | null>(null);
 
   const isMounted = useIsMounted();
-  const queryClient = useQueryClient();
 
-  // TanStack Query - parallel fetching with automatic caching
-  const { data: documents = [], isLoading: docsLoading } = useQuery({
-    queryKey: [`/api/v1/cases/${caseData.id}/documents`],
-    queryFn: () => ApiService.documents.getAll(caseData.id),
-    enabled: !!caseData?.id,
-    staleTime: 5 * 60 * 1000,
+  // ✅ ENZYME: useApiRequest - parallel fetching with automatic caching
+  const { data: documents = [], isLoading: docsLoading, refetch: refetchDocs } = useApiRequest<LegalDocument[]>({
+    endpoint: `/api/v1/cases/${caseData.id}/documents`,
+    options: {
+      enabled: !!caseData?.id,
+      staleTime: 5 * 60 * 1000,
+    }
   });
 
-  const { data: stages = [], isLoading: stagesLoading, refetch: refetchStages } = useQuery({
-    queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`],
-    queryFn: () => ApiService.workflow.stages.getAll(caseData.id),
-    enabled: !!caseData?.id,
-    staleTime: 5 * 60 * 1000,
+  const { data: stages = [], isLoading: stagesLoading, refetch: refetchStages } = useApiRequest<WorkflowStage[]>({
+    endpoint: `/api/v1/cases/${caseData.id}/workflow/stages`,
+    options: {
+      enabled: !!caseData?.id,
+      staleTime: 5 * 60 * 1000,
+    }
   });
 
-  const { data: billingEntries = [], isLoading: billingLoading } = useQuery({
-    queryKey: [`/api/v1/cases/${caseData.id}/billing/time-entries`],
-    queryFn: () => ApiService.billing.timeEntries.getAll(caseData.id),
-    enabled: !!caseData?.id,
-    staleTime: 2 * 60 * 1000,
+  const { data: billingEntries = [], isLoading: billingLoading, refetch: refetchBilling } = useApiRequest<TimeEntry[]>({
+    endpoint: `/api/v1/cases/${caseData.id}/billing/time-entries`,
+    options: {
+      enabled: !!caseData?.id,
+      staleTime: 2 * 60 * 1000,
+    }
   });
 
-  const { data: motions = [], isLoading: motionsLoading } = useQuery({
-    queryKey: [`/api/v1/cases/${caseData.id}/motions`],
-    queryFn: () => ApiService.motions.getAll(caseData.id),
-    enabled: !!caseData?.id,
-    staleTime: 5 * 60 * 1000,
+  const { data: motions = [], isLoading: motionsLoading, refetch: refetchMotions } = useApiRequest<Motion[]>({
+    endpoint: `/api/v1/cases/${caseData.id}/motions`,
+    options: {
+      enabled: !!caseData?.id,
+      staleTime: 5 * 60 * 1000,
+    }
   });
 
-  const { data: docketEntries = [], isLoading: docketsLoading } = useQuery({
-    queryKey: [`/api/v1/cases/${caseData.id}/docket`],
-    queryFn: () => ApiService.getDocketEntries(caseData.id),
-    enabled: !!caseData?.id,
-    staleTime: 10 * 60 * 1000,
+  const { data: docketEntries = [], isLoading: docketsLoading, refetch: refetchDockets } = useApiRequest<DocketEntry[]>({
+    endpoint: `/api/v1/cases/${caseData.id}/docket`,
+    options: {
+      enabled: !!caseData?.id,
+      staleTime: 10 * 60 * 1000,
+    }
   });
 
   const loading = docsLoading || stagesLoading || billingLoading || motionsLoading || docketsLoading;
@@ -110,8 +113,8 @@ export const useCaseDetail = (caseData: Case) => {
     setAnalyzingId(doc.id);
     try {
       const result = await OpenAIService.analyzeDocument(doc.content);
-      await ApiService.documents.update(doc.id, { summary: result.summary, riskScore: result.riskScore });
-      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/documents`] });
+      await OpenAIService.updateDocument(doc.id, { summary: result.summary, riskScore: result.riskScore });
+      refetchDocs();
     } catch (err) {
       console.error('Failed to analyze document:', err);
       if (isMounted()) {
@@ -141,8 +144,8 @@ export const useCaseDetail = (caseData: Case) => {
 
   const createDocument = useLatestCallback(async (doc: Partial<LegalDocument>) => {
     try {
-      const newDoc = await ApiService.documents.create(doc);
-      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/documents`] });
+      const newDoc = await OpenAIService.createDocument(doc);
+      refetchDocs();
       return newDoc;
     } catch (err) {
       console.error('Failed to create document:', err);
@@ -163,8 +166,8 @@ export const useCaseDetail = (caseData: Case) => {
       }));
       
       // Save to backend and refetch
-      await Promise.all(newStages.map(stage => ApiService.workflow.stages.create(stage)));
-      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`] });
+      await Promise.all(newStages.map(stage => OpenAIService.createWorkflowStage(stage)));
+      refetchStages();
     } catch (err) {
       console.error('Failed to generate workflow:', err);
       if (isMounted()) {
@@ -179,8 +182,8 @@ export const useCaseDetail = (caseData: Case) => {
 
   const addTimeEntry = useLatestCallback(async (entry: Partial<TimeEntry>) => {
     try {
-      const newEntry = await ApiService.billing.timeEntries.create(entry);
-      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/billing/time-entries`] });
+      const newEntry = await OpenAIService.createTimeEntry(entry);
+      refetchBilling();
       return newEntry;
     } catch (err) {
       console.error('Failed to add time entry:', err);
@@ -194,10 +197,10 @@ export const useCaseDetail = (caseData: Case) => {
   const toggleTask = useLatestCallback(async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
     try {
       // Update task status in backend
-      await ApiService.workflow.tasks.update(taskId, { status });
+      await OpenAIService.updateWorkflowTask(taskId, { status });
       
-      // Optimistic update handled by Enzyme cache invalidation
-      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`] });
+      // Refetch to get updated data
+      refetchStages();
       
       // Business logic for stage auto-advancement
       const stageWithTask = stages.find(s => s.tasks.some(t => t.id === taskId));
@@ -205,10 +208,10 @@ export const useCaseDetail = (caseData: Case) => {
         const updatedTasks = stageWithTask.tasks.map(t => t.id === taskId ? { ...t, status } : t);
         const allDone = updatedTasks.every(t => t.status === 'Done');
         if (allDone) {
-          await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Completed' });
-          queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`] });
+          await OpenAIService.updateWorkflowStage(stageWithTask.id, { status: 'Completed' });
+          refetchStages();
         } else {
-          await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Active' });
+          await OpenAIService.updateWorkflowStage(stageWithTask.id, { status: 'Active' });
         }
       }
     } catch (err) {
@@ -221,7 +224,11 @@ export const useCaseDetail = (caseData: Case) => {
   });
 
   const refresh = useLatestCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}`] });
+    refetchDocs();
+    refetchStages();
+    refetchBilling();
+    refetchMotions();
+    refetchDockets();
   });
 
   return {

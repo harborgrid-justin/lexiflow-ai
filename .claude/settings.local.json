@@ -39,7 +39,13 @@
       "Bash(git stash:*)",
       "Bash(git restore:*)",
       "Bash(git checkout:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm run type-check:*)",
+      "Bash(npx vue-tsc:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(./node_modules/.bin/tsc:*)"
     ],
     "deny": [],
     "ask": []
