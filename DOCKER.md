@@ -81,6 +81,10 @@ docker build --target client-production -t lexiflow-frontend .
 docker build --target production -t lexiflow-combined .
 ```
 
+### Docker Network Topology
+
+All containers join the private `lexiflow-network` bridge defined in `docker-compose.yml`. This keeps database traffic off the host network surface while still exposing the frontend (3000) and backend (3001) ports you need for development. Use `docker network inspect lexiflow-ai_lexiflow-network` to view attached services.
+
 ## 🗄️ PostgreSQL Configuration
 
 ### Database Details
@@ -91,7 +95,16 @@ docker build --target production -t lexiflow-combined .
 
 ### Data Persistence
 
-Data is persisted in Docker volumes:
+Data is persisted in the repo under the directory specified by `DATA_PATH` (defaults to `./data`). Customize it in `.env.docker` if you want to store containers on another disk.
+
+Data directory layout:
+```bash
+./data/
+  postgres/   # PostgreSQL data directory
+  backend/    # API logs & uploads
+```
+
+Useful commands:
 ```bash
 # List volumes
 docker volume ls | grep lexiflow
@@ -102,6 +115,16 @@ docker-compose exec postgres pg_dump -U lexiflow_user lexiflow > backup.sql
 # Restore database
 docker-compose exec -T postgres psql -U lexiflow_user lexiflow < backup.sql
 ```
+
+### Automatic Schema + Seed
+
+On the first startup (when the `postgres` data directory is empty) the container will now:
+
+1. Enable required extensions.
+2. Apply every SQL file in `server/src/database/migrations`.
+3. Load sample data from `server/src/database/seed.sql`.
+
+This gives you a working LexiFlow dataset immediately after `docker-compose up`.
 
 ### Access Database
 

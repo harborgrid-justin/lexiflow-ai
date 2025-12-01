@@ -9,8 +9,8 @@ WORKDIR /app/server
 # Copy package files first for better layer caching
 COPY server/package*.json ./
 
-# Use npm ci for reproducible builds and --ignore-scripts for security
-RUN npm ci --ignore-scripts && npm cache clean --force
+# Use npm ci for reproducible builds
+RUN npm ci && npm cache clean --force
 
 # Copy source after dependencies for optimal layer caching
 COPY server/tsconfig.json server/nest-cli.json ./
@@ -21,8 +21,11 @@ RUN npm run build && \
     # Remove dev dependencies to reduce image size
     npm prune --production
 
+# Dedicated base image for frontend so we can move to Node 20 without impacting the backend
+FROM node:20-alpine AS client-base
+
 # Agent 2: Frontend Build Optimization  
-FROM base AS client-builder
+FROM client-base AS client-builder
 WORKDIR /app/client
 
 # Copy package files first for better layer caching
@@ -31,16 +34,8 @@ COPY client/package*.json ./
 # Use npm ci for reproducible builds
 RUN npm ci --ignore-scripts && npm cache clean --force
 
-# Copy source files
-COPY client/tsconfig.json client/vite.config.ts client/index.html ./
-COPY client/src ./src
-COPY client/types ./types
-COPY client/services ./services
-COPY client/components ./components
-COPY client/hooks ./hooks
-COPY client/contexts ./contexts
-COPY client/utils ./utils
-COPY client/*.tsx ./
+# Copy application source (node_modules and dist are already excluded via .dockerignore)
+COPY client/ ./
 
 # Build optimized production bundle
 RUN npm run build
@@ -57,7 +52,7 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # Install production dependencies only
 COPY server/package*.json ./
-RUN npm ci --only=production --ignore-scripts && npm cache clean --force
+RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder
 COPY --from=server-builder --chown=nestjs:nodejs /app/server/dist ./dist
@@ -75,7 +70,7 @@ EXPOSE 3001
 CMD ["node", "dist/main.js"]
 
 # Agent 3: Frontend Production Runtime
-FROM node:18-alpine AS client-production
+FROM client-base AS client-production
 WORKDIR /app/client
 
 # Security: Create non-root user

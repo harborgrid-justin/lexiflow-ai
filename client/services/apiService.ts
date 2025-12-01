@@ -5,23 +5,68 @@ import { transformApiCase, transformApiUser, transformApiEvidence, transformApiC
 // API Base URL configuration
 // In development with Vite proxy, use relative path '/api/v1'
 // In production or when running standalone, use the full URL
-const getApiBaseUrl = (): string => {
-  // Check for Vite environment variable first
-  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) {
-    return `${(import.meta as any).env.VITE_API_URL}/api/v1`;
+const trimTrailingSlash = (value?: string | null): string | null => {
+  if (!value) return null;
+  return value.endsWith('/') ? value.slice(0, -1) : value;
+};
+
+const getCodespacesApiOrigin = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
   }
-  // Fallback to process.env for non-Vite builds
+
+  const { protocol, hostname } = window.location;
+  const isCodespaceHost = hostname.endsWith('.app.github.dev') || hostname.endsWith('.github.dev');
+  if (!isCodespaceHost) {
+    return null;
+  }
+
+  const match = hostname.match(/^(.*)-(\d+)\.(app|github)\.github\.dev$/);
+  if (!match) {
+    return null;
+  }
+
+  const [, base, port, domain] = match;
+  const apiPort = '3001';
+
+  // If we're already on the API port, reuse the current origin.
+  if (port === apiPort) {
+    return `${protocol}//${hostname}`;
+  }
+
+  return `${protocol}//${base}-${apiPort}.${domain}.github.dev`;
+};
+
+const getApiBaseUrl = (): string => {
+  const envApiUrl = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_API_URL : undefined;
+  const normalizedEnvUrl = trimTrailingSlash(envApiUrl);
+  const isEnvLocalhost = normalizedEnvUrl ? /localhost|127\.0\.0\.1/i.test(normalizedEnvUrl) : false;
+
+  const codespacesOrigin = getCodespacesApiOrigin();
+  if (codespacesOrigin && (!normalizedEnvUrl || isEnvLocalhost)) {
+    return `${codespacesOrigin}/api/v1`;
+  }
+
+  if (normalizedEnvUrl) {
+    return `${normalizedEnvUrl}/api/v1`;
+  }
+
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  // Default: use proxy in development (localhost or GitHub Codespaces)
+
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    // Use Vite proxy for localhost and GitHub Codespaces
-    if (hostname === 'localhost' || hostname.endsWith('.app.github.dev') || hostname.endsWith('.github.dev')) {
-      return '/api/v1'; // Use Vite proxy
+    if (hostname === 'localhost') {
+      return '/api/v1';
+    }
+
+    const codespaceFallback = getCodespacesApiOrigin();
+    if (codespaceFallback) {
+      return `${codespaceFallback}/api/v1`;
     }
   }
+
   return 'http://localhost:3001/api/v1';
 };
 

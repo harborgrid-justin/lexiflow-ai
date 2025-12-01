@@ -65,6 +65,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Runtime data volumes
+data
+
 # Cache directories
 .npm
 .eslintcache
