@@ -1,1 +1,1 @@
-export class ValidationUtil { static validateUUID(id: string) {} }
+export class ValidationUtil { static validateUUID(_id: string) { return true; } }

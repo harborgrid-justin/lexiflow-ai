@@ -36,7 +36,7 @@ export class RedisMessagingOperations {
     const userKey = `user:${userId}:presence`;
     await this.setOps.sadd('users:online', userId);
     await this.basicOps.setJson(userKey, { status: 'online', lastSeen: new Date().toISOString() }, 300);
-    await this.basicOps.expire(`users:online`, 300);
+    await this.basicOps.expire('users:online', 300);
   }
 
   async setUserOffline(userId: string): Promise<void> {

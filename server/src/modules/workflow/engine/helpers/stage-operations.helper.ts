@@ -63,7 +63,7 @@ export class StageOperationsHelper {
 
   async createTaskFromTemplate(stageId: string, template: Record<string, unknown>): Promise<WorkflowTask> {
     const stage = await this.stageModel.findByPk(stageId);
-    if (!stage) throw new Error(`Stage not found: ${stageId}`);
+    if (!stage) {throw new Error(`Stage not found: ${stageId}`);}
     const task = await this.taskModel.create({
       case_id: stage.case_id,
       stage_id: stageId,
@@ -91,7 +91,7 @@ export class StageOperationsHelper {
       case 'assignTo':
         if (typeof value === 'string') {
           const tasks = await this.taskModel.findAll({ where: { stage_id: stageId, status: 'pending' } });
-          for (const task of tasks) await task.update({ assigned_to: value });
+          for (const task of tasks) {await task.update({ assigned_to: value });}
         }
         break;
       case 'setPriority':

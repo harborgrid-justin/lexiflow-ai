@@ -9,6 +9,8 @@ import { WorkflowStage, WorkflowTask } from '../../../models/workflow.model';
 import { DependencyService } from './dependency.service';
 import { SLAService } from './sla.service';
 import { ApprovalService } from './approval.service';
+import { AuditService } from './audit.service';
+import { NotificationService } from './notification.service';
 import { AnalyticsService } from './analytics.service';
 import { TimeTrackingService } from './time-tracking.service';
 import { ParallelService } from './parallel.service';
@@ -40,6 +42,8 @@ export class WorkflowOrchestratorService {
     private dependencyService: DependencyService,
     private slaService: SLAService,
     private approvalService: ApprovalService,
+    private auditService: AuditService,
+    private notificationService: NotificationService,
     private analyticsService: AnalyticsService,
     private timeTrackingService: TimeTrackingService,
     private parallelService: ParallelService,
@@ -159,7 +163,7 @@ export class WorkflowOrchestratorService {
   ): Promise<{ success: boolean; nextTasks?: string[]; actions?: string[] }> {
     return this.recoveryService.executeWithRecovery(taskId, 'complete', async () => {
       const task = await this.taskModel.findByPk(taskId);
-      if (!task) throw new Error(`Task ${taskId} not found`);
+      if (!task) {throw new Error(`Task ${taskId} not found`);}
 
       await this.validationService.validateTaskCompletion(task, userId);
       await this.taskLifecycleService.completeTask(taskId, userId, data);
@@ -262,6 +266,8 @@ export class WorkflowOrchestratorService {
   getExternalIntegrationService() { return this.externalIntegrationService; }
   getCustomFieldsService() { return this.customFieldsService; }
   getVersioningService() { return this.versioningService; }
+  getNotificationService() { return this.notificationService; }
+  getAuditService() { return this.auditService; }
 
   // ==================== COMPREHENSIVE STATUS ====================
 

@@ -79,12 +79,12 @@ export class WorkflowEngineController {
 
   @Get('sla/breaches')
   @ApiOperation({ summary: 'Get all SLA breaches' })
-  async getSLABreaches(@Query('caseId') caseId?: string) {
+  async getSLABreaches(@Query('caseId') _caseId?: string) {
     // Return empty breach report for now - will be populated as tasks are created
     return { 
       warnings: [], 
       breaches: [], 
-      total: 0 
+      total: 0, 
     };
   }
 

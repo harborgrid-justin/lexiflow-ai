@@ -6,7 +6,7 @@ import { CircuitBreaker } from '../circuit-breaker';
 import { AuditService } from '../audit.service';
 import { WorkflowEngineError } from '../errors';
 
-interface RecoveryState {
+export interface RecoveryState {
   taskId: string;
   operation: string;
   startedAt: Date;

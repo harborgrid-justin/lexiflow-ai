@@ -1,4 +1,4 @@
-export type { WorkflowTask } from '../../../models/workflow.model';
+export type { WorkflowTask } from '../../../../models/workflow.model';
 
 export interface TaskDependency {
   taskId: string;

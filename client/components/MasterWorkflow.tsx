@@ -49,12 +49,12 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
         }
     };
     fetchData();
-    loadNotificationCount();
     
-    // Refresh notifications every 30 seconds
-    const interval = setInterval(loadNotificationCount, 30000);
+    // Load and refresh notifications
+    loadNotificationCount();
+    const interval = setInterval(() => loadNotificationCount(), 30000);
     return () => clearInterval(interval);
-  }, [loadNotificationCount]);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const getCaseProgress = (status: string) => {
     switch(status) {

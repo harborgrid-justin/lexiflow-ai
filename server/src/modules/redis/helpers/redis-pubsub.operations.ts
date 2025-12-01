@@ -23,6 +23,6 @@ export class RedisPubSubOperations {
   }
 
   async unsubscribe(channel: string): Promise<void> {
-    return this.subscriber.unsubscribe(channel);
+    await this.subscriber.unsubscribe(channel);
   }
 }

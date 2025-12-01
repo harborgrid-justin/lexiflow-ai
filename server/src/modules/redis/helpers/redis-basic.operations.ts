@@ -40,14 +40,14 @@ export class RedisBasicOperations {
   }
 
   async scan(cursor: string, pattern?: string, count?: number): Promise<[string, string[]]> {
-    const args: any[] = [cursor];
+    const args: [string, ...any[]] = [cursor];
     if (pattern) {
       args.push('MATCH', pattern);
     }
     if (count) {
       args.push('COUNT', count);
     }
-    return this.client.scan(...args);
+    return this.client.scan(...args) as Promise<[string, string[]]>;
   }
 
   async setJson<T>(key: string, value: T, ttlSeconds?: number): Promise<'OK'> {

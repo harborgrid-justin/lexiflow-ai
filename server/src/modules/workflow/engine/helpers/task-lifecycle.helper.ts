@@ -94,15 +94,15 @@ export class TaskLifecycleHelper {
     }
   }
 
-  private async processPostCompletion(task: WorkflowTask, context?: Record<string, unknown>): Promise<{ nextTasks: string[]; actions: string[] }> {
+  private async processPostCompletion(task: WorkflowTask, _context?: Record<string, unknown>): Promise<{ nextTasks: string[]; actions: string[] }> {
     const nextTasks: string[] = [];
     const actions: string[] = [];
     const parallelResult = await this.parallelService.markTaskComplete(task.id);
     if (parallelResult.groupComplete) {
       actions.push('parallel_group_completed');
-      if (parallelResult.nextTaskId) nextTasks.push(parallelResult.nextTaskId);
+      if (parallelResult.nextTaskId) {nextTasks.push(parallelResult.nextTaskId);}
     }
-    if (this.escalationService.resolveEscalation(task.id)) actions.push('escalation_resolved');
+    if (this.escalationService.resolveEscalation(task.id)) {actions.push('escalation_resolved');}
     return { nextTasks, actions };
   }
 
