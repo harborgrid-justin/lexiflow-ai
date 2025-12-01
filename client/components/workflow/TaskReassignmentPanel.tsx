@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { UserPlus, Users, ArrowRight } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Button } from '../common/Button';
