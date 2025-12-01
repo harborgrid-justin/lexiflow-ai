@@ -92,6 +92,16 @@ async function bootstrap() {
     }),
   );
 
+  // Health check endpoint (before global prefix, accessible at /health)
+  app.getHttpAdapter().get('/health', (_req: unknown, res: { json: (data: unknown) => void }) => {
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+    });
+  });
+
   // API prefix
   app.setGlobalPrefix('api/v1');
 

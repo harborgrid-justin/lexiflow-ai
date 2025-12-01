@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Briefcase, FileText, Search, ShieldCheck, Scale, X, Calendar, ChevronDown, Book, DollarSign, Users, BarChart3, Settings, FileQuestion, Fingerprint, MessageSquare, Globe, GitGraph, ScrollText } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Search, ShieldCheck, Scale, X, Calendar, ChevronDown, Book, DollarSign, Users, BarChart3, Settings, FileQuestion, Fingerprint, MessageSquare, Globe, GitGraph, ScrollText, Zap } from 'lucide-react';
 import { User as UserType } from '../types';
 
 interface SidebarProps {
@@ -25,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isO
     { id: 'library', label: 'Knowledge Base', icon: Book },
     { id: 'clauses', label: 'Clause Library', icon: ScrollText },
     { id: 'research', label: 'Legal Research', icon: Search },
+    { id: 'enzyme-demo', label: 'Enzyme Demo', icon: Zap },
   ];
 
   // RBAC Logic: Only Admins and Senior Partners see Compliance & Admin

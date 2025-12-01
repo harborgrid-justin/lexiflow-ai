@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         // Proxy API requests to the backend server
-        '/api': {
+        '/api/v1': {
           target: API_URL,
           changeOrigin: true,
           secure: false,

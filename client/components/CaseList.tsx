@@ -9,6 +9,7 @@ import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 import { Modal } from './common/Modal';
 import { useCaseList } from '../hooks/useCaseList';
+import { ApiService } from '../services/apiService';
 import { CaseListActive } from './case-list/CaseListActive';
 import { CaseListIntake } from './case-list/CaseListIntake';
 import { CaseListDocket } from './case-list/CaseListDocket';
@@ -19,18 +20,18 @@ import {
   CaseListConflicts, CaseListTasks, CaseListReporters, 
   CaseListClosing, CaseListArchived 
 } from './case-list/CaseListMisc';
-import { DocketImportModal } from './DocketImportModal';
 
 interface CaseListProps {
   onSelectCase: (c: Case) => void;
   currentUser?: User;
+  navigateTo?: (view: string) => void;
 }
 
 type CaseView = 
   'active' | 'docket' | 'tasks' | 'intake' | 'conflicts' | 
   'resources' | 'trust' | 'experts' | 'reporters' | 'closing' | 'archived';
 
-export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser }) => {
+export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser, navigateTo }) => {
   const {
     isModalOpen,
     setIsModalOpen,
@@ -44,30 +45,6 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser })
   } = useCaseList();
 
   const [view, setView] = useState<CaseView>('active');
-  const [isDocketModalOpen, setIsDocketModalOpen] = useState(false);
-
-  const handleDocketImport = async (data: any) => {
-    try {
-      const newCase: Partial<Case> = {
-        title: data.caseInfo?.title || 'Imported Case',
-        client: 'New Client',
-        status: CaseStatus.Discovery,
-        filingDate: new Date().toISOString(),
-        description: `Imported from Docket. Case No: ${data.caseInfo?.caseNumber}`,
-        matterType: 'Litigation',
-        court: data.caseInfo?.court,
-        judge: data.caseInfo?.judge,
-        createdBy: currentUser?.id
-      };
-      
-      await addCase(newCase);
-      
-      alert(`Successfully imported case: ${newCase.title}. Created ${data.parties?.length} parties and ${data.docketEntries?.length} docket entries.`);
-    } catch (error) {
-      console.error("Failed to import docket", error);
-      alert("Failed to import docket.");
-    }
-  };
 
   const menuItems = [
     { id: 'active', label: 'Matters', icon: Briefcase },
@@ -90,7 +67,7 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser })
         subtitle="Manage matters, intake, and firm operations."
         actions={
           <div className="flex gap-2">
-            <Button variant="secondary" icon={FileInput} onClick={() => setIsDocketModalOpen(true)}>Import Docket</Button>
+            <Button variant="secondary" icon={FileInput} onClick={() => navigateTo?.('pacer-import')}>Import from PACER</Button>
             <Button variant="primary" icon={Plus} onClick={() => setIsModalOpen(true)}>New Matter</Button>
           </div>
         }
@@ -164,12 +141,6 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser })
           </div>
         </div>
       </Modal>
-
-      <DocketImportModal 
-        isOpen={isDocketModalOpen} 
-        onClose={() => setIsDocketModalOpen(false)} 
-        onImport={handleDocketImport}
-      />
     </div>
   );
 };

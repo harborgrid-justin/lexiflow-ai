@@ -16,6 +16,7 @@ import {
 } from '../../models';
 import { CasesController } from './cases.controller';
 import { CasesService } from './cases.service';
+import { PacerParserService } from '../../services/pacer-parser.service';
 
 @Module({
   imports: [SequelizeModule.forFeature([
@@ -33,7 +34,7 @@ import { CasesService } from './cases.service';
     Task,
   ])],
   controllers: [CasesController],
-  providers: [CasesService],
+  providers: [CasesService, PacerParserService],
   exports: [CasesService],
 })
 export class CasesModule {}

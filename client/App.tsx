@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
@@ -20,11 +21,14 @@ import { EvidenceVault } from './components/EvidenceVault';
 import { SecureMessenger } from './components/SecureMessenger';
 import { JurisdictionManager } from './components/JurisdictionManager';
 import { MasterWorkflow } from './components/MasterWorkflow';
+import { EnzymeDemo } from './components/EnzymeDemo';
+import { HydrationDemo, EditCaseDemo } from './components/enzyme';
 import { UserProfile } from './components/UserProfile';
 import { UserImpersonator as _UserImpersonator } from './components/UserImpersonator';
 import { Case, User } from './types';
 import { ApiService } from './services/apiService';
 import { Bell, User as UserIcon, Menu, ShieldAlert } from 'lucide-react';
+import { PacerImportPage } from './pages/cases/PacerImportPage';
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
@@ -126,10 +130,28 @@ const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
 
 const AppContent: React.FC = () => {
   const { user, loading, isAuthenticated, impersonateUser: _impersonateUser, isImpersonating, stopImpersonating } = useAuth();
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveView] = useState(() => {
+    // Initialize from URL hash
+    const hash = window.location.hash.slice(1);
+    return hash || 'dashboard';
+  });
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [cases, setCases] = useState<Case[]>([]);
+
+  // Sync activeView with URL hash
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        setActiveView(hash);
+        setSelectedCase(null);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,7 +208,8 @@ const AppContent: React.FC = () => {
     if (selectedCase) return <CaseDetail caseData={selectedCase} onBack={() => setSelectedCase(null)} currentUser={user} />;
     switch (activeView) {
       case 'dashboard': return <Dashboard onSelectCase={handleSelectCaseById} />;
-      case 'cases': return <CaseList onSelectCase={setSelectedCase} currentUser={user} />;
+      case 'cases': return <CaseList onSelectCase={setSelectedCase} currentUser={user} navigateTo={setActiveView} />;
+      case 'pacer-import': return <PacerImportPage onBack={() => setActiveView('cases')} currentUser={user} />;
       case 'messages': return <SecureMessenger currentUserId={user.id} />;
       case 'discovery': return <DiscoveryPlatform />;
       case 'evidence': return <EvidenceVault onNavigateToCase={handleSelectCaseById} currentUser={user} />;
@@ -202,8 +225,17 @@ const AppContent: React.FC = () => {
       case 'jurisdiction': return <JurisdictionManager />;
       case 'workflows': return <MasterWorkflow />;
       case 'clauses': return <ClauseLibrary />;
+      case 'enzyme-demo': return <EnzymeDemo />;
+      case 'hydration-demo': return <HydrationDemo />;
       case 'profile': return <UserProfile userId={user.id} />;
-      default: return <div className="flex justify-center items-center h-full text-slate-400">Under Construction</div>;
+      default: {
+        // Check for dynamic routes like edit-case/:id
+        if (activeView.startsWith('edit-case/')) {
+          const caseId = activeView.replace('edit-case/', '');
+          return <EditCaseDemo caseId={caseId} onBack={() => setActiveView('enzyme-demo')} />;
+        }
+        return <div className="flex justify-center items-center h-full text-slate-400">Under Construction</div>;
+      }
     }
   };
 
@@ -277,11 +309,24 @@ const AppContent: React.FC = () => {
   );
 };
 
+// Create React Query client for Enzyme hooks
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
+
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 export default App;

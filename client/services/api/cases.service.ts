@@ -72,4 +72,37 @@ export const casesService = {
   },
 
   delete: (id: string) => deleteJson(`/cases/${id}`),
+
+  parsePacerDocket: async (docketText: string): Promise<any> => {
+    return postJson<any>('/cases/parse-pacer', { docketText });
+  },
+
+  importPacer: async (parsedData: any): Promise<{ 
+    case: Case; 
+    parties: any[]; 
+    motions: any[]; 
+    documents: any[];
+    workflow: {
+      stages: any[];
+      tasks: any[];
+    };
+  }> => {
+    const response = await postJson<{ 
+      case: ApiCase; 
+      parties: any[]; 
+      motions: any[]; 
+      documents: any[];
+      workflow: {
+        stages: any[];
+        tasks: any[];
+      };
+    }>('/cases/import-pacer', parsedData);
+    return {
+      case: transformApiCase(response.case),
+      parties: response.parties || [],
+      motions: response.motions || [],
+      documents: response.documents || [],
+      workflow: response.workflow || { stages: [], tasks: [] },
+    };
+  },
 };

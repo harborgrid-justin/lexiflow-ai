@@ -79,4 +79,20 @@ export class CasesService {
       include: ['organization'],
     });
   }
+
+  async getStats(): Promise<{
+    total: number;
+    active: number;
+    closed: number;
+    pending: number;
+  }> {
+    const [total, active, closed, pending] = await Promise.all([
+      this.caseModel.count(),
+      this.caseModel.count({ where: { status: 'Active' } }),
+      this.caseModel.count({ where: { status: 'Closed' } }),
+      this.caseModel.count({ where: { status: 'Pending' } }),
+    ]);
+
+    return { total, active, closed, pending };
+  }
 }

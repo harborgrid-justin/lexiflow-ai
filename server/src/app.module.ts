@@ -98,6 +98,7 @@ import { OpposingCounselModule } from './modules/opposing-counsel/opposing-couns
 import { DocumentVersionsModule } from './modules/document-versions/document-versions.module';
 import { PlaybooksModule } from './modules/playbooks/playbooks.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -208,6 +209,7 @@ import { RedisModule } from './modules/redis/redis.module';
     OpposingCounselModule,
     DocumentVersionsModule,
     PlaybooksModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

@@ -1,18 +1,24 @@
 
 import OpenAI from 'openai';
-import { SearchResult } from "../types";
 
-const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_ENTERPRISE_KEY || '';
+const openaiBaseUrl = import.meta.env.VITE_OPENAI_BASE_URL || 'https://api.openai.com/v1';
+
 const openai = new OpenAI({
-  apiKey,
-  dangerouslyAllowBrowser: true // Required for client-side usage
+  apiKey: openaiApiKey,
+  baseURL: openaiBaseUrl,
+  dangerouslyAllowBrowser: true, // Required for client-side usage
+  timeout: 30000, // 30 second timeout
+  maxRetries: 2, // Retry up to 2 times on failure
 });
 
-// Helper to make OpenAI chat completion calls
-async function chatCompletion(prompt: string, jsonMode = false): Promise<string> {
+// Helper to make OpenAI chat completion calls with optimized settings
+async function chatCompletion(prompt: string, jsonMode = false, maxTokens = 2048): Promise<string> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
+    max_tokens: maxTokens,
+    temperature: 0.7,
     ...(jsonMode && { response_format: { type: 'json_object' } }),
   });
   return response.choices[0]?.message?.content || '';
@@ -134,21 +140,77 @@ Provide only the refined entry text, nothing else.`;
 
   async parseDocket(text: string): Promise<any> {
     try {
-      const prompt = `Parse the following court docket text into structured JSON. Extract:
-- caseInfo: object with title, caseNumber, court, judge
-- parties: array of objects with name, role, type
-- docketEntries: array of objects with date, description, entryNumber
-- deadlines: array of objects with date, title, type
+      const prompt = `Parse the following PACER court docket text into structured JSON. Extract ALL available information:
 
-Docket text:
-${text.substring(0, 15000)}
+REQUIRED FIELDS:
+- caseInfo: {
+    docketNumber: string (e.g., "25-1229"),
+    originatingCaseNumber: string (e.g., "1:24-cv-01442-LMB-IDD"),
+    title: string (full case title),
+    court: string (full court name),
+    jurisdiction: string,
+    natureOfSuit: string,
+    caseType: string,
+    filingDate: string (ISO format YYYY-MM-DD),
+    dateOrderJudgment: string (ISO),
+    dateNOAFiled: string (ISO),
+    dateRecvCOA: string (ISO),
+    feeStatus: string,
+    presidingJudge: string (full name with title),
+    orderingJudge: string,
+    status: string (Active/Termed/etc)
+  }
+- parties: array of {
+    name: string,
+    role: string (e.g., "Debtor - Appellant", "Creditor - Appellee"),
+    type: string ("Individual" or "Corporation"),
+    contact: string (email or phone),
+    counsel: array of {
+      name: string,
+      firm: string,
+      phone: string,
+      email: string,
+      status: string (e.g., "[COR NTC Retained]", "[NTC Pro Se]"),
+      address: string
+    }
+  }
+- docketEntries: array of {
+    entryNumber: number,
+    date: string (MM/DD/YYYY format),
+    description: string,
+    pages: number,
+    fileSize: string,
+    documentId: string (if available)
+  }
+- consolidatedCases: array of {
+    caseNumber: string,
+    relationship: string (Lead/Member),
+    startDate: string,
+    endDate: string
+  }
+- priorCases: array of case numbers
+- deadlines: array of {
+    date: string (ISO format),
+    title: string,
+    type: string (e.g., "Brief Due", "Response Due")
+  }
 
-Return valid JSON only.`;
+PACER Docket Text:
+${text}
+
+Return ONLY valid JSON with all fields. Use null for missing data. Ensure dates are properly formatted.`;
 
       const response = await chatCompletion(prompt, true);
-      return JSON.parse(response);
+      const parsed = JSON.parse(response);
+      
+      // Validate and normalize the response
+      if (!parsed.caseInfo || !parsed.parties) {
+        throw new Error('Invalid PACER data structure');
+      }
+      
+      return parsed;
     } catch (e) {
-      console.error("Docket parsing failed:", e);
+      console.error("PACER docket parsing failed:", e);
       return null;
     }
   }

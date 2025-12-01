@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   Query,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { CasesService } from './cases.service';
 import { CreateCaseDto } from './dto/create-case.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
 import { Case } from '../../models/case.model';
+import { PacerParserService } from '../../services/pacer-parser.service';
 
 /**
  * Cases Controller
@@ -48,8 +51,12 @@ export class CasesController {
   /**
    * Creates an instance of CasesController
    * @param {CasesService} casesService - The cases service for business logic
+   * @param {PacerParserService} pacerParserService - Service for parsing PACER dockets
    */
-  constructor(private readonly casesService: CasesService) {}
+  constructor(
+    private readonly casesService: CasesService,
+    private readonly pacerParserService: PacerParserService,
+  ) {}
 
   /**
    * Create a new case
@@ -78,6 +85,96 @@ export class CasesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   create(@Body() createCaseDto: CreateCaseDto): Promise<Case> {
     return this.casesService.create(createCaseDto);
+  }
+
+  /**
+   * Parse PACER docket text using OpenAI
+   * 
+   * Accepts raw PACER docket text and returns structured JSON data.
+   * Uses enterprise OpenAI API key for secure parsing.
+   * 
+   * @param {object} body - Request body with docketText
+   * @returns {Promise<object>} Parsed PACER data
+   */
+  @Post('parse-pacer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Parse PACER docket text' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'PACER text parsed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid docket text' })
+  async parsePacerDocket(
+    @Body() body: { docketText: string },
+  ): Promise<any> {
+    return this.pacerParserService.parsePacerText(body.docketText);
+  }
+
+  /**
+   * Import case from PACER docket
+   * 
+   * Creates a new case along with parties, motions, and documents from parsed PACER data.
+   * This endpoint processes the entire docket and creates all related entities.
+   * 
+   * @param {any} parsedPacerData - Parsed PACER docket data from frontend
+   * @returns {Promise<object>} Created case with parties, motions, and documents
+   * 
+   * @example
+   * POST /api/v1/cases/import-pacer
+   * {
+   *   "caseInfo": { "docketNumber": "25-1229", "title": "Smith v. Jones", ... },
+   *   "parties": [...],
+   *   "docketEntries": [...],
+   *   "consolidatedCases": [...]
+   * }
+   */
+  @Post('import-pacer')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Import case from PACER docket' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Case imported successfully from PACER',
+    schema: {
+      type: 'object',
+      properties: {
+        case: { type: 'object' },
+        parties: { type: 'array' },
+        motions: { type: 'array' },
+        documents: { type: 'array' },
+        workflow: {
+          type: 'object',
+          properties: {
+            stages: { type: 'array' },
+            tasks: { type: 'array' },
+          },
+        },
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid PACER data' })
+  async importFromPacer(
+    @Body() parsedPacerData: any,
+    // TODO: Get from authenticated user context
+    // For now, we'll use a default org and user
+  ): Promise<{
+    case: Case;
+    parties: any[];
+    motions: any[];
+    documents: any[];
+    workflow: {
+      stages: any[];
+      tasks: any[];
+    };
+  }> {
+    // TODO: Get ownerOrgId and createdBy from authenticated user
+    const ownerOrgId = parsedPacerData.ownerOrgId || 'default-org-id';
+    const createdBy = parsedPacerData.createdBy || 'system-user-id';
+
+    return this.pacerParserService.createCaseFromPacer(
+      parsedPacerData,
+      ownerOrgId,
+      createdBy,
+    );
   }
 
   /**
@@ -142,6 +239,29 @@ export class CasesController {
   @ApiResponse({ status: 200, description: 'Cases retrieved successfully', type: [Case] })
   findByStatus(@Param('status') status: string): Promise<Case[]> {
     return this.casesService.findByStatus(status);
+  }
+
+  /**
+   * Get case statistics
+   * 
+   * Retrieves aggregate statistics about all cases.
+   * 
+   * @returns {Promise<object>} Statistics object with counts
+   * 
+   * @example
+   * const stats = await getStats();
+   * // { total: 150, active: 75, closed: 50, pending: 25 }
+   */
+  @Get('stats')
+  @ApiOperation({ summary: 'Get case statistics' })
+  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  async getStats(): Promise<{
+    total: number;
+    active: number;
+    closed: number;
+    pending: number;
+  }> {
+    return this.casesService.getStats();
   }
 
   /**

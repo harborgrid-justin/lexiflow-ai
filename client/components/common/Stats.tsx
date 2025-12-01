@@ -5,7 +5,7 @@ import { Card } from './Card';
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   color?: string;
   bg?: string;
   trend?: string;
@@ -19,9 +19,11 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, icon: Icon, co
         <p className="text-3xl font-bold text-slate-900 mt-1 tracking-tight">{value}</p>
         {trend && <p className="text-xs text-slate-400 mt-1">{trend}</p>}
       </div>
-      <div className={`p-3 rounded-full ${bg}`}>
-        <Icon className={`h-6 w-6 ${color}`} />
-      </div>
+      {Icon && (
+        <div className={`p-3 rounded-full ${bg}`}>
+          <Icon className={`h-6 w-6 ${color}`} />
+        </div>
+      )}
     </Card>
   );
 };
