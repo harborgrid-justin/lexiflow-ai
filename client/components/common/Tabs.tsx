@@ -21,7 +21,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
               : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
           }`}
         >
-          {tab.charAt(0).toUpperCase() + tab.slice(1).replace(/([A-Z])/g, ' $1').trim()}
+          {tab ? (tab.charAt(0).toUpperCase() + tab.slice(1).replace(/([A-Z])/g, ' $1').trim()) : ''}
         </button>
       ))}
     </div>

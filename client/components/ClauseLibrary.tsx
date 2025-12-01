@@ -4,6 +4,8 @@ import { Clause } from '../types';
 import { ApiService } from '../services/apiService';
 import { Search, BarChart2, ShieldAlert, FileText, History } from 'lucide-react';
 import { ClauseHistoryModal } from './ClauseHistoryModal';
+import { PageHeader } from './common/PageHeader';
+import { Card } from './common/Card';
 
 export const ClauseLibrary: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,14 +27,17 @@ export const ClauseLibrary: React.FC = () => {
   const filtered = clauses.filter(c => (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || (c.category || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="h-full flex flex-col space-y-6 relative">
+    <div className="space-y-6">
       {selectedClause && (
         <ClauseHistoryModal clause={selectedClause} onClose={() => setSelectedClause(null)} />
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Clause Library</h2>
-        <p className="text-slate-500 mb-4">Manage standard clauses, track versions, and monitor usage statistics.</p>
+      <PageHeader 
+        title="Clause Library"
+        subtitle="Manage standard clauses, track versions, and monitor usage statistics."
+      />
+
+      <Card>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <input 
@@ -41,11 +46,11 @@ export const ClauseLibrary: React.FC = () => {
             placeholder="Search clauses by name or category..."
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map(clause => (
-          <div key={clause.id} className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col hover:shadow-md transition-shadow">
+          <Card key={clause.id} noPadding className="flex flex-col hover:shadow-md transition-shadow">
             <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-lg">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{clause.category}</span>
@@ -75,7 +80,7 @@ export const ClauseLibrary: React.FC = () => {
                 <History className="h-3 w-3 mr-1"/> View History
               </button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

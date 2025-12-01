@@ -6,6 +6,8 @@ import { ApiService } from '../services/apiService';
 import { Client } from '../types';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
+import { Card } from './common/Card';
+import { StatCard } from './common/Stats';
 
 interface BillingDashboardProps {
   navigateTo?: (view: string) => void;
@@ -53,26 +55,32 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4"><span className="text-slate-500 text-sm font-medium">Total WIP</span><DollarSign className="h-5 w-5 text-blue-500"/></div>
-          <div className="text-3xl font-bold text-slate-900">${totalWip.toLocaleString()}</div>
-          <div className="mt-2 text-xs text-green-600 flex items-center"><TrendingUp className="h-3 w-3 mr-1"/> +12% from last month</div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4"><span className="text-slate-500 text-sm font-medium">Realization Rate</span><TrendingUp className="h-5 w-5 text-emerald-500"/></div>
-          <div className="text-3xl font-bold text-slate-900">92.4%</div>
-          <div className="mt-2 text-xs text-slate-500">Firm target: 90%</div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4"><span className="text-slate-500 text-sm font-medium">Outstanding (60+ days)</span><AlertCircle className="h-5 w-5 text-red-500"/></div>
-          <div className="text-3xl font-bold text-slate-900">$12,450</div>
-          <div className="mt-2 text-xs text-red-600">3 Invoices overdue</div>
-        </div>
+        <StatCard
+          label="Total WIP"
+          value={`$${totalWip.toLocaleString()}`}
+          icon={DollarSign}
+          color="text-blue-600"
+          bg="bg-blue-50"
+          trend={{ value: 12, isPositive: true }}
+        />
+        <StatCard
+          label="Realization Rate"
+          value="92.4%"
+          icon={TrendingUp}
+          color="text-emerald-600"
+          bg="bg-emerald-50"
+        />
+        <StatCard
+          label="Outstanding (60+ days)"
+          value="$12,450"
+          icon={AlertCircle}
+          color="text-red-600"
+          bg="bg-red-50"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-          <h3 className="font-bold text-slate-900 mb-6">WIP vs Billed (Top Clients)</h3>
+        <Card title="WIP vs Billed (Top Clients)">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={wipData}>
@@ -85,9 +93,8 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-900 mb-6">Realization Breakdown</h3>
+        </Card>
+        <Card title="Realization Breakdown">
             <div className="h-64 flex justify-center">
              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -98,14 +105,14 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                 </PieChart>
              </ResponsiveContainer>
             </div>
-            <div className="flex justify-center gap-4 text-sm">
+            <div className="flex justify-center gap-4 text-sm mt-4">
                 <div className="flex items-center"><div className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div> Collected</div>
                 <div className="flex items-center"><div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div> Write-off</div>
             </div>
-        </div>
+        </Card>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+      <Card noPadding>
         <div className="p-4 border-b border-slate-200 bg-slate-50">
             <h3 className="font-bold text-slate-800 flex items-center">
                 <Users className="h-5 w-5 mr-2 text-blue-600"/> Client Portfolio
@@ -155,7 +162,7 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                 </div>
             </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

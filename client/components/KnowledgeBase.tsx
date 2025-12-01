@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Book, FileText, Lightbulb, MessageCircle } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
+import { Card } from './common/Card';
 import { ApiService } from '../services/apiService';
 import { KnowledgeItem } from '../types';
 import { ensureTagsArray } from '../utils/type-transformers';
@@ -52,7 +53,7 @@ export const KnowledgeBase: React.FC = () => {
           }
         />
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <Card>
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5"/>
                 <input 
@@ -62,25 +63,25 @@ export const KnowledgeBase: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-        </div>
+        </Card>
 
         {loading ? (
             <div className="p-8 text-center text-slate-500">Loading knowledge base...</div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {tab === 'wiki' && filteredItems.map(item => (
-                     <div key={item.id} className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:border-blue-300 cursor-pointer group transition-all">
+                     <Card key={item.id} className="hover:border-blue-300 cursor-pointer group transition-all">
                         <div className="flex items-center justify-between mb-2">
                             {item.metadata.icon === 'Book' ? <Book className="h-5 w-5 text-purple-500"/> : <Lightbulb className="h-5 w-5 text-amber-500"/>}
                             <span className={`text-xs font-bold px-2 py-0.5 rounded ${item.metadata.color === 'purple' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}>{item.category}</span>
                         </div>
                         <h3 className="font-bold text-slate-900 group-hover:text-blue-600">{item.title}</h3>
                         <p className="text-sm text-slate-500 mt-2">{item.summary}</p>
-                     </div>
+                     </Card>
                 ))}
 
                 {tab === 'precedents' && filteredItems.map(item => (
-                     <div key={item.id} className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:border-blue-300 cursor-pointer transition-all">
+                     <Card key={item.id} className="hover:border-blue-300 cursor-pointer transition-all">
                         <div className="flex items-center justify-between mb-2"><FileText className="h-5 w-5 text-blue-500"/><span className="text-xs text-slate-500">{item.metadata.similarity}% Similarity</span></div>
                         <h3 className="font-bold text-slate-900">{item.title}</h3>
                         <p className="text-sm text-slate-500 mt-2">{item.summary}</p>
@@ -89,13 +90,13 @@ export const KnowledgeBase: React.FC = () => {
                                 <span key={tag} className="text-xs bg-slate-100 px-2 py-1 rounded">{tag}</span>
                             ))}
                         </div>
-                     </div>
+                     </Card>
                 ))}
 
                 {tab === 'qa' && (
                     <div className="col-span-1 md:col-span-2 space-y-4">
                         {filteredItems.map(item => (
-                            <div key={item.id} className="bg-white p-4 rounded-lg border border-slate-200">
+                            <Card key={item.id} className="p-4">
                                 <div className="flex gap-3">
                                     <div className="mt-1"><MessageCircle className="h-5 w-5 text-slate-400"/></div>
                                     <div>
@@ -107,7 +108,7 @@ export const KnowledgeBase: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
                         ))}
                     </div>
                 )}

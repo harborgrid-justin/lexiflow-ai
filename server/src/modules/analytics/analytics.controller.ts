@@ -38,6 +38,20 @@ export class AnalyticsController {
     return this.analyticsService.getDashboard();
   }
 
+  @Get('judge')
+  @ApiOperation({ summary: 'Get all judge analytics summary' })
+  @ApiResponse({ status: 200, description: 'Judge analytics summary retrieved successfully' })
+  getJudgeAnalyticsSummary(): Promise<{ profile: any; stats: any[] }> {
+    return this.analyticsService.getJudgeAnalyticsSummary();
+  }
+
+  @Get('counsel')
+  @ApiOperation({ summary: 'Get all counsel analytics summary' })
+  @ApiResponse({ status: 200, description: 'Counsel analytics summary retrieved successfully' })
+  getCounselAnalyticsSummary(): Promise<{ profile: any; outcomes: any[] }> {
+    return this.analyticsService.getCounselAnalyticsSummary();
+  }
+
   @Get('case-prediction/:caseId')
   @ApiOperation({ summary: 'Get case outcome prediction' })
   @ApiResponse({ status: 200, description: 'Case prediction retrieved successfully', type: [Analytics] })

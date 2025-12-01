@@ -62,7 +62,7 @@ export class AnalyticsService {
     };
   }
 
-  async getVelocity(caseId?: string, days = 7): Promise<number> {
+  async getVelocity(caseId?: string, days = 7): Promise<{ velocity: number; unit: string }> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
@@ -75,11 +75,17 @@ export class AnalyticsService {
     }
 
     const completed = await this.taskModel.count({ where: whereClause });
-    return Math.round((completed / days) * 10) / 10;
+    const velocity = Math.round((completed / days) * 10) / 10;
+    
+    return {
+      velocity,
+      unit: 'tasks/day'
+    };
   }
 
   async getBottlenecks(caseId?: string): Promise<{
     slowestStages: Array<{ stageId: string; name: string; avgDays: number }>;
+    blockedTasks: Array<{ taskId: string; title: string; blockedBy: string[] }>;
     overloadedUsers: Array<{ userId: string; taskCount: number }>;
   }> {
     const whereClause: any = {};
@@ -119,6 +125,9 @@ export class AnalyticsService {
       .sort((a, b) => b.avgDays - a.avgDays)
       .slice(0, 5);
 
+    // Find blocked tasks (for now, return empty array - dependency service would provide this)
+    const blockedTasks: Array<{ taskId: string; title: string; blockedBy: string[] }> = [];
+
     // Find overloaded users
     const userTaskCount: Record<string, number> = {};
     tasks
@@ -132,7 +141,7 @@ export class AnalyticsService {
       .filter(u => u.taskCount > 5)
       .sort((a, b) => b.taskCount - a.taskCount);
 
-    return { slowestStages, overloadedUsers };
+    return { slowestStages, blockedTasks, overloadedUsers };
   }
 
   private calculateAverageCompletionTime(tasks: WorkflowTask[]): number {

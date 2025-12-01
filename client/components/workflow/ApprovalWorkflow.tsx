@@ -114,7 +114,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                 : 'bg-blue-50 border border-blue-200'
             }`}>
               <p className="text-sm font-medium">
-                Status: {approvalChain.status.charAt(0).toUpperCase() + approvalChain.status.slice(1)}
+                Status: {approvalChain.status?.charAt(0).toUpperCase() + approvalChain.status?.slice(1) || 'Unknown'}
               </p>
               <p className="text-xs mt-1 opacity-75">
                 Step {approvalChain.currentStep + 1} of {approvalChain.steps.length}

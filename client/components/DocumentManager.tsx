@@ -6,6 +6,8 @@ import { DocumentVersions } from './DocumentVersions';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 import { Modal } from './common/Modal';
+import { Card } from './common/Card';
+import { StatCard } from './common/Stats';
 import { useDocumentManager } from '../hooks/useDocumentManager';
 import { DocumentTable } from './document/DocumentTable';
 import { DocumentFilters } from './document/DocumentFilters';
@@ -111,28 +113,16 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
 
       {/* Feature 1: Advanced Filtering & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-             <div className="text-xs text-slate-500 uppercase font-bold">Total Assets</div>
-             <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-             <div className="text-xs text-slate-500 uppercase font-bold">Evidence Linked</div>
-             <div className="text-2xl font-bold text-blue-600">{stats.evidence}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-             <div className="text-xs text-slate-500 uppercase font-bold">Discovery Prod.</div>
-             <div className="text-2xl font-bold text-purple-600">{stats.discovery}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-             <div className="text-xs text-slate-500 uppercase font-bold">e-Signed</div>
-             <div className="text-2xl font-bold text-green-600">{stats.signed}</div>
-          </div>
+          <StatCard label="Total Assets" value={stats.total} color="text-slate-900" bg="bg-white" />
+          <StatCard label="Evidence Linked" value={stats.evidence} color="text-blue-600" bg="bg-white" />
+          <StatCard label="Discovery Prod." value={stats.discovery} color="text-purple-600" bg="bg-white" />
+          <StatCard label="e-Signed" value={stats.signed} color="text-green-600" bg="bg-white" />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
           <DocumentFilters activeModuleFilter={activeModuleFilter} setActiveModuleFilter={setActiveModuleFilter} />
 
-          <div className="flex-1 flex flex-col bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+          <Card className="flex-1 flex flex-col overflow-hidden p-0">
              {/* Toolbar */}
              <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                 <div className="relative w-64">
@@ -160,7 +150,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
                 setSelectedDocForHistory={setSelectedDocForHistory}
                 setTaggingDoc={setTaggingDoc}
              />
-          </div>
+          </Card>
       </div>
     </div>
   );

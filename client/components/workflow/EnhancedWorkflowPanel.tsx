@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, Settings, Play, Pause, BarChart3 } from 'lucide-react';
+import { Layers, Settings, Play, Pause, BarChart3, RefreshCw } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { TaskDependencyManager } from './TaskDependencyManager';
@@ -10,7 +10,13 @@ import { ParallelTasksManager } from './ParallelTasksManager';
 import { TaskReassignmentPanel } from './TaskReassignmentPanel';
 import { NotificationCenter } from './NotificationCenter';
 import { AuditTrailViewer } from './AuditTrailViewer';
-import { WorkflowAnalyticsDashboard } from './WorkflowAnalyticsDashboard';
+import { WorkflowMetricGrid } from './analytics/WorkflowMetricGrid';
+import { TaskDistributionSection } from './analytics/TaskDistributionSection';
+import { SLABreachAlert } from './analytics/SLABreachAlert';
+import { EnterpriseCapabilitiesSection } from './analytics/EnterpriseCapabilitiesSection';
+import { StageProgressSection } from './analytics/StageProgressSection';
+import { BottleneckInsights } from './analytics/BottleneckInsights';
+import { useWorkflowAnalytics } from '../../hooks/useWorkflowAnalytics';
 
 interface EnhancedWorkflowPanelProps {
   caseId: string;
@@ -32,6 +38,15 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
   onUpdate
 }) => {
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [expandedAnalyticsSection, setExpandedAnalyticsSection] = useState<string | null>('capabilities');
+  const {
+    metrics,
+    velocity,
+    bottlenecks,
+    refreshAnalytics,
+    isRefreshing,
+    checkSLABreaches,
+  } = useWorkflowAnalytics({ caseId });
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Layers },
@@ -45,6 +60,10 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
     { id: 'audit', label: 'Audit Trail', icon: Settings },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 }
   ];
+
+  const toggleAnalyticsSection = (section: string) => {
+    setExpandedAnalyticsSection(prev => (prev === section ? null : section));
+  };
 
   return (
     <div className="space-y-6">
@@ -99,8 +118,25 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
                 <NotificationCenter userId={currentUserId} />
               </div>
 
-              {/* Quick Analytics */}
-              <WorkflowAnalyticsDashboard caseId={caseId} />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="font-bold text-slate-900 flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-slate-500" /> Workflow Snapshot
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={RefreshCw}
+                    onClick={refreshAnalytics}
+                    disabled={isRefreshing}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+                <WorkflowMetricGrid metrics={metrics} velocity={velocity} />
+                <TaskDistributionSection metrics={metrics} />
+                <SLABreachAlert metrics={metrics} onViewDetails={() => checkSLABreaches(caseId)} />
+              </div>
             </div>
           )}
 
@@ -175,7 +211,40 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
 
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
-            <WorkflowAnalyticsDashboard caseId={caseId} />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="font-bold text-slate-900 flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2 text-slate-500" /> Workflow Analytics
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={RefreshCw}
+                  onClick={refreshAnalytics}
+                  disabled={isRefreshing}
+                >
+                  Refresh
+                </Button>
+              </div>
+              <WorkflowMetricGrid metrics={metrics} velocity={velocity} />
+              <EnterpriseCapabilitiesSection
+                metrics={metrics}
+                isExpanded={expandedAnalyticsSection === 'capabilities'}
+                onToggle={() => toggleAnalyticsSection('capabilities')}
+              />
+              <StageProgressSection
+                metrics={metrics}
+                isExpanded={expandedAnalyticsSection === 'stages'}
+                onToggle={() => toggleAnalyticsSection('stages')}
+              />
+              <BottleneckInsights
+                bottlenecks={bottlenecks}
+                isExpanded={expandedAnalyticsSection === 'bottlenecks'}
+                onToggle={() => toggleAnalyticsSection('bottlenecks')}
+              />
+              <TaskDistributionSection metrics={metrics} />
+              <SLABreachAlert metrics={metrics} onViewDetails={() => checkSLABreaches(caseId)} />
+            </div>
           )}
         </div>
       </div>

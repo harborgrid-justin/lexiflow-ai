@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { PageHeader } from './common/PageHeader';
+import { TabNavigation, TabItem } from './common/TabNavigation';
 import { CalendarMaster } from './calendar/CalendarMaster';
 import { CalendarDeadlines } from './calendar/CalendarDeadlines';
 import { CalendarTeam } from './calendar/CalendarTeam';
@@ -19,7 +20,7 @@ interface CalendarViewProps {
 export const CalendarView: React.FC<CalendarViewProps> = ({ onNavigateToCase }) => {
   const [activeTab, setActiveTab] = useState<CalendarTab>('master');
 
-  const tabs = [
+  const tabs: TabItem[] = [
     { id: 'master', label: 'Master Schedule', icon: CalendarIcon },
     { id: 'deadlines', label: 'Court Deadlines', icon: Clock },
     { id: 'team', label: 'Team Availability', icon: Users },
@@ -36,29 +37,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onNavigateToCase }) 
         subtitle="Deadlines, Court Filings, and Compliance Schedules."
       />
 
-      <div className="border-b border-slate-200 mb-6">
-        <nav className="flex space-x-1 overflow-x-auto pb-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as CalendarTab)}
-                className={`
-                  flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
-                  ${activeTab === tab.id 
-                    ? 'border-blue-600 text-blue-600 bg-blue-50/50' 
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                  }
-                `}
-              >
-                <Icon className={`h-4 w-4 mr-2 ${activeTab === tab.id ? 'text-blue-600' : 'text-slate-400'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+      <TabNavigation 
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as CalendarTab)}
+        className="mb-6 bg-white rounded-t-lg"
+      />
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'master' && <CalendarMaster onNavigateToCase={onNavigateToCase} />}

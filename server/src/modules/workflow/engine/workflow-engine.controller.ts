@@ -163,9 +163,25 @@ export class WorkflowEngineController {
 
   // ==================== ANALYTICS ====================
 
-  @Get('analytics')
+  @Get('analytics/metrics')
   @ApiOperation({ summary: 'Get workflow metrics' })
   getMetrics(@Query('caseId') caseId?: string) {
+    return this.orchestrator.getAnalyticsService().getMetrics(caseId);
+  }
+
+  @Get('analytics/velocity')
+  @ApiOperation({ summary: 'Get task velocity' })
+  getVelocity(
+    @Query('caseId') caseId?: string,
+    @Query('days') days?: string,
+  ) {
+    const daysNum = days ? parseInt(days, 10) : 7;
+    return this.orchestrator.getAnalyticsService().getVelocity(caseId, daysNum);
+  }
+
+  @Get('analytics')
+  @ApiOperation({ summary: 'Get workflow metrics (legacy)' })
+  getMetricsLegacy(@Query('caseId') caseId?: string) {
     return this.orchestrator.getAnalyticsService().getMetrics(caseId);
   }
 

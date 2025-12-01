@@ -53,8 +53,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isO
       </nav>
       <div className="p-4 border-t border-slate-800 bg-slate-900">
         <button onClick={onSwitchUser} className="w-full flex items-center p-2 rounded hover:bg-slate-800 border border-slate-700">
-          <div className="h-8 w-8 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">{currentUser.name.charAt(0)}</div>
-          <div className="ml-3 text-left flex-1 min-w-0"><p className="text-sm font-medium truncate">{currentUser.name}</p><p className="text-xs text-slate-400 truncate">{currentUser.role}</p></div>
+          <div className="h-8 w-8 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">{currentUser?.name?.charAt(0) || '?'}</div>
+          <div className="ml-3 text-left flex-1 min-w-0"><p className="text-sm font-medium truncate">{currentUser?.name || 'Unknown'}</p><p className="text-xs text-slate-400 truncate">{currentUser?.role || 'No role'}</p></div>
           <ChevronDown className="h-4 w-4 text-slate-500" />
         </button>
       </div>

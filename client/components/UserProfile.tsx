@@ -94,7 +94,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
         <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 text-center">
                 <div className="w-24 h-24 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center text-slate-400 text-3xl font-bold overflow-hidden">
-                    {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover"/> : user.name.charAt(0)}
+                    {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover"/> : user.name?.charAt(0) || '?'}
                 </div>
                 <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
                 <p className="text-slate-500 mb-4">{user.role}</p>

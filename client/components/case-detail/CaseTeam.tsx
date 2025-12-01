@@ -84,7 +84,7 @@ export const CaseTeam: React.FC<CaseTeamProps> = ({ caseId }) => {
             <div key={member.userId} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-start justify-between group">
                 <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 font-bold overflow-hidden">
-                        {member.user?.avatar ? <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover"/> : member.user?.name.charAt(0)}
+                        {member.user?.avatar ? <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover"/> : member.user?.name?.charAt(0) || '?'}
                     </div>
                     <div>
                         <h4 className="font-bold text-slate-900 text-sm">{member.user?.name}</h4>

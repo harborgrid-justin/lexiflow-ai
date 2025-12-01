@@ -1,20 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, Briefcase, FileText, Book, Building, 
-  Plus, Search, Trash2, Edit2, Save, Database
-} from 'lucide-react';
+import { Users, Briefcase, FileText, Book, Building } from 'lucide-react';
 import { ApiService } from '../../services/apiService';
-import { Button } from '../common/Button';
-import { Modal } from '../common/Modal';
-import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
-import { Badge } from '../common/Badge';
+import { EntitySidebar } from './platform/EntitySidebar';
+import { EntityToolbar } from './platform/EntityToolbar';
+import { EntityTable } from './platform/EntityTable';
+import { EntityCardList } from './platform/EntityCardList';
+import { EntityModal } from './platform/EntityModal';
 
 type Category = 'users' | 'cases' | 'clients' | 'clauses' | 'documents';
 
 export const AdminPlatformManager: React.FC = () => {
-  // Local state to simulate database
-  const [data, setData] = useState<any>({
+  const [data, setData] = useState<Record<Category, any[]>>({
     users: [],
     cases: [],
     clients: [],
@@ -24,24 +20,24 @@ export const AdminPlatformManager: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            const [u, c, cl, clauses, d] = await Promise.all([
-                ApiService.getUsers(),
-                ApiService.getCases(),
-                ApiService.getClients(),
-                ApiService.getClauses(),
-                ApiService.getDocuments()
-            ]);
-            setData({
-                users: u,
-                cases: c,
-                clients: cl,
-                clauses: clauses,
-                documents: d
-            });
-        } catch (e) {
-            console.error("Failed to fetch platform data", e);
-        }
+      try {
+        const [u, c, cl, clauses, d] = await Promise.all([
+          ApiService.getUsers(),
+          ApiService.getCases(),
+          ApiService.getClients(),
+          ApiService.getClauses(),
+          ApiService.getDocuments(),
+        ]);
+        setData({
+          users: u,
+          cases: c,
+          clients: cl,
+          clauses,
+          documents: d,
+        });
+      } catch (error) {
+        console.error('Failed to fetch platform data', error);
+      }
     };
     fetchData();
   }, []);
@@ -52,7 +48,7 @@ export const AdminPlatformManager: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewItem, setIsNewItem] = useState(false);
 
-  const categories = [
+  const categories: { id: Category; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'users', label: 'Users', icon: Users },
     { id: 'cases', label: 'Cases', icon: Briefcase },
     { id: 'clients', label: 'Clients', icon: Building },
@@ -101,6 +97,7 @@ export const AdminPlatformManager: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (!editingItem) return;
     if (isNewItem) {
       setData(prev => ({
         ...prev,
@@ -115,182 +112,43 @@ export const AdminPlatformManager: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const renderFormFields = () => {
-    if (!editingItem) return null;
-    return Object.keys(editingItem).map(key => {
-      if (key === 'id' || key === 'parties' || key === 'versions' || key === 'matters') return null; // Skip complex/auto fields
-      return (
-        <div key={key} className="mb-4">
-          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{key}</label>
-          <input
-            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500"
-            value={editingItem[key]}
-            onChange={e => setEditingItem({ ...editingItem, [key]: e.target.value })}
-          />
-        </div>
-      );
-    });
-  };
-
   const listItems = getCurrentList();
 
   return (
     <div className="flex flex-col h-full bg-slate-50 rounded-lg overflow-hidden border border-slate-200">
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={isNewItem ? 'Create Record' : 'Edit Record'}>
-        <div className="p-6">
-          <div className="grid grid-cols-1 gap-1 max-h-[60vh] overflow-y-auto">
-            {renderFormFields()}
-          </div>
-          <div className="pt-4 flex justify-end gap-3 border-t mt-4">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button variant="primary" icon={Save} onClick={handleSave}>Save Changes</Button>
-          </div>
-        </div>
-      </Modal>
+      <EntityModal
+        isOpen={isModalOpen}
+        title={isNewItem ? 'Create Record' : 'Edit Record'}
+        item={editingItem}
+        onClose={() => setIsModalOpen(false)}
+        onChange={(key, value) => setEditingItem(prev => (prev ? { ...prev, [key]: value } : prev))}
+        onSave={handleSave}
+      />
 
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col">
-          <div className="p-4 border-b border-slate-100 hidden md:block">
-            <h3 className="font-bold text-slate-800 flex items-center text-sm uppercase tracking-wide">
-              <Database className="h-4 w-4 mr-2 text-blue-600"/> Data Entities
-            </h3>
-          </div>
-          <nav className="flex md:flex-col overflow-x-auto md:overflow-y-auto p-2 space-x-2 md:space-x-0 md:space-y-1">
-            {categories.map(cat => {
-              const Icon = cat.icon;
-              const count = (data[cat.id as Category] as any[]).length;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id as Category)}
-                  className={`flex-shrink-0 w-auto md:w-full flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all ${
-                    activeCategory === cat.id 
-                      ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <Icon className={`h-4 w-4 mr-2 md:mr-3 ${activeCategory === cat.id ? 'text-blue-600' : 'text-slate-400'}`} />
-                    {cat.label}
-                  </div>
-                  <span className="hidden md:inline-block bg-white text-slate-500 px-2 py-0.5 rounded-full text-xs border border-slate-100 shadow-sm">{count}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        <EntitySidebar
+          categories={categories}
+          activeCategory={activeCategory}
+          data={data}
+          onSelect={setActiveCategory}
+        />
 
-        {/* Main Content */}
         <div className="flex-1 flex flex-col bg-white overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-            <div className="relative flex-1 md:max-w-xs mr-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input 
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                placeholder={`Search ${activeCategory}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button variant="primary" size="sm" icon={Plus} onClick={handleCreate} className="whitespace-nowrap">Add New</Button>
-          </div>
+          <EntityToolbar
+            searchTerm={searchTerm}
+            placeholder={`Search ${activeCategory}...`}
+            onSearchChange={setSearchTerm}
+            onCreate={handleCreate}
+          />
 
           <div className="flex-1 overflow-auto p-0 md:p-4">
-            {/* Desktop Table */}
-            <div className="hidden md:block">
-                <TableContainer>
-                <TableHeader>
-                    <TableHead>ID</TableHead>
-                    {activeCategory === 'users' && <><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Office</TableHead></>}
-                    {activeCategory === 'cases' && <><TableHead>Title</TableHead><TableHead>Client</TableHead><TableHead>Status</TableHead><TableHead>Value</TableHead></>}
-                    {activeCategory === 'clients' && <><TableHead>Name</TableHead><TableHead>Industry</TableHead><TableHead>Status</TableHead></>}
-                    {activeCategory === 'clauses' && <><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead>Risk</TableHead></>}
-                    {activeCategory === 'documents' && <><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Date</TableHead></>}
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableHeader>
-                <TableBody>
-                    {listItems.map((item: any) => (
-                    <TableRow key={item.id}>
-                        <TableCell className="font-mono text-xs text-slate-500">{item.id}</TableCell>
-                        
-                        {activeCategory === 'users' && (
-                        <>
-                            <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
-                            <TableCell><Badge variant="neutral">{item.role}</Badge></TableCell>
-                            <TableCell>{item.office}</TableCell>
-                        </>
-                        )}
-
-                        {activeCategory === 'cases' && (
-                        <>
-                            <TableCell className="font-medium text-slate-900 max-w-xs truncate">{item.title}</TableCell>
-                            <TableCell>{item.client}</TableCell>
-                            <TableCell><Badge variant="info">{item.status}</Badge></TableCell>
-                            <TableCell className="font-mono">${item.value?.toLocaleString()}</TableCell>
-                        </>
-                        )}
-
-                        {activeCategory === 'clients' && (
-                        <>
-                            <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
-                            <TableCell>{item.industry}</TableCell>
-                            <TableCell><Badge variant={item.status === 'Active' ? 'success' : 'neutral'}>{item.status}</Badge></TableCell>
-                        </>
-                        )}
-
-                        {activeCategory === 'clauses' && (
-                        <>
-                            <TableCell className="font-medium text-slate-900">{item.name}</TableCell>
-                            <TableCell>{item.category}</TableCell>
-                            <TableCell><Badge variant={item.riskRating === 'High' ? 'error' : 'success'}>{item.riskRating}</Badge></TableCell>
-                        </>
-                        )}
-
-                        {activeCategory === 'documents' && (
-                        <>
-                            <TableCell className="font-medium text-slate-900 max-w-xs truncate">{item.title}</TableCell>
-                            <TableCell>{item.type}</TableCell>
-                            <TableCell>{item.uploadDate}</TableCell>
-                        </>
-                        )}
-
-                        <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"><Edit2 className="h-4 w-4"/></button>
-                            <button onClick={() => handleDelete(item.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"><Trash2 className="h-4 w-4"/></button>
-                        </div>
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </TableContainer>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="md:hidden space-y-3 p-4">
-                {listItems.map((item: any) => (
-                    <div key={item.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs font-mono text-slate-500">{item.id}</span>
-                            <div className="flex gap-2">
-                                <button onClick={() => handleEdit(item)} className="text-blue-600"><Edit2 className="h-4 w-4"/></button>
-                                <button onClick={() => handleDelete(item.id)} className="text-red-600"><Trash2 className="h-4 w-4"/></button>
-                            </div>
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-sm mb-2">{item.name || item.title}</h4>
-                        <div className="text-xs text-slate-600 space-y-1">
-                            {Object.entries(item).slice(1, 4).map(([k, v]) => (
-                                k !== 'name' && k !== 'title' && k !== 'id' ? 
-                                <div key={k} className="flex justify-between">
-                                    <span className="capitalize text-slate-400">{k}:</span>
-                                    <span className="font-medium truncate max-w-[150px]">{String(v)}</span>
-                                </div> : null
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <EntityTable
+              items={listItems}
+              activeCategory={activeCategory}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+            <EntityCardList items={listItems} onEdit={handleEdit} onDelete={handleDelete} />
           </div>
         </div>
       </div>

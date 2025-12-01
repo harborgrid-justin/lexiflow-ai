@@ -43,6 +43,12 @@ const getApiBaseUrl = (): string => {
   const normalizedEnvUrl = trimTrailingSlash(envApiUrl);
   const isEnvLocalhost = normalizedEnvUrl ? /localhost|127\.0\.0\.1/i.test(normalizedEnvUrl) : false;
 
+  // In development mode (with Vite dev server), always use the proxy
+  // This works both locally and in Codespaces
+  if (typeof window !== 'undefined' && import.meta.env?.DEV) {
+    return '/api/v1';
+  }
+
   const codespacesOrigin = getCodespacesApiOrigin();
   if (codespacesOrigin && (!normalizedEnvUrl || isEnvLocalhost)) {
     return `${codespacesOrigin}/api/v1`;

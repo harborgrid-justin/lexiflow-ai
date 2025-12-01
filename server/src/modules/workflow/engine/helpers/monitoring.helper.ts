@@ -63,7 +63,7 @@ export class MonitoringHelper {
   async getCaseWorkflowStatus(caseId: string): Promise<{
     metrics: Awaited<ReturnType<typeof this.analyticsService.getMetrics>>;
     bottlenecks: Awaited<ReturnType<typeof this.analyticsService.getBottlenecks>>;
-    velocity: number;
+    velocity: { velocity: number; unit: string };
   }> {
     const [metrics, bottlenecks, velocity] = await Promise.all([
       this.analyticsService.getMetrics(caseId),

@@ -25,7 +25,7 @@ export const CalendarSync: React.FC = () => {
           <div key={i} className="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between hover:bg-slate-50 gap-4 md:gap-0">
             <div className="flex items-center gap-4">
               <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 ${acc.provider.includes('Office') ? 'bg-blue-600' : acc.provider.includes('Google') ? 'bg-red-500' : 'bg-slate-700'}`}>
-                {acc.provider.charAt(0)}
+                {acc.provider?.charAt(0) || '?'}
               </div>
               <div>
                 <h4 className="font-bold text-slate-900">{acc.provider}</h4>

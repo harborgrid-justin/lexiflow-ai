@@ -2,6 +2,7 @@
 import React from 'react';
 import { Case, TimelineEvent, User } from '../types';
 import { ArrowLeft, MapPin, DollarSign } from 'lucide-react';
+import { PageHeader } from './common/PageHeader';
 import { CaseOverview } from './case-detail/CaseOverview';
 import { CaseDocuments } from './case-detail/CaseDocuments';
 import { CaseWorkflow } from './case-detail/CaseWorkflow';
@@ -17,6 +18,7 @@ import { CaseMotions } from './case-detail/CaseMotions';
 import { CaseTeam } from './case-detail/CaseTeam';
 import { useCaseDetail } from '../hooks/useCaseDetail';
 import { WorkflowQuickActions } from './workflow/WorkflowQuickActions';
+import { Button } from './common/Button';
 
 interface CaseDetailProps {
   caseData: Case;
@@ -78,38 +80,40 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-4 md:mb-6 space-y-3 md:space-y-0">
-        <div className="flex items-center space-x-3 flex-1">
-            <button onClick={onBack} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"><ArrowLeft className="h-5 w-5" /></button>
-            <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 line-clamp-1">{caseData.title}</h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 mt-1">
-                <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-xs">{caseData.id}</span>
+    <div className="space-y-6">
+      <PageHeader 
+        title={caseData.title}
+        subtitle={
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 mt-1">
+            <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-xs">{caseData.id}</span>
+            <span className="hidden md:inline text-slate-300">•</span>
+            <span className="line-clamp-1">{caseData.client}</span>
+            {caseData.jurisdiction && (
+              <>
                 <span className="hidden md:inline text-slate-300">•</span>
-                <span className="line-clamp-1">{caseData.client}</span>
-                {caseData.jurisdiction && (
-                    <>
-                        <span className="hidden md:inline text-slate-300">•</span>
-                        <span className="flex items-center text-slate-600"><MapPin className="h-3 w-3 mr-1"/> {caseData.jurisdiction}</span>
-                    </>
-                )}
-                <span className="hidden md:inline text-slate-300">•</span>
-                <span className="flex items-center font-semibold text-slate-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
-                    <DollarSign className="h-3 w-3 mr-0.5 text-green-600"/>
-                    {(caseData.value ?? 0).toLocaleString()}
-                </span>
-            </div>
-            </div>
-        </div>
-        <div className="flex-shrink-0">
-          <WorkflowQuickActions 
-            userId={currentUser?.id || '1'}
-            caseId={caseData.id}
-            compact
-          />
-        </div>
-      </div>
+                <span className="flex items-center text-slate-600"><MapPin className="h-3 w-3 mr-1"/> {caseData.jurisdiction}</span>
+              </>
+            )}
+            <span className="hidden md:inline text-slate-300">•</span>
+            <span className="flex items-center font-semibold text-slate-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+              <DollarSign className="h-3 w-3 mr-0.5 text-green-600"/>
+              {(caseData.value ?? 0).toLocaleString()}
+            </span>
+          </div>
+        }
+        actions={
+          <>
+            <WorkflowQuickActions 
+              userId={currentUser?.id || '1'}
+              caseId={caseData.id}
+              compact
+            />
+            <Button variant="secondary" icon={ArrowLeft} onClick={onBack}>
+              Back to Cases
+            </Button>
+          </>
+        }
+      />
 
       <div className="border-b border-slate-200 mb-6">
         <nav className="flex space-x-8 overflow-x-auto no-scrollbar pb-1">

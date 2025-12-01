@@ -7,6 +7,8 @@ import { AdminAuditLog } from './admin/AdminAuditLog';
 import { AdminPlatformManager } from './admin/AdminPlatformManager';
 import { AdminHierarchy } from './admin/AdminHierarchy';
 import { PageHeader } from './common/PageHeader';
+import { Card } from './common/Card';
+import { Button } from './common/Button';
 
 export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('hierarchy');
@@ -44,7 +46,7 @@ export const AdminPanel: React.FC = () => {
             </button>
         </div>
 
-        <div className="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <Card className="flex-1 overflow-hidden flex flex-col p-0">
             {activeTab === 'hierarchy' && <AdminHierarchy />}
             {activeTab === 'logs' && <AdminAuditLog logs={logs} />}
             {activeTab === 'data' && <AdminPlatformManager />}
@@ -58,21 +60,21 @@ export const AdminPanel: React.FC = () => {
                         <div className="h-10 w-10 bg-blue-600 rounded flex items-center justify-center text-white font-bold">O</div>
                         <div><h4 className="font-bold">Outlook / Exchange</h4><p className="text-xs text-green-600">Connected (Sync Active)</p></div>
                     </div>
-                    <button className="text-xs border px-2 py-1 rounded">Config</button>
+                    <Button variant="ghost" size="sm">Config</Button>
                 </div>
                 <div className="border p-4 rounded-lg flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <div className="h-10 w-10 bg-orange-500 rounded flex items-center justify-center text-white font-bold">iM</div>
                         <div><h4 className="font-bold">iManage</h4><p className="text-xs text-green-600">Connected (DMS)</p></div>
                     </div>
-                    <button className="text-xs border px-2 py-1 rounded">Config</button>
+                    <Button variant="ghost" size="sm">Config</Button>
                 </div>
                 <div className="border p-4 rounded-lg flex items-center justify-between opacity-60">
                     <div className="flex items-center space-x-3">
                         <div className="h-10 w-10 bg-blue-400 rounded flex items-center justify-center text-white font-bold">Doc</div>
                         <div><h4 className="font-bold">DocuSign</h4><p className="text-xs text-slate-500">Not Connected</p></div>
                     </div>
-                    <button className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Connect</button>
+                    <Button variant="primary" size="sm">Connect</Button>
                 </div>
                 </div>
             </div>
@@ -99,7 +101,7 @@ export const AdminPanel: React.FC = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </Card>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
+import { TabNavigation, TabItem } from './common/TabNavigation';
 import { DiscoveryRequest } from '../types';
 import { ApiService } from '../services/apiService';
 import { 
@@ -22,6 +23,13 @@ export const DiscoveryPlatform: React.FC = () => {
   const [view, setView] = useState<DiscoveryView>('dashboard');
   const [contextId, setContextId] = useState<string | null>(null); // To store ID of doc or request being viewed/edited
   const [requests, setRequests] = useState<DiscoveryRequest[]>([]);
+  const primaryTabs: TabItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: Scale },
+    { id: 'requests', label: 'Requests & Responses', icon: MessageCircle },
+    { id: 'privilege', label: 'Privilege Log', icon: Shield },
+    { id: 'holds', label: 'Legal Holds', icon: Lock },
+    { id: 'plan', label: 'Discovery Plan (26(f))', icon: Users },
+  ];
 
   useEffect(() => {
     const fetchDiscovery = async () => {
@@ -109,30 +117,12 @@ export const DiscoveryPlatform: React.FC = () => {
                 </div>
                 }
             />
-            <div className="border-b border-slate-200">
-                <nav className="flex space-x-6 overflow-x-auto">
-                {[
-                    { id: 'dashboard', label: 'Dashboard', icon: Scale },
-                    { id: 'requests', label: 'Requests & Responses', icon: MessageCircle },
-                    { id: 'privilege', label: 'Privilege Log', icon: Shield },
-                    { id: 'holds', label: 'Legal Holds', icon: Lock },
-                    { id: 'plan', label: 'Discovery Plan (26(f))', icon: Users },
-                ].map(item => (
-                    <button 
-                    key={item.id}
-                    onClick={() => setView(item.id as DiscoveryView)}
-                    className={`pb-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors ${
-                        view === item.id 
-                        ? 'border-blue-600 text-blue-600' 
-                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                    }`}
-                    >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                    </button>
-                ))}
-                </nav>
-            </div>
+            <TabNavigation 
+              tabs={primaryTabs}
+              activeTab={view}
+              onTabChange={(id) => setView(id as DiscoveryView)}
+              className="bg-white rounded-t-lg"
+            />
           </>
       ) : null}
 

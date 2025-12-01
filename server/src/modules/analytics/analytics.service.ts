@@ -63,6 +63,17 @@ export class AnalyticsService {
     });
   }
 
+  async getJudgeAnalyticsSummary(): Promise<{ profile: any; stats: any[] }> {
+    const judgeAnalytics = await this.analyticsModel.findAll({
+      where: { metric_type: 'judge_analytics' },
+      limit: 10,
+    });
+    return {
+      profile: { name: 'All Judges', totalCases: judgeAnalytics.length },
+      stats: judgeAnalytics.map(a => a.data),
+    };
+  }
+
   async getCounselPerformance(counselName: string): Promise<Analytics[]> {
     return this.analyticsModel.findAll({
       where: {
@@ -73,6 +84,17 @@ export class AnalyticsService {
       },
       include: ['case', 'creator', 'organization'],
     });
+  }
+
+  async getCounselAnalyticsSummary(): Promise<{ profile: any; outcomes: any[] }> {
+    const counselAnalytics = await this.analyticsModel.findAll({
+      where: { metric_type: 'counsel_performance' },
+      limit: 10,
+    });
+    return {
+      profile: { name: 'All Counsel', totalCases: counselAnalytics.length },
+      outcomes: counselAnalytics.map(a => a.data),
+    };
   }
 
   async getDashboard(): Promise<{ stats: any[]; chartData: any[]; alerts: any[] }> {

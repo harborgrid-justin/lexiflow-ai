@@ -16,7 +16,7 @@ export const CaseListExperts: React.FC = () => {
         <div key={exp.id} className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div className="h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700 text-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-              {exp.name.charAt(0)}
+              {exp.name?.charAt(0) || '?'}
             </div>
             <Badge variant="success">{exp.rating} ★</Badge>
           </div>

@@ -4,16 +4,23 @@ import { Briefcase, Play, Layers, RefreshCw, BarChart3, Bell } from 'lucide-reac
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { Button } from './common/Button';
+import { StatCard } from './common/Stats';
 import { ApiService } from '../services/apiService';
 import { Case } from '../types';
 import { CaseWorkflowList } from './workflow/CaseWorkflowList';
 import { FirmProcessList } from './workflow/FirmProcessList';
 import { WorkflowConfig } from './workflow/WorkflowConfig';
 import { WorkflowTemplateBuilder } from './workflow/WorkflowTemplateBuilder';
-import { WorkflowAnalyticsDashboard } from './workflow/WorkflowAnalyticsDashboard';
 import { NotificationCenter } from './workflow/NotificationCenter';
 import { SLAMonitor } from './workflow/SLAMonitor';
 import { useWorkflowEngine } from '../hooks/useWorkflowEngine';
+import { useWorkflowAnalytics } from '../hooks/useWorkflowAnalytics';
+import { WorkflowMetricGrid } from './workflow/analytics/WorkflowMetricGrid';
+import { EnterpriseCapabilitiesSection } from './workflow/analytics/EnterpriseCapabilitiesSection';
+import { StageProgressSection } from './workflow/analytics/StageProgressSection';
+import { BottleneckInsights } from './workflow/analytics/BottleneckInsights';
+import { TaskDistributionSection } from './workflow/analytics/TaskDistributionSection';
+import { SLABreachAlert } from './workflow/analytics/SLABreachAlert';
 
 interface MasterWorkflowProps {
   onSelectCase: (caseId: string) => void;
@@ -26,6 +33,15 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
   const [currentUser] = useState({ id: '1', name: 'Current User' }); // Replace with actual current user
   const { getNotifications } = useWorkflowEngine();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [analyticsSection, setAnalyticsSection] = useState<string | null>('capabilities');
+  const {
+    metrics,
+    velocity,
+    bottlenecks,
+    refreshAnalytics,
+    isRefreshing,
+    checkSLABreaches,
+  } = useWorkflowAnalytics();
 
   const loadNotificationCount = useCallback(async () => {
     const notifications = await getNotifications(currentUser.id, true);
@@ -35,26 +51,38 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
   }, [getNotifications, currentUser.id]);
 
   useEffect(() => {
-     
     const fetchData = async () => {
-        try {
-            const [c, p] = await Promise.all([
-                ApiService.getCases(),
-                ApiService.getFirmProcesses()
-            ]);
-            setCases(c);
-            setProcesses(p);
-        } catch (e) {
-            console.error("Failed to fetch workflow data", e);
-        }
+      try {
+        const [c, p] = await Promise.all([
+          ApiService.getCases(),
+          ApiService.getFirmProcesses()
+        ]);
+        setCases(c);
+        setProcesses(p);
+      } catch (e) {
+        console.error("Failed to fetch workflow data", e);
+      }
     };
     fetchData();
-    
-    // Load and refresh notifications
-    loadNotificationCount();
-    const interval = setInterval(() => loadNotificationCount(), 30000);
-    return () => clearInterval(interval);
-  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initializeNotifications = async () => {
+      if (!isMounted) return;
+      await loadNotificationCount();
+    };
+
+    initializeNotifications();
+    const interval = setInterval(() => {
+      void loadNotificationCount();
+    }, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [loadNotificationCount]);
 
   const getCaseProgress = (status: string) => {
     switch(status) {
@@ -109,22 +137,10 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p className="text-xs text-slate-500 font-bold uppercase">Active Workflows</p>
-          <p className="text-2xl font-bold text-blue-600">{cases.length + processes.filter(p => p.status === 'Active').length}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p className="text-xs text-slate-500 font-bold uppercase">Tasks Due Today</p>
-          <p className="text-2xl font-bold text-amber-600">14</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p className="text-xs text-slate-500 font-bold uppercase">Automations Ran</p>
-          <p className="text-2xl font-bold text-purple-600">1,204</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p className="text-xs text-slate-500 font-bold uppercase">Efficiency Gain</p>
-          <p className="text-2xl font-bold text-green-600">+22%</p>
-        </div>
+        <StatCard label="Active Workflows" value={cases.length + processes.filter(p => p.status === 'Active').length} color="text-blue-600" bg="bg-white" />
+        <StatCard label="Tasks Due Today" value={14} color="text-amber-600" bg="bg-white" />
+        <StatCard label="Automations Ran" value="1,204" color="text-purple-600" bg="bg-white" />
+        <StatCard label="Efficiency Gain" value="+22%" color="text-green-600" bg="bg-white" />
       </div>
 
       {activeTab === 'cases' && (
@@ -170,13 +186,28 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
             <h3 className="font-bold text-slate-900 flex items-center">
               <BarChart3 className="h-5 w-5 mr-2 text-slate-500"/> Workflow Analytics
             </h3>
+            <Button variant="outline" size="sm" icon={RefreshCw} onClick={refreshAnalytics} disabled={isRefreshing}>Refresh</Button>
           </div>
           
-          {/* Global SLA Monitor */}
+          <WorkflowMetricGrid metrics={metrics} velocity={velocity} />
           <SLAMonitor showBreachReport />
-          
-          {/* Analytics Dashboard */}
-          <WorkflowAnalyticsDashboard />
+          <EnterpriseCapabilitiesSection
+            metrics={metrics}
+            isExpanded={analyticsSection === 'capabilities'}
+            onToggle={() => setAnalyticsSection(prev => prev === 'capabilities' ? null : 'capabilities')}
+          />
+          <StageProgressSection
+            metrics={metrics}
+            isExpanded={analyticsSection === 'stages'}
+            onToggle={() => setAnalyticsSection(prev => prev === 'stages' ? null : 'stages')}
+          />
+          <BottleneckInsights
+            bottlenecks={bottlenecks}
+            isExpanded={analyticsSection === 'bottlenecks'}
+            onToggle={() => setAnalyticsSection(prev => prev === 'bottlenecks' ? null : 'bottlenecks')}
+          />
+          <TaskDistributionSection metrics={metrics} />
+          <SLABreachAlert metrics={metrics} onViewDetails={() => checkSLABreaches()} />
         </div>
       )}
 
