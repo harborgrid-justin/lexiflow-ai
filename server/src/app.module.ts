@@ -103,7 +103,7 @@ import { PlaybooksModule } from './modules/playbooks/playbooks.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
     }),
 
     // Database

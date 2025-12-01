@@ -6,7 +6,7 @@ import { transformApiCase, transformApiUser, transformApiEvidence, transformApiC
 // In development with Vite proxy, use relative path '/api/v1'
 // In production or when running standalone, use the full URL
 const trimTrailingSlash = (value?: string | null): string | null => {
-  if (!value) return null;
+  if (!value || typeof value !== 'string') return null;
   return value.endsWith('/') ? value.slice(0, -1) : value;
 };
 
@@ -16,17 +16,22 @@ const getCodespacesApiOrigin = (): string | null => {
   }
 
   const { protocol, hostname } = window.location;
+  if (!hostname || typeof hostname !== 'string') {
+    return null;
+  }
+  
   const isCodespaceHost = hostname.endsWith('.app.github.dev') || hostname.endsWith('.github.dev');
   if (!isCodespaceHost) {
     return null;
   }
 
-  const match = hostname.match(/^(.*)-(\d+)\.(app|github)\.github\.dev$/);
+  // Match patterns like: ideal-space-system-9r7q47w4xjf7rwx-3000.app.github.dev
+  const match = hostname.match(/^(.*)-(\d+)\.app\.github\.dev$/);
   if (!match) {
     return null;
   }
 
-  const [, base, port, domain] = match;
+  const [, base, port] = match;
   const apiPort = '3001';
 
   // If we're already on the API port, reuse the current origin.
@@ -34,7 +39,7 @@ const getCodespacesApiOrigin = (): string | null => {
     return `${protocol}//${hostname}`;
   }
 
-  return `${protocol}//${base}-${apiPort}.${domain}.github.dev`;
+  return `${protocol}//${base}-${apiPort}.app.github.dev`;
 };
 
 const getApiBaseUrl = (): string => {
