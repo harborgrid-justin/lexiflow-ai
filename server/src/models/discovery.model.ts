@@ -90,4 +90,7 @@ export class DiscoveryRequest extends Model {
 
   @BelongsTo(() => User, 'created_by')
   creator?: User;
+
+  @BelongsTo(() => User, { foreignKey: 'created_by', as: 'requested_by' })
+  requested_by?: User;
 }
