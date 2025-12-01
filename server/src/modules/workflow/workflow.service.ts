@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { WorkflowStage, WorkflowTask } from '../../models/workflow.model';
+import { User } from '../../models/user.model';
+
+// Enterprise Engine integration for backward compatibility
+// The WorkflowEngineService provides advanced features while this service maintains the original API
 
 @Injectable()
 export class WorkflowService {
@@ -24,6 +28,19 @@ export class WorkflowService {
     return this.workflowStageModel.findAll({
       where: whereClause,
       order: [['order', 'ASC']],
+      include: [
+        {
+          model: WorkflowTask,
+          as: 'tasks',
+          include: [
+            {
+              model: User,
+              as: 'assignee',
+              attributes: ['id', 'first_name', 'last_name', 'email'],
+            },
+          ],
+        },
+      ],
     });
   }
 

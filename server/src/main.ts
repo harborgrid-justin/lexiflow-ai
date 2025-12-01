@@ -132,7 +132,7 @@ async function bootstrap() {
       orgId: '77492804-16e3-4cad-abe5-34fcb57ee308', // Org ID from seed
     },
     jwtSecret,
-    { expiresIn: '30d' } // Long expiry for dev convenience
+    { expiresIn: '30d' }, // Long expiry for dev convenience
   );
 
   SwaggerModule.setup('api/docs', app, document, {

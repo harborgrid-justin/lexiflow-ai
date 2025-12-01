@@ -93,7 +93,7 @@ export class BillingService {
       wip.push({
         month: monthName,
         amount: monthAmount || Math.floor(Math.random() * 50000) + 10000, // Fallback to sample data if no entries
-        billed: Math.floor((monthAmount || Math.floor(Math.random() * 50000) + 10000) * 0.8)
+        billed: Math.floor((monthAmount || Math.floor(Math.random() * 50000) + 10000) * 0.8),
       });
     }
 

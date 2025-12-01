@@ -101,7 +101,7 @@ export class DocumentsController {
   })
   @ApiResponse({ status: 400, description: 'No file uploaded or invalid file' })
   async uploadDocument(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
     @Body()
     metadata: {
       title?: string;

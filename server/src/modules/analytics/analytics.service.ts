@@ -107,28 +107,28 @@ export class AnalyticsService {
         value: activeCases.toString(),
         icon: 'Briefcase',
         color: 'text-blue-600',
-        bg: 'bg-blue-100'
+        bg: 'bg-blue-100',
       },
       {
         label: 'Pending Intake',
         value: pendingCases.toString(),
         icon: 'Clock',
         color: 'text-amber-600',
-        bg: 'bg-amber-100'
+        bg: 'bg-amber-100',
       },
       {
         label: 'Total Matters',
         value: totalCases.toString(),
         icon: 'FileText',
         color: 'text-green-600',
-        bg: 'bg-green-100'
+        bg: 'bg-green-100',
       },
       {
         label: 'Portfolio Value',
         value: `$${(totalValue / 1000000).toFixed(1)}M`,
         icon: 'AlertTriangle',
         color: 'text-purple-600',
-        bg: 'bg-purple-100'
+        bg: 'bg-purple-100',
       },
     ];
 

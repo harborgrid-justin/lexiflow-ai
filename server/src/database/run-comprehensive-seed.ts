@@ -67,9 +67,9 @@ async function runSeed() {
         continue;
       }
 
-      console.log(`\n========================================`);
+      console.log('\n========================================');
       console.log(`Running: ${seedFile}`);
-      console.log(`========================================\n`);
+      console.log('========================================\n');
 
       const sql = fs.readFileSync(filePath, 'utf-8');
 
@@ -89,7 +89,7 @@ async function runSeed() {
       let errorCount = 0;
 
       for (const statement of statements) {
-        if (!statement || statement.startsWith('--')) continue;
+        if (!statement || statement.startsWith('--')) {continue;}
 
         try {
           await sequelize.query(statement);

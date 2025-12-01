@@ -165,11 +165,63 @@ export const useCaseDetail = (caseData: Case) => {
 
   const toggleTask = async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
     try {
+      // Update task status in backend (using frontend format - transformer handles conversion)
       await ApiService.workflow.tasks.update(taskId, { status });
-      setStages(prevStages => prevStages.map(stage => ({
-        ...stage,
-        tasks: stage.tasks.map(t => t.id === taskId ? { ...t, status } : t)
-      })));
+      
+      // Update local state and check business rules
+      setStages(prevStages => {
+        const updatedStages = prevStages.map(stage => {
+          const updatedTasks = stage.tasks.map(t => t.id === taskId ? { ...t, status } : t);
+          
+          // Business Rule: Check if all tasks in stage are complete
+          const allTasksDone = updatedTasks.length > 0 && updatedTasks.every(t => t.status === 'Done');
+          const anyTaskInProgress = updatedTasks.some(t => t.status === 'In Progress');
+          
+          // Auto-update stage status based on task completion
+          let newStageStatus = stage.status;
+          if (allTasksDone) {
+            newStageStatus = 'Completed';
+          } else if (anyTaskInProgress || updatedTasks.some(t => t.status === 'Done')) {
+            newStageStatus = 'Active';
+          }
+          
+          return {
+            ...stage,
+            tasks: updatedTasks,
+            status: newStageStatus
+          };
+        });
+        
+        // Business Rule: Auto-activate next stage when current is completed
+        const completedIndex = updatedStages.findIndex(s => 
+          s.tasks.length > 0 && s.tasks.every(t => t.status === 'Done') && s.status === 'Completed'
+        );
+        
+        if (completedIndex >= 0 && completedIndex < updatedStages.length - 1) {
+          const nextStage = updatedStages[completedIndex + 1];
+          if (nextStage.status === 'Pending') {
+            updatedStages[completedIndex + 1] = { ...nextStage, status: 'Active' };
+            // Update backend for stage advancement
+            ApiService.workflow.stages.update(nextStage.id, { status: 'Active' }).catch(console.error);
+          }
+        }
+        
+        return updatedStages;
+      });
+      
+      // Update stage status in backend if needed
+      const stageWithTask = stages.find(s => s.tasks.some(t => t.id === taskId));
+      if (stageWithTask) {
+        const updatedTasks = stageWithTask.tasks.map(t => t.id === taskId ? { ...t, status } : t);
+        const allDone = updatedTasks.every(t => t.status === 'Done');
+        if (allDone) {
+          await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Completed' });
+        } else {
+          const doneCount = updatedTasks.filter(t => t.status === 'Done').length;
+          const progress = Math.round((doneCount / updatedTasks.length) * 100);
+          await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Active' });
+        }
+      }
     } catch (err) {
       console.error('Failed to update task:', err);
 

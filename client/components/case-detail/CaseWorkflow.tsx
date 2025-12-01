@@ -3,22 +3,37 @@ import React, { useState } from 'react';
 import { WorkflowStage } from '../../types';
 import { 
   Cpu, Sparkles, Plus, CheckCircle, Clock, BookOpen, Zap, 
-  ArrowRight, FileText, DollarSign, Scale, Gavel, Layout, ChevronDown, ChevronUp, Box
+  ArrowRight, FileText, DollarSign, Scale, Gavel, Layout, ChevronDown, ChevronUp, Box,
+  Settings, GitBranch, Bell, BarChart3
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { UserAvatar } from '../common/UserAvatar';
+import { EnhancedWorkflowPanel } from '../workflow/EnhancedWorkflowPanel';
 
 interface CaseWorkflowProps {
   stages: WorkflowStage[];
+  caseId: string;
+  currentUserId: string;
+  users: Array<{ id: string; name: string; role: string }>;
   generatingWorkflow: boolean;
   onGenerateWorkflow: () => void;
   onNavigateToModule?: (module: string) => void;
   onToggleTask?: (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => void;
 }
 
-export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWorkflow, onGenerateWorkflow, onNavigateToModule, onToggleTask }) => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'automation'>('timeline');
+export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ 
+  stages, 
+  caseId,
+  currentUserId,
+  users,
+  generatingWorkflow, 
+  onGenerateWorkflow, 
+  onNavigateToModule, 
+  onToggleTask 
+}) => {
+  const [activeTab, setActiveTab] = useState<'timeline' | 'automation' | 'engine'>('timeline');
   const [expandedStage, setExpandedStage] = useState<string | null>(stages.find(s => s.status === 'Active')?.id || null);
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
 
   const handleToggleTask = (stageId: string, taskId: string) => {
     const stage = stages.find(s => s.id === stageId);
@@ -71,6 +86,13 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWo
                 className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'automation' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
              >
                  Automations
+             </button>
+             <button 
+                onClick={() => setActiveTab('engine')}
+                className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${activeTab === 'engine' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+             >
+                 <Settings className="h-4 w-4" />
+                 Workflow Engine
              </button>
           </div>
 
@@ -182,6 +204,23 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ stages, generatingWo
                     </div>
                 );
             })}
+        </div>
+      ) : activeTab === 'engine' ? (
+        <div className="space-y-6">
+          <EnhancedWorkflowPanel
+            caseId={caseId}
+            stageId={expandedStage || undefined}
+            taskId={selectedTask || undefined}
+            currentUserId={currentUserId}
+            users={users}
+            tasks={stages.flatMap(s => s.tasks.map(t => ({
+              id: t.id,
+              title: t.title,
+              status: t.status.toLowerCase() === 'done' ? 'done' : t.status.toLowerCase(),
+              assignedTo: t.assignee
+            })))}
+            onUpdate={() => window.location.reload()}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">

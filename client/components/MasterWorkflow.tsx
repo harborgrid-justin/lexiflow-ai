@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Play, Layers, RefreshCw } from 'lucide-react';
+import { Briefcase, Play, Layers, RefreshCw, BarChart3, Bell, Settings as SettingsIcon } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { Button } from './common/Button';
@@ -10,15 +10,22 @@ import { CaseWorkflowList } from './workflow/CaseWorkflowList';
 import { FirmProcessList } from './workflow/FirmProcessList';
 import { WorkflowConfig } from './workflow/WorkflowConfig';
 import { WorkflowTemplateBuilder } from './workflow/WorkflowTemplateBuilder';
+import { WorkflowAnalyticsDashboard } from './workflow/WorkflowAnalyticsDashboard';
+import { NotificationCenter } from './workflow/NotificationCenter';
+import { SLAMonitor } from './workflow/SLAMonitor';
+import { useWorkflowEngine } from '../hooks/useWorkflowEngine';
 
 interface MasterWorkflowProps {
   onSelectCase: (caseId: string) => void;
 }
 
 export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) => {
-  const [activeTab, setActiveTab] = useState<'cases' | 'firm' | 'templates' | 'config'>('cases');
+  const [activeTab, setActiveTab] = useState<'cases' | 'firm' | 'templates' | 'config' | 'analytics' | 'notifications'>('cases');
   const [cases, setCases] = useState<Case[]>([]);
   const [processes, setProcesses] = useState<any[]>([]);
+  const [currentUser] = useState({ id: '1', name: 'Current User' }); // Replace with actual current user
+  const { getNotifications } = useWorkflowEngine();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,7 +41,19 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
         }
     };
     fetchData();
+    loadNotificationCount();
+    
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(loadNotificationCount, 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  const loadNotificationCount = async () => {
+    const notifications = await getNotifications(currentUser.id, true);
+    if (notifications) {
+      setUnreadCount(notifications.length);
+    }
+  };
 
   const getCaseProgress = (status: string) => {
     switch(status) {
@@ -58,14 +77,30 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
     <div className="h-full flex flex-col space-y-6 animate-fade-in">
       <PageHeader 
         title="Master Workflow Engine" 
-        subtitle="Orchestrate case lifecycles and firm-wide business operations."
+        subtitle="Orchestrate case lifecycles and firm-wide business operations with all enterprise features."
         actions={
-          <div className="flex gap-2">
-            <Tabs 
-              tabs={['cases', 'firm', 'templates', 'config']} 
-              activeTab={activeTab} 
-              onChange={(t) => setActiveTab(t as any)} 
-            />
+          <div className="flex gap-2 items-center">
+            <div className="flex gap-2 overflow-x-auto">
+              <Tabs 
+                tabs={['cases', 'firm', 'analytics', 'notifications', 'templates', 'config']} 
+                activeTab={activeTab} 
+                onChange={(t) => setActiveTab(t as any)} 
+              />
+            </div>
+            <div className="relative">
+              <Button 
+                variant="secondary" 
+                icon={Bell} 
+                onClick={() => setActiveTab('notifications')}
+                className="relative"
+              >
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+            </div>
             <Button variant="primary" icon={Play} className="hidden md:flex">Run Automation</Button>
           </div>
         }
@@ -126,6 +161,33 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
 
       {activeTab === 'config' && (
         <WorkflowConfig />
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="font-bold text-slate-900 flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2 text-slate-500"/> Workflow Analytics
+            </h3>
+          </div>
+          
+          {/* Global SLA Monitor */}
+          <SLAMonitor showBreachReport />
+          
+          {/* Analytics Dashboard */}
+          <WorkflowAnalyticsDashboard />
+        </div>
+      )}
+
+      {activeTab === 'notifications' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="font-bold text-slate-900 flex items-center">
+              <Bell className="h-5 w-5 mr-2 text-slate-500"/> Notification Center
+            </h3>
+          </div>
+          <NotificationCenter userId={currentUser.id} />
+        </div>
       )}
     </div>
   );

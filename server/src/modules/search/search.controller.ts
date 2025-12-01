@@ -149,7 +149,7 @@ export class SearchController {
         includeStatutes: body.includeStatutes,
         includeArticles: body.includeArticles,
         includeNews: body.includeNews,
-      }
+      },
     );
   }
 

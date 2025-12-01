@@ -347,11 +347,25 @@ export function transformApiEvidence(apiEvidence: ApiEvidence): EvidenceItem {
  * Transform ApiTask to frontend WorkflowTask format
  */
 export function transformApiTask(apiTask: ApiTask): WorkflowTask {
+  // Build assignee name from nested assignee object if available
+  const assigneeName = apiTask.assignee 
+    ? `${apiTask.assignee.first_name || ''} ${apiTask.assignee.last_name || ''}`.trim()
+    : '';
+  
+  // Map API status to frontend status format
+  const statusMap: Record<string, 'Pending' | 'In Progress' | 'Done'> = {
+    'pending': 'Pending',
+    'in-progress': 'In Progress',
+    'in_progress': 'In Progress',
+    'done': 'Done',
+    'completed': 'Done',
+  };
+  
   return {
     id: apiTask.id,
     title: apiTask.title,
-    status: apiTask.status as any,
-    assignee: '', // Would need to resolve from assignee_id
+    status: statusMap[apiTask.status?.toLowerCase()] || 'Pending',
+    assignee: assigneeName,
     dueDate: typeof apiTask.due_date === 'string' ? apiTask.due_date : apiTask.due_date?.toISOString() || '',
     priority: apiTask.priority as any,
     caseId: apiTask.case_id,

@@ -55,7 +55,7 @@ export class GoogleCustomSearchService {
       siteSearch?: string; // Restrict to specific domains
       exactTerms?: string;
       excludeTerms?: string;
-    } = {}
+    } = {},
   ): Promise<LegalSearchResult[]> {
     if (!this.apiKey || !this.searchEngineId) {
       throw new Error('Google Custom Search not configured properly');
@@ -88,7 +88,7 @@ export class GoogleCustomSearchService {
 
       const response = await axios.get<GoogleCustomSearchResponse>(
         this.baseUrl,
-        { params }
+        { params },
       );
 
       if (!response.data.items || response.data.items.length === 0) {
@@ -114,7 +114,7 @@ export class GoogleCustomSearchService {
    */
   async searchCaseLaw(
     query: string,
-    jurisdiction?: string
+    jurisdiction?: string,
   ): Promise<LegalSearchResult[]> {
     // Focus on authoritative legal sources
     const legalSites = [
@@ -139,7 +139,7 @@ export class GoogleCustomSearchService {
    */
   async searchStatutes(
     query: string,
-    jurisdiction?: string
+    jurisdiction?: string,
   ): Promise<LegalSearchResult[]> {
     const statuteSites = [
       'law.cornell.edu/uscode',
@@ -178,7 +178,7 @@ export class GoogleCustomSearchService {
    */
   async comprehensiveResearch(
     query: string,
-    jurisdiction?: string
+    jurisdiction?: string,
   ): Promise<{
     caseLaw: LegalSearchResult[];
     statutes: LegalSearchResult[];
@@ -205,7 +205,7 @@ export class GoogleCustomSearchService {
    */
   async searchLegalNews(
     query: string,
-    daysBack: number = 30
+    daysBack: number = 30,
   ): Promise<LegalSearchResult[]> {
     const newsSites = [
       'law.com',

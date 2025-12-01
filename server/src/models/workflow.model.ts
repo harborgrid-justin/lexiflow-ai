@@ -7,6 +7,7 @@ import {
   Default,
   ForeignKey,
   BelongsTo,
+  HasMany,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { Case } from './case.model';
@@ -82,6 +83,10 @@ export class WorkflowStage extends Model {
 
   @BelongsTo(() => User, 'assigned_to')
   assignee?: User;
+
+  // Forward reference - WorkflowTask is defined below
+  @HasMany(() => WorkflowTask, 'stage_id')
+  tasks?: WorkflowTask[];
 }
 
 @Table({

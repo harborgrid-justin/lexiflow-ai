@@ -43,7 +43,7 @@ export class SearchService {
       includeCaseLaw?: boolean;
       includeArticles?: boolean;
       includeNews?: boolean;
-    }
+    },
   ) {
     // Log the search query
     await this.searchQueryModel.create({
@@ -59,7 +59,7 @@ export class SearchService {
       if (!options || (!options.includeCaseLaw && !options.includeStatutes && !options.includeArticles && !options.includeNews)) {
         const results = await this.googleSearchService.comprehensiveResearch(
           query,
-          options?.jurisdiction
+          options?.jurisdiction,
         );
 
         return {
@@ -81,33 +81,33 @@ export class SearchService {
       }
 
       // Perform targeted searches based on options
-      const searchPromises: Promise<any>[] = [];
+      const searchPromises: Array<Promise<any>> = [];
       const resultTypes: string[] = [];
 
       if (options.includeCaseLaw) {
         searchPromises.push(
-          this.googleSearchService.searchCaseLaw(query, options.jurisdiction)
+          this.googleSearchService.searchCaseLaw(query, options.jurisdiction),
         );
         resultTypes.push('caseLaw');
       }
 
       if (options.includeStatutes) {
         searchPromises.push(
-          this.googleSearchService.searchStatutes(query, options.jurisdiction)
+          this.googleSearchService.searchStatutes(query, options.jurisdiction),
         );
         resultTypes.push('statutes');
       }
 
       if (options.includeArticles) {
         searchPromises.push(
-          this.googleSearchService.searchLegalArticles(query)
+          this.googleSearchService.searchLegalArticles(query),
         );
         resultTypes.push('articles');
       }
 
       if (options.includeNews) {
         searchPromises.push(
-          this.googleSearchService.searchLegalNews(query)
+          this.googleSearchService.searchLegalNews(query),
         );
         resultTypes.push('news');
       }
