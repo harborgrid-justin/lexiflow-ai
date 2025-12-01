@@ -146,11 +146,6 @@ export const WorkflowTemplateBuilder: React.FC = () => {
     setTemplates(templates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
   };
 
-  const filteredTasks = TASK_LIBRARY.filter(task =>
-    task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    task.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="h-[calc(100vh-200px)] flex gap-6">
       {/* Task Library Sidebar */}

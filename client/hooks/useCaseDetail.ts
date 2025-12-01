@@ -217,8 +217,6 @@ export const useCaseDetail = (caseData: Case) => {
         if (allDone) {
           await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Completed' });
         } else {
-          const doneCount = updatedTasks.filter(t => t.status === 'Done').length;
-          const progress = Math.round((doneCount / updatedTasks.length) * 100);
           await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Active' });
         }
       }

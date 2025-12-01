@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, CheckCircle, AlertTriangle, Clock, X } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Card } from '../common/Card';
@@ -14,22 +14,22 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   userId,
   compact = false
 }) => {
-  const { getNotifications, markNotificationRead, loading } = useWorkflowEngine();
+  const { getNotifications, markNotificationRead, loading: _loading } = useWorkflowEngine();
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [showAll, setShowAll] = useState(false);
+
+  const loadNotifications = useCallback(async () => {
+    const notifs = await getNotifications(userId, !showAll);
+    if (notifs) {
+      setNotifications(notifs);
+    }
+  }, [getNotifications, userId, showAll]);
 
   useEffect(() => {
     loadNotifications();
     const interval = setInterval(loadNotifications, 30000); // Refresh every 30s
     return () => clearInterval(interval);
-  }, [userId, showAll]);
-
-  const loadNotifications = async () => {
-    const notifs = await getNotifications(userId, !showAll);
-    if (notifs) {
-      setNotifications(notifs);
-    }
-  };
+  }, [loadNotifications]);
 
   const handleMarkRead = async (notificationId: string) => {
     await markNotificationRead(notificationId);

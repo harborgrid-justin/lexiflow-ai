@@ -1,5 +1,5 @@
 import { useEffect, useRef, RefObject } from 'react';
-import { safeFocus, safeBlur, safeScrollIntoView, safeAddEventListener } from '../utils/dom-safety';
+import { safeFocus, safeScrollIntoView, safeAddEventListener } from '../utils/dom-safety';
 
 /**
  * Safely focus an element on mount

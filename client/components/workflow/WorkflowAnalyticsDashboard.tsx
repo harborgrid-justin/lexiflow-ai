@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart3, TrendingUp, AlertTriangle, Clock, Users, CheckCircle,
   ArrowRight, Activity, Zap, Shield, GitBranch, Bell, History,
@@ -31,11 +31,7 @@ export const WorkflowAnalyticsDashboard: React.FC<WorkflowAnalyticsDashboardProp
     loading 
   } = useWorkflowEngine();
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [caseId]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     const [m, b, v] = await Promise.all([
       getWorkflowMetrics(caseId),
       getBottlenecks(caseId),
@@ -44,7 +40,11 @@ export const WorkflowAnalyticsDashboard: React.FC<WorkflowAnalyticsDashboardProp
     if (m) setMetrics(m);
     if (b) setBottlenecks(b);
     if (v) setVelocity(v);
-  };
+  }, [getWorkflowMetrics, getBottlenecks, getTaskVelocity, caseId]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -176,7 +176,7 @@ export const WorkflowAnalyticsDashboard: React.FC<WorkflowAnalyticsDashboardProp
           isExpanded={expandedSection === 'bottlenecks'}
           onToggle={() => toggleSection('bottlenecks')}
           badge={bottlenecks?.blockedTasks.length ? 
-            <Badge variant="danger">{bottlenecks.blockedTasks.length} Blocked</Badge> : null
+            <Badge variant="error">{bottlenecks.blockedTasks.length} Blocked</Badge> : null
           }
         >
           <div className="p-4 space-y-6">
@@ -187,7 +187,7 @@ export const WorkflowAnalyticsDashboard: React.FC<WorkflowAnalyticsDashboardProp
                   <Clock className="h-4 w-4" /> Slowest Stages
                 </h4>
                 <div className="space-y-2">
-                  {bottlenecks.slowestStages.slice(0, 3).map((stage, idx) => (
+                  {bottlenecks.slowestStages.slice(0, 3).map((stage, _idx) => (
                     <div key={stage.stageId} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                       <span className="text-sm text-slate-700">{stage.name}</span>
                       <span className="text-sm font-bold text-slate-900">{stage.avgDays} days avg</span>
@@ -348,7 +348,7 @@ const CapabilityCard: React.FC<CapabilityCardProps> = ({ icon, title, status, co
     </div>
     <p className="text-xs font-medium text-slate-700">{title}</p>
     {count !== undefined && count > 0 && (
-      <Badge variant="danger" className="mt-1 text-[10px]">{count}</Badge>
+      <Badge variant="error" className="mt-1 text-[10px]">{count}</Badge>
     )}
   </div>
 );

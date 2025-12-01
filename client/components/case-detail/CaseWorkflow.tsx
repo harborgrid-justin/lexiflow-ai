@@ -4,7 +4,7 @@ import { WorkflowStage } from '../../types';
 import { 
   Cpu, Sparkles, Plus, CheckCircle, Clock, BookOpen, Zap, 
   ArrowRight, FileText, DollarSign, Scale, Gavel, Layout, ChevronDown, ChevronUp, Box,
-  Settings, GitBranch, Bell, BarChart3
+  Settings
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { UserAvatar } from '../common/UserAvatar';
@@ -33,7 +33,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'automation' | 'engine'>('timeline');
   const [expandedStage, setExpandedStage] = useState<string | null>(stages.find(s => s.status === 'Active')?.id || null);
-  const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [selectedTask, _setSelectedTask] = useState<string | null>(null);
 
   const handleToggleTask = (stageId: string, taskId: string) => {
     const stage = stages.find(s => s.id === stageId);

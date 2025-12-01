@@ -25,6 +25,15 @@ import {
   WorkflowEngineController,
 } from './engine';
 
+// Helper services
+import { TaskLifecycleService } from './engine/helpers/task-lifecycle.service';
+import { StageManagementService } from './engine/helpers/stage-management.service';
+import { ConditionalHandlerService } from './engine/helpers/conditional-handler.service';
+import { ValidationService } from './engine/helpers/validation.service';
+import { PostCompletionService } from './engine/helpers/post-completion.service';
+import { RecoveryService } from './engine/helpers/recovery.service';
+import { MonitoringService } from './engine/helpers/monitoring.service';
+
 // All engine services
 const engineServices = [
   DependencyService,
@@ -43,6 +52,14 @@ const engineServices = [
   RecurringService,
   VersioningService,
   WorkflowOrchestratorService,
+  // Helper services
+  TaskLifecycleService,
+  StageManagementService,
+  ConditionalHandlerService,
+  ValidationService,
+  PostCompletionService,
+  RecoveryService,
+  MonitoringService,
 ];
 
 @Module({

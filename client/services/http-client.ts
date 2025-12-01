@@ -19,7 +19,7 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
           message: text || response.statusText || 'Request failed',
         };
       }
-    } catch (parseError) {
+    } catch (_parseError) {
       errorData = {
         statusCode: response.status,
         message: response.statusText || 'Request failed',

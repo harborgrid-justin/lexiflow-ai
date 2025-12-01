@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Layers, Settings, Play, Pause, BarChart3 } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { Tabs } from '../common/Tabs';
 import { TaskDependencyManager } from './TaskDependencyManager';
 import { SLAMonitor } from './SLAMonitor';
 import { ApprovalWorkflow } from './ApprovalWorkflow';

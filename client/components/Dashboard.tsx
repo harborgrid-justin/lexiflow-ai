@@ -18,7 +18,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
   const [stats, setStats] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
-  const [currentUserId] = useState('1'); // Replace with actual current user ID
+  const [_currentUserId] = useState('1'); // Replace with actual current user ID
   const { checkSLABreaches } = useWorkflowEngine();
   const [slaBreaches, setSlaBreaches] = useState({ warnings: 0, breaches: 0 });
 
@@ -52,7 +52,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
         }
     };
     fetchDashboard();
-  }, []);
+  }, [checkSLABreaches]);
 
   return (
     <div className="space-y-6 animate-fade-in">

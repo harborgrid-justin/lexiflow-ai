@@ -50,7 +50,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
     createDocument
   } = useCaseDetail(caseData);
 
-  const [teamMembers, setTeamMembers] = React.useState<Array<{ id: string; name: string; role: string }>>([
+  const [teamMembers] = React.useState<Array<{ id: string; name: string; role: string }>>([
     { id: '1', name: 'John Smith', role: 'Senior Partner' },
     { id: '2', name: 'Jane Doe', role: 'Associate' },
     { id: '3', name: 'Bob Johnson', role: 'Paralegal' }

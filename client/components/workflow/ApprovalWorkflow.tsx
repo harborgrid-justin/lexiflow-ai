@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, CheckCircle, XCircle, Clock, MessageSquare } from 'lucide-react';
+import { UserCheck, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
@@ -15,7 +15,7 @@ interface ApprovalWorkflowProps {
 
 export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
   taskId,
-  taskTitle,
+  _taskTitle,
   currentUserId,
   users,
   onUpdate
@@ -33,8 +33,14 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
   const [comments, setComments] = useState('');
 
   useEffect(() => {
+    const loadApprovalChain = async () => {
+      const chain = await getApprovalChain(taskId);
+      if (chain) {
+        setApprovalChain(chain);
+      }
+    };
     loadApprovalChain();
-  }, [taskId]);
+  }, [getApprovalChain, taskId]);
 
   const loadApprovalChain = async () => {
     const chain = await getApprovalChain(taskId);
@@ -180,7 +186,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                     Approve
                   </Button>
                   <Button
-                    variant="danger"
+                    variant="error"
                     size="sm"
                     onClick={() => handleApprove('reject')}
                     disabled={loading}

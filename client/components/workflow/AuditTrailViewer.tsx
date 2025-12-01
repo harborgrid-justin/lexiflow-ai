@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { FileText, User, Calendar, Filter } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Card } from '../common/Card';
-import { Button } from '../common/Button';
 import type { AuditLogEntry } from '../../types/workflow-engine';
 
 interface AuditTrailViewerProps {

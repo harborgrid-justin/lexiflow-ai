@@ -12,14 +12,14 @@ interface WorkflowQuickActionsProps {
 
 export const WorkflowQuickActions: React.FC<WorkflowQuickActionsProps> = ({
   userId,
-  caseId,
+  _caseId,
   taskId,
   compact = false
 }) => {
   const {
     getNotifications,
     getTaskSLAStatus,
-    checkSLABreaches,
+    checkSLABreaches: _checkSLABreaches,
     startTimeTracking,
     stopTimeTracking
   } = useWorkflowEngine();
@@ -28,13 +28,7 @@ export const WorkflowQuickActions: React.FC<WorkflowQuickActionsProps> = ({
   const [slaStatus, setSlaStatus] = React.useState<TaskSLAStatus | null>(null);
   const [isTracking, setIsTracking] = React.useState(false);
 
-  React.useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
-  }, [userId, taskId]);
-
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     const notifs = await getNotifications(userId, true);
     if (notifs) setNotifications(notifs);
 
@@ -42,7 +36,13 @@ export const WorkflowQuickActions: React.FC<WorkflowQuickActionsProps> = ({
       const status = await getTaskSLAStatus(taskId);
       if (status) setSlaStatus(status);
     }
-  };
+  }, [getNotifications, getTaskSLAStatus, userId, taskId]);
+
+  React.useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   const handleTimeTracking = async () => {
     if (!taskId) return;

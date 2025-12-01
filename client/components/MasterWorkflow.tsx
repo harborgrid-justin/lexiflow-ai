@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Briefcase, Play, Layers, RefreshCw, BarChart3, Bell, Settings as SettingsIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Briefcase, Play, Layers, RefreshCw, BarChart3, Bell } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { Button } from './common/Button';
@@ -27,6 +27,13 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
   const { getNotifications } = useWorkflowEngine();
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const loadNotificationCount = useCallback(async () => {
+    const notifications = await getNotifications(currentUser.id, true);
+    if (notifications) {
+      setUnreadCount(notifications.length);
+    }
+  }, [getNotifications, currentUser.id]);
+
   useEffect(() => {
     const fetchData = async () => {
         try {
@@ -46,14 +53,7 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
     // Refresh notifications every 30 seconds
     const interval = setInterval(loadNotificationCount, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  const loadNotificationCount = async () => {
-    const notifications = await getNotifications(currentUser.id, true);
-    if (notifications) {
-      setUnreadCount(notifications.length);
-    }
-  };
+  }, [loadNotificationCount]);
 
   const getCaseProgress = (status: string) => {
     switch(status) {
