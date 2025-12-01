@@ -4,9 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
-import { CaseList } from './components/CaseList';
+import { CaseManagement } from './components/CaseManagement';
 import { ResearchTool } from './components/ResearchTool';
-import { CaseDetail } from './components/CaseDetail';
 import { DocumentManager } from './components/DocumentManager';
 import { CalendarView } from './components/CalendarView';
 import { ClauseLibrary } from './components/ClauseLibrary';
@@ -24,7 +23,6 @@ import { MasterWorkflow } from './components/MasterWorkflow';
 import { EnzymeDemo } from './components/EnzymeDemo';
 import { HydrationDemo, EditCaseDemo } from './components/enzyme';
 import { UserProfile } from './components/UserProfile';
-import { UserImpersonator as _UserImpersonator } from './components/UserImpersonator';
 import { Case, User } from './types';
 import { ApiService } from './services/apiService';
 import { Bell, User as UserIcon, Menu, ShieldAlert } from 'lucide-react';
@@ -205,10 +203,17 @@ const AppContent: React.FC = () => {
   const renderContent = () => {
     if (!user) return null;
     
-    if (selectedCase) return <CaseDetail caseData={selectedCase} onBack={() => setSelectedCase(null)} currentUser={user} />;
     switch (activeView) {
       case 'dashboard': return <Dashboard onSelectCase={handleSelectCaseById} />;
-      case 'cases': return <CaseList onSelectCase={setSelectedCase} currentUser={user} navigateTo={setActiveView} />;
+      case 'cases': return (
+        <CaseManagement 
+          selectedCase={selectedCase}
+          onSelectCase={setSelectedCase}
+          onBackToList={() => setSelectedCase(null)}
+          currentUser={user}
+          navigateTo={setActiveView}
+        />
+      );
       case 'pacer-import': return <PacerImportPage onBack={() => setActiveView('cases')} onImportComplete={handleSelectCaseById} />;
       case 'messages': return <SecureMessenger currentUserId={user.id} />;
       case 'discovery': return <DiscoveryPlatform />;

@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
 import { PageHeader, StatCard, Card, Button, StatusCard } from './common';
 import { useDashboard } from '../hooks/useDashboard';
+import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
 
 interface DashboardProps {
   onSelectCase: (caseId: string) => void;
@@ -11,7 +12,22 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
   const CHART_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#f59e0b'];
-  const { stats, chartData, alerts, slaBreaches } = useDashboard();
+  const { stats, chartData, alerts, slaBreaches, loading } = useDashboard();
+  
+  // ✅ ENZYME HOOK: Track analytics events
+  const trackEvent = useTrackEvent();
+  
+  useEffect(() => {
+    trackEvent('dashboard_viewed', { 
+      totalCases: stats.find(s => s.label === 'Total Cases')?.value || 0 
+    });
+  }, [trackEvent, stats]);
+
+  // ✅ ENZYME HOOK: Stable callback with latest values
+  const handleCaseSelect = useLatestCallback((caseId: string) => {
+    trackEvent('dashboard_case_clicked', { caseId });
+    onSelectCase(caseId);
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -88,7 +104,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
               <div 
                 key={alert.id} 
                 className={`flex items-start p-3 rounded-md transition-colors border-l-4 border-l-blue-500 bg-slate-50/50 ${alert.caseId ? 'cursor-pointer hover:bg-blue-50' : ''}`}
-                onClick={() => alert.caseId && onSelectCase(alert.caseId)}
+                onClick={() => alert.caseId && handleCaseSelect(alert.caseId)}
               >
                 <div className="flex-1">
                   <p className={`text-sm font-medium ${alert.caseId ? 'text-blue-700' : 'text-slate-900'}`}>{alert.message}</p>
@@ -103,6 +119,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
           </Button>
         </Card>
       </div>
+      
+      {/* Enzyme Features Indicator */}
+      {!loading && (
+        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg p-4 text-white text-sm">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span className="font-medium">Powered by Enzyme Framework:</span>
+            <span className="opacity-90">TanStack Query caching • useLatestCallback • useTrackEvent analytics</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

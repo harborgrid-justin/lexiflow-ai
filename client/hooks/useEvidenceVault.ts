@@ -1,8 +1,9 @@
-
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiService, ApiError } from '../services/apiService';
 import { EvidenceItem, ChainOfCustodyEvent } from '../types';
 import { ensureTagsArray } from '../utils/type-transformers';
+import { useLatestCallback, useIsMounted } from '../enzyme';
 
 export type ViewMode = 'dashboard' | 'inventory' | 'custody' | 'intake' | 'detail';
 export type DetailTab = 'overview' | 'custody' | 'admissibility' | 'forensics';
@@ -25,33 +26,18 @@ export const useEvidenceVault = () => {
   const [view, setView] = useState<ViewMode>('dashboard');
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [selectedItem, setSelectedItem] = useState<EvidenceItem | null>(null);
-  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const queryClient = useQueryClient();
+  const isMounted = useIsMounted();
 
-  const fetchEvidence = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const items = await ApiService.evidence.getAll();
-      setEvidenceItems(items);
-    } catch (err) {
-      console.error('Failed to fetch evidence:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to load evidence: ${err.statusText}`);
-      } else {
-        setError('Failed to load evidence. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchEvidence();
-  }, [fetchEvidence]);
+  // Fetch evidence with TanStack Query - automatic caching
+  const { data: evidenceItems = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ['evidence'],
+    queryFn: () => ApiService.evidence.getAll(),
+    staleTime: 3 * 60 * 1000, // 3 min cache
+    retry: 2
+  });
 
   const [filters, setFilters] = useState<EvidenceFilters>({
     search: '',
@@ -67,39 +53,63 @@ export const useEvidenceVault = () => {
     hasBlockchain: false
   });
 
-  const handleItemClick = (item: EvidenceItem) => {
+  // Create evidence mutation
+  const createMutation = useMutation({
+    mutationFn: (newItem: EvidenceItem) => ApiService.evidence.create(newItem),
+    onSuccess: (createdItem) => {
+      queryClient.invalidateQueries({ queryKey: ['evidence'] });
+      if (isMounted()) {
+        setView('inventory');
+      }
+    },
+    onError: (err: any) => {
+      console.error('Failed to create evidence item:', err);
+      if (isMounted()) {
+        const message = err instanceof ApiError ? err.statusText : 'Failed to log item';
+        setError(`Failed to log item: ${message}`);
+      }
+    }
+  });
+
+  // Update evidence mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<EvidenceItem> }) =>
+      ApiService.evidence.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evidence'] });
+    },
+    onError: (err: any) => {
+      console.error('Failed to update evidence:', err);
+      if (isMounted()) {
+        const message = err instanceof ApiError ? err.statusText : 'Failed to update';
+        setError(`Failed to update: ${message}`);
+      }
+    }
+  });
+
+  const handleItemClick = useLatestCallback((item: EvidenceItem) => {
     setSelectedItem(item);
     setView('detail');
     setActiveTab('overview');
-  };
+  });
 
-  const handleBack = () => {
+  const handleBack = useLatestCallback(() => {
     setSelectedItem(null);
     setView('inventory');
-  };
+  });
 
-  const handleIntakeComplete = async (newItem: EvidenceItem) => {
+  const handleIntakeComplete = useLatestCallback(async (newItem: EvidenceItem) => {
     try {
       setError(null);
-      const createdItem = await ApiService.evidence.create(newItem);
-      setEvidenceItems([createdItem, ...evidenceItems]);
+      await createMutation.mutateAsync(newItem);
       alert("Item logged successfully.");
-      setView('inventory');
     } catch (err) {
-      console.error('Failed to create evidence item:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to log item: ${err.statusText}`);
-        alert(`Failed to log item: ${err.statusText}`);
-      } else {
-        setError('Failed to log item. Please try again.');
-        alert('Failed to log item.');
-      }
+      alert('Failed to log item.');
       throw err;
     }
-  };
+  });
 
-  const handleCustodyUpdate = async (newEvent: ChainOfCustodyEvent) => {
+  const handleCustodyUpdate = useLatestCallback(async (newEvent: ChainOfCustodyEvent) => {
     if (!selectedItem) return;
 
     try {
@@ -110,21 +120,16 @@ export const useEvidenceVault = () => {
         chainOfCustody: updatedChain
       };
 
-      await ApiService.evidence.update(selectedItem.id, { chainOfCustody: updatedChain });
+      await updateMutation.mutateAsync({
+        id: selectedItem.id,
+        data: { chainOfCustody: updatedChain }
+      });
 
-      setEvidenceItems(prev => prev.map(item => item.id === selectedItem.id ? updatedItem : item));
       setSelectedItem(updatedItem);
     } catch (err) {
-      console.error('Failed to update custody:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to update custody: ${err.statusText}`);
-      } else {
-        setError('Failed to update custody. Please try again.');
-      }
       throw err;
     }
-  };
+  });
 
   const filteredItems = useMemo(() => {
     return evidenceItems.filter(e => {
@@ -145,10 +150,6 @@ export const useEvidenceVault = () => {
     });
   }, [filters, evidenceItems]);
 
-  const refresh = useCallback(() => {
-    return fetchEvidence();
-  }, [fetchEvidence]);
-
   return {
     view,
     setView,
@@ -165,6 +166,6 @@ export const useEvidenceVault = () => {
     handleBack,
     handleIntakeComplete,
     handleCustodyUpdate,
-    refresh
+    refresh: refetch
   };
 };

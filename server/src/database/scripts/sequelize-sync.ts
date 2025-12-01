@@ -154,21 +154,26 @@ async function syncDatabase() {
     console.log('  ✅ Created organization: TechCorp Legal');
 
     // Create password hash
-    const passwordHash = await bcrypt.hash('LexiFlow2024!', 10);
+    const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'LexiFlow2024!';
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
     // Create users
+    const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@lexiflow.com';
+    const adminFirstName = process.env.DEFAULT_ADMIN_FIRST_NAME || 'Admin';
+    const adminLastName = process.env.DEFAULT_ADMIN_LAST_NAME || 'User';
+    
     const _admin = await User.create({
-      first_name: 'Admin',
-      last_name: 'User',
-      name: 'Admin User',
-      email: 'admin@lexiflow.com',
+      first_name: adminFirstName,
+      last_name: adminLastName,
+      name: `${adminFirstName} ${adminLastName}`,
+      email: adminEmail,
       password_hash: passwordHash,
       role: 'admin',
       position: 'System Administrator',
       status: 'active',
       organization_id: org1.id,
     });
-    console.log('  ✅ Created user: admin@lexiflow.com');
+    console.log(`  ✅ Created user: ${adminEmail}`);
 
     await User.create({
       first_name: 'John',
@@ -308,9 +313,9 @@ async function syncDatabase() {
     console.log(`  Clients: ${clientCount}`);
 
     console.log('\n🔐 Default Login Credentials:');
-    console.log('  ┌─────────────────────────────────────────┐');
-    console.log('  │  Email:    admin@lexiflow.com          │');
-    console.log('  │  Password: LexiFlow2024!               │');
+    console.log('  ├──────────────────────────────────────┤');
+    console.log(`  │  Email:    ${(process.env.DEFAULT_ADMIN_EMAIL || 'admin@lexiflow.com').padEnd(25)} │`);
+    console.log(`  │  Password: ${(process.env.DEFAULT_ADMIN_PASSWORD || 'LexiFlow2024!').padEnd(25)} │`);
     console.log('  └─────────────────────────────────────────┘');
     console.log('\n  Other users (same password):');
     console.log('  - j.sterling@sterlinglaw.com (attorney)');

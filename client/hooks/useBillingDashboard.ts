@@ -1,36 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ApiService } from '../services/apiService';
-import { Client } from '../types';
+import { Client, TimeEntry } from '../types';
+
+interface BillingStats {
+  wip?: Array<{ month: string; amount: number }>;
+  realization?: Array<{ name: string; value: number; color: string }>;
+}
 
 export const useBillingDashboard = () => {
-  const [wipData, setWipData] = useState<any[]>([]);
-  const [realizationData, setRealizationData] = useState<any[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  // Parallel API requests with TanStack Query - automatic caching
+  const { data: stats } = useQuery<BillingStats>({
+    queryKey: ['billing', 'stats'],
+    queryFn: () => ApiService.billing.getStats(),
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [stats, c] = await Promise.all([
-          ApiService.getBillingStats(),
-          ApiService.getClients()
-        ]);
-        if (stats && stats.wip) {
-          setWipData(stats.wip.map((w: any) => ({ month: w.month, wip: w.amount })));
-        }
-        if (stats && stats.realization) {
-          setRealizationData(stats.realization);
-        }
-        setClients(c || []);
-      } catch (e) {
-        console.error("Failed to fetch billing data", e);
-        setWipData([]);
-        setRealizationData([]);
-        setClients([]);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ['clients'],
+    queryFn: () => ApiService.clients.getAll(),
+    staleTime: 10 * 60 * 1000, // 10 min cache
+  });
 
+  // Derive data using useMemo for performance
+  const wipData = useMemo(() => {
+    if (!stats?.wip) return [];
+    return stats.wip.map((w: any) => ({ month: w.month, wip: w.amount }));
+  }, [stats]);
+
+  const realizationData = stats?.realization || [];
   const totalWip = wipData.reduce((acc, curr) => acc + curr.wip, 0);
 
   return {

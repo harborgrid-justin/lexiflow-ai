@@ -5,6 +5,7 @@ import { ResearchSearchForm } from './research/ResearchSearchForm';
 import { ResearchResults } from './research/ResearchResults';
 import { ResearchHistoryList } from './research/ResearchHistoryList';
 import { useResearch } from '../hooks/useResearch';
+import { User } from '../types';
 
 interface ResearchToolProps {
   currentUser?: User;

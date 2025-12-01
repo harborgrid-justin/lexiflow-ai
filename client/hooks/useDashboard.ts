@@ -1,53 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Briefcase, FileText, Clock, AlertTriangle } from 'lucide-react';
-import { ApiService } from '../services/apiService';
+import { useApiRequest, useLatestCallback } from '../enzyme';
 import { useWorkflowEngine } from './useWorkflowEngine';
 
 export const useDashboard = () => {
-  const [stats, setStats] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [slaBreaches, setSlaBreaches] = useState({ warnings: 0, breaches: 0 });
-
   const { checkSLABreaches } = useWorkflowEngine();
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const data = await ApiService.getDashboard();
-        if (!data) return;
+  // Fetch dashboard data with Enzyme - automatic caching and refetching
+  const { data: dashboardData, isLoading } = useApiRequest<any>({
+    endpoint: '/api/v1/analytics/dashboard',
+    options: { staleTime: 5 * 60 * 1000 } // Cache for 5 minutes
+  });
 
-        // Map icon strings back to components
-        const mappedStats = (data.stats || []).map((s: any) => ({
-          ...s,
-          icon: s.icon === 'Briefcase' ? Briefcase : s.icon === 'FileText' ? FileText : s.icon === 'Clock' ? Clock : AlertTriangle
-        }));
-        setStats(mappedStats);
-        setChartData(data.chartData || []);
-        setAlerts(data.alerts || []);
+  // Fetch SLA breaches separately with shorter cache time
+  const { data: slaData } = useApiRequest<any>({
+    endpoint: '/api/v1/workflow/engine/sla/check',
+    options: { staleTime: 2 * 60 * 1000 } // Cache for 2 minutes
+  });
 
-        // Load SLA breach data
-        const breachData = await checkSLABreaches();
-        if (breachData) {
-          setSlaBreaches({
-            warnings: breachData.warnings?.length || 0,
-            breaches: breachData.breaches?.length || 0
-          });
-        }
-      } catch (e) {
-        console.error("Failed to fetch dashboard", e);
-        setStats([]);
-        setChartData([]);
-        setAlerts([]);
-      }
-    };
-    fetchDashboard();
-  }, [checkSLABreaches]);
+  // Map icon strings to components using useMemo for performance
+  const stats = useMemo(() => {
+    if (!dashboardData?.stats) return [];
+    return dashboardData.stats.map((s: any) => ({
+      ...s,
+      icon: s.icon === 'Briefcase' ? Briefcase : s.icon === 'FileText' ? FileText : s.icon === 'Clock' ? Clock : AlertTriangle
+    }));
+  }, [dashboardData]);
+
+  const chartData = dashboardData?.chartData || [];
+  const alerts = dashboardData?.alerts || [];
+  const slaBreaches = {
+    warnings: slaData?.warnings?.length || 0,
+    breaches: slaData?.breaches?.length || 0
+  };
 
   return {
     stats,
     chartData,
     alerts,
-    slaBreaches
+    slaBreaches,
+    isLoading
   };
 };

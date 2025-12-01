@@ -6,7 +6,7 @@ import { Button } from '../common/Button';
 export const CalendarSync: React.FC = () => {
   const accounts = [
     { provider: 'Office 365', user: 'alex@lexiflow.com', status: 'Connected', lastSync: '2 mins ago' },
-    { provider: 'Google Calendar', user: 'admin@lexiflow.com', status: 'Connected', lastSync: '15 mins ago' },
+    { provider: 'Google Calendar', user: 'user@example.com', status: 'Connected', lastSync: '15 mins ago' },
     { provider: 'CourtAPI (ECF)', user: 'Firm Account', status: 'Error', lastSync: '2 hours ago' },
   ];
 

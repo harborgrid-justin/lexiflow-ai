@@ -1,31 +1,26 @@
-import { useState, useEffect, useMemo } from 'react';
-import { ApiService } from '../services/apiService';
+import { useState, useMemo } from 'react';
 import { KnowledgeItem } from '../types';
+import { useQuery } from '@tanstack/react-query';
+import { ApiService } from '../services/apiService';
 
 export const useKnowledgeBase = (tab: string) => {
-  const [items, setItems] = useState<KnowledgeItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const categoryMap: Record<string, string> = {
-            'wiki': 'Playbook',
-            'precedents': 'Precedent',
-            'qa': 'Q&A'
-        };
-        const data = await ApiService.getKnowledgeBase(categoryMap[tab]);
-        setItems(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [tab]);
+  // Map tab to category
+  const categoryMap: Record<string, string> = {
+    'wiki': 'Playbook',
+    'precedents': 'Precedent',
+    'qa': 'Q&A'
+  };
+  const category = categoryMap[tab];
+
+  // Fetch knowledge items with TanStack Query - dynamic query based on category
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ['/api/v1/knowledge', category],
+    queryFn: () => ApiService.getKnowledgeBase(category),
+    staleTime: 5 * 60 * 1000, // 5 min cache
+    enabled: !!category // Only fetch if category exists
+  });
 
   const filteredItems = useMemo(() => items.filter(i =>
     (i.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||

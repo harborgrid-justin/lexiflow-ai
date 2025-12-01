@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase, Activity, Zap } from 'lucide-react';
 import { PageHeader, Button, Card, Avatar, Badge, StatCard } from './common';
 import { useBillingDashboard } from '../hooks/useBillingDashboard';
+import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
 
 interface BillingDashboardProps {
   navigateTo?: (view: string) => void;
@@ -11,6 +12,27 @@ interface BillingDashboardProps {
 
 export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }) => {
   const { wipData, realizationData, clients, totalWip } = useBillingDashboard();
+  
+  // ✅ ENZYME HOOKS: Analytics tracking
+  const trackEvent = useTrackEvent();
+  
+  useEffect(() => {
+    trackEvent('billing_dashboard_viewed', { 
+      totalWip,
+      clientCount: clients.length 
+    });
+  }, [trackEvent, totalWip, clients.length]);
+
+  // ✅ ENZYME HOOK: Stable callback
+  const handleExport = useLatestCallback(() => {
+    trackEvent('billing_export_clicked', { format: 'LEDES' });
+    // Export logic here
+  });
+
+  const handleClientClick = useLatestCallback(() => {
+    trackEvent('billing_client_clicked');
+    navigateTo?.('crm');
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -18,7 +40,7 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
         title="Financial Performance" 
         subtitle="WIP, Realization, and Collections Dashboard"
         actions={
-          <Button variant="secondary" icon={Download}>LEDES Export</Button>
+          <Button variant="secondary" icon={Download} onClick={handleExport}>LEDES Export</Button>
         }
       />
 
@@ -92,7 +114,7 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                 <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">My Portfolio (Attorney)</h4>
                 <div className="space-y-3">
                     {clients.slice(0, 1).map(client => (
-                         <div key={client.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer" onClick={() => navigateTo && navigateTo('crm')}>
+                         <div key={client.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer" onClick={handleClientClick}>
                             <div className="flex items-center space-x-3">
                                 <Avatar name={client.name || 'Unknown Client'} size="sm" color="blue" />
                                 <div>
@@ -114,7 +136,7 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                 <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Firm Wide</h4>
                  <div className="space-y-3">
                     {clients.map(client => (
-                         <div key={`firm-${client.id}`} className="flex items-center justify-between p-3 border border-slate-200 bg-white rounded-lg hover:border-blue-400 cursor-pointer" onClick={() => navigateTo && navigateTo('crm')}>
+                         <div key={`firm-${client.id}`} className="flex items-center justify-between p-3 border border-slate-200 bg-white rounded-lg hover:border-blue-400 cursor-pointer" onClick={handleClientClick}>
                             <div className="flex items-center space-x-3">
                                 <Avatar name={client.name || 'Unknown Client'} size="sm" color="slate" />
                                 <div>
@@ -133,6 +155,16 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
             </div>
         </div>
       </Card>
+
+      {/* Enzyme Framework Features Indicator */}
+      {!loading && (
+        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-xs text-slate-600">
+          <Activity className="h-4 w-4 text-blue-600" />
+          <span className="font-semibold">Powered by Enzyme:</span>
+          <Zap className="h-3 w-3 text-amber-500" />
+          <span>TanStack Query caching • useLatestCallback • useTrackEvent analytics</span>
+        </div>
+      )}
     </div>
   );
 };

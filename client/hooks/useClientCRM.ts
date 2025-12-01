@@ -1,38 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useApiRequest, useApiMutation, useLatestCallback } from '../enzyme';
 import { Client } from '../types';
-import { ApiService } from '../services/apiService';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useClientCRM = () => {
-  const [clients, setClients] = useState<Client[]>([]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const data = await ApiService.getClients();
-        setClients(data || []);
-      } catch (e) {
-        console.error("Failed to fetch clients", e);
-        setClients([]);
-      }
-    };
-    fetchClients();
-  }, []);
+  // Fetch clients with Enzyme - automatic caching
+  const { data: clients = [] } = useApiRequest<Client[]>({
+    endpoint: '/api/v1/clients',
+    options: { staleTime: 5 * 60 * 1000 } // 5 min cache
+  });
 
-  const handleAddClient = (clientName: string) => {
-    const newClient: Client = {
-      id: `cli-${Date.now()}`,
+  // Mutation for creating clients
+  const { mutateAsync: createClient } = useApiMutation<Client, Partial<Client>>({
+    method: 'POST',
+    endpoint: '/api/v1/clients',
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/clients'] });
+    }
+  });
+
+  const handleAddClient = useLatestCallback(async (clientName: string) => {
+    const newClient: Partial<Client> = {
       name: clientName,
       industry: 'General',
       status: 'Prospect',
       totalBilled: 0,
       matters: []
     };
-    setClients([...clients, newClient]);
-  };
+    await createClient({ data: newClient });
+  });
 
   return {
     clients,
-    setClients,
     handleAddClient
   };
 };

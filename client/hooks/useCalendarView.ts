@@ -1,46 +1,42 @@
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { ApiService, ApiError } from '../services/apiService';
 import { WorkflowTask, Case, ConflictCheck } from '../types';
+import { useApiRequest, useLatestCallback, useIsMounted } from '../enzyme';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useCalendarView = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [tasks, setTasks] = useState<WorkflowTask[]>([]);
-  const [cases, setCases] = useState<Case[]>([]);
-  const [conflicts, setConflicts] = useState<ConflictCheck[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const queryClient = useQueryClient();
+  const isMounted = useIsMounted();
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [t, c, conf] = await Promise.all([
-        ApiService.tasks.getAll(),
-        ApiService.cases.getAll(),
-        ApiService.compliance.getAll()
-      ]);
-
-      setTasks(t);
-      setCases(c);
-      setConflicts(conf);
-    } catch (err) {
-      console.error('Failed to fetch calendar data:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to load calendar: ${err.statusText}`);
-      } else {
-        setError('Failed to load calendar. Please try again.');
+  // Parallel API requests with Enzyme - automatic caching
+  const { data: tasks = [], isLoading: loadingTasks } = useApiRequest<WorkflowTask[]>({
+    endpoint: '/api/v1/workflow/tasks',
+    options: { 
+      staleTime: 2 * 60 * 1000, // 2 min cache
+      onError: (err: any) => {
+        console.error('Failed to fetch tasks:', err);
+        if (isMounted() && err instanceof ApiError) {
+          setError(`Failed to load calendar: ${err.statusText}`);
+        }
       }
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: cases = [], isLoading: loadingCases } = useApiRequest<Case[]>({
+    endpoint: '/api/v1/cases',
+    options: { staleTime: 5 * 60 * 1000 } // 5 min cache
+  });
+
+  const { data: conflicts = [], isLoading: loadingConflicts } = useApiRequest<ConflictCheck[]>({
+    endpoint: '/api/v1/compliance',
+    options: { staleTime: 5 * 60 * 1000 } // 5 min cache
+  });
+
+  const loading = loadingTasks || loadingCases || loadingConflicts;
 
   const events = useMemo(() => [
     ...tasks.map(t => ({ id: t.id, title: t.title, date: t.dueDate, type: 'task', priority: t.priority, caseId: t.caseId })),
@@ -62,9 +58,11 @@ export const useCalendarView = () => {
 
   const monthLabel = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-  const refresh = useCallback(() => {
-    return fetchData();
-  }, [fetchData]);
+  const refresh = useLatestCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['/api/v1/workflow/tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/v1/cases'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/v1/compliance'] });
+  });
 
   return {
     currentMonth,

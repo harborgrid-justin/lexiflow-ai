@@ -8,7 +8,7 @@ import {
   type ApiError,
   isApiError,
 } from '@missionfabric-js/enzyme/api';
-import { API_BASE_URL, getAuthToken } from '../config';
+import { API_BASE_URL, getAuthToken } from '../../services/config';
 
 /**
  * Custom token provider that integrates with LexiFlow's existing auth storage

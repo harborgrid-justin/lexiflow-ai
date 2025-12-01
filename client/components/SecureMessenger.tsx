@@ -3,9 +3,7 @@ import React from 'react';
 import { 
   MessageSquare, Users, FileText, Archive
 } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
-import { Button } from './common/Button';
-import { TabNavigation } from './common/TabNavigation';
+import { PageHeader, Button, TabNavigation } from './common';
 import { useSecureMessenger } from '../hooks/useSecureMessenger';
 import { MessengerChatList } from './messenger/MessengerChatList';
 import { MessengerChatWindow } from './messenger/MessengerChatWindow';

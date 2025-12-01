@@ -1,28 +1,17 @@
-import { useState, useEffect } from 'react';
-import { ApiService } from '../services/apiService';
+import { useApiRequest } from '../enzyme';
 import { ConflictCheck, EthicalWall } from '../types';
 
 export const useComplianceDashboard = () => {
-  const [conflicts, setConflicts] = useState<ConflictCheck[]>([]);
-  const [walls, setWalls] = useState<EthicalWall[]>([]);
+  // Parallel API requests with Enzyme - automatic caching
+  const { data: conflicts = [] } = useApiRequest<ConflictCheck[]>({
+    endpoint: '/api/v1/compliance/conflicts',
+    options: { staleTime: 5 * 60 * 1000 } // 5 min cache
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [c, w] = await Promise.all([
-          ApiService.getConflicts(),
-          ApiService.getWalls()
-        ]);
-        setConflicts(c || []);
-        setWalls(w || []);
-      } catch (e) {
-        console.error("Failed to fetch compliance data", e);
-        setConflicts([]);
-        setWalls([]);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: walls = [] } = useApiRequest<EthicalWall[]>({
+    endpoint: '/api/v1/compliance/walls',
+    options: { staleTime: 5 * 60 * 1000 } // 5 min cache
+  });
 
   return {
     conflicts,

@@ -1,6 +1,21 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Button } from './Button';
+
+interface ButtonProps {
+  variant?: string;
+  icon?: any;
+  onClick?: () => void;
+  children: ReactNode;
+}
+
+const SimpleButton: React.FC<ButtonProps> = ({ onClick, children }) => (
+  <button
+    onClick={onClick}
+    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+  >
+    {children}
+  </button>
+);
 
 interface Props {
   children?: ReactNode;
@@ -37,13 +52,9 @@ export class ErrorBoundary extends Component<Props, State> {
             We encountered an unexpected error while loading this module. 
             <br/><span className="text-xs font-mono bg-slate-100 px-1 rounded mt-2 inline-block">{this.state.error?.message}</span>
           </p>
-          <Button 
-            variant="primary" 
-            icon={RefreshCw} 
-            onClick={() => window.location.reload()}
-          >
+          <SimpleButton onClick={() => window.location.reload()}>
             Reload Application
-          </Button>
+          </SimpleButton>
         </div>
       );
     }

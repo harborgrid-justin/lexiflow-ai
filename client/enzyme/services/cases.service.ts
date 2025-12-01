@@ -2,7 +2,7 @@
 // Example migration showing how to use @missionfabric-js/enzyme for API calls
 // This can be used alongside or as a replacement for the existing casesService
 
-import { enzymeClient } from '../enzyme';
+import { enzymeClient } from './client';
 import { Case, CaseStatus } from '../../types';
 import { ApiCase } from '../../shared-types';
 import { transformApiCase } from '../../utils/type-transformers';

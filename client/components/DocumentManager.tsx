@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Plus, Share2, Split, Wand2, RefreshCw, X } from 'lucide-react';
+import { Plus, Share2, Split, Wand2, RefreshCw, X, Activity, Zap } from 'lucide-react';
 import { UserRole, LegalDocument } from '../types';
 import { DocumentVersions } from './DocumentVersions';
 import { PageHeader, Button, Modal, Card, SearchInput, StatCard } from './common';
@@ -9,6 +9,7 @@ import { DocumentTable } from './document/DocumentTable';
 import { DocumentFilters } from './document/DocumentFilters';
 import { ensureTagsArray } from '../utils/type-transformers';
 import { useTagManagement } from '../hooks/useTagManagement';
+import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
 
 interface DocumentManagerProps {
   currentUserRole?: UserRole;
@@ -43,6 +44,47 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
     handleAddTag,
     handleRemoveTag
   } = useTagManagement();
+
+  const trackEvent = useTrackEvent();
+
+  // Track page view
+  React.useEffect(() => {
+    trackEvent('document_manager_viewed', {
+      totalDocs: stats.total,
+      activeFilter: activeModuleFilter,
+      selectedCount: selectedDocs.length
+    });
+  }, [activeModuleFilter]);
+
+  // Stable callback for share with analytics
+  const handleShare = useLatestCallback(() => {
+    trackEvent('document_share_clicked');
+    alert('Secure Share Link Generated');
+  });
+
+  // Stable callback for upload with analytics
+  const handleUpload = useLatestCallback(() => {
+    trackEvent('document_upload_clicked');
+    // Future: Open upload modal
+  });
+
+  // Stable callback for compare with analytics
+  const handleCompare = useLatestCallback(() => {
+    trackEvent('document_compare_activated', { selectedCount: selectedDocs.length });
+    alert('Compare Mode Activated');
+  });
+
+  // Stable callback for bulk summarize with analytics
+  const handleBulkSummarizeWithAnalytics = useLatestCallback(() => {
+    trackEvent('document_bulk_summarize', { count: selectedDocs.length });
+    handleBulkSummarize();
+  });
+
+  // Stable callback for sync with analytics
+  const handleSync = useLatestCallback(() => {
+    trackEvent('document_sync_clicked');
+    // Future: Sync documents
+  });
 
   return (
     <div className="h-full flex flex-col space-y-4 md:space-y-6 relative animate-fade-in">
@@ -107,8 +149,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
         subtitle="Unified access to Case Files, Evidence, Discovery, and Financial records."
         actions={
           <div className="flex gap-2">
-            <Button variant="secondary" icon={Share2} onClick={() => alert("Secure Share Link Generated")}>Share</Button>
-            <Button variant="primary" icon={Plus}>Upload</Button>
+            <Button variant="secondary" icon={Share2} onClick={handleShare}>Share</Button>
+            <Button variant="primary" icon={Plus} onClick={handleUpload}>Upload</Button>
           </div>
         }
       />
@@ -137,12 +179,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
                 <div className="flex gap-2">
                     {selectedDocs.length > 0 && (
                         <>
-                            <Button variant="ghost" size="sm" icon={Split} onClick={() => alert("Compare Mode Activated")}>Compare (2)</Button>
-                            <Button variant="ghost" size="sm" icon={Wand2} onClick={handleBulkSummarize} isLoading={isProcessingAI}>AI Summarize</Button>
+                            <Button variant="ghost" size="sm" icon={Split} onClick={handleCompare}>Compare (2)</Button>
+                            <Button variant="ghost" size="sm" icon={Wand2} onClick={handleBulkSummarizeWithAnalytics} isLoading={isProcessingAI}>AI Summarize</Button>
                             <span className="h-8 w-px bg-slate-300 mx-1"></span>
                         </>
                     )}
-                    <Button variant="secondary" size="sm" icon={RefreshCw}>Sync</Button>
+                    <Button variant="secondary" size="sm" icon={RefreshCw} onClick={handleSync}>Sync</Button>
                 </div>
              </div>
 
@@ -155,6 +197,14 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
                 setTaggingDoc={setTaggingDoc}
              />
           </Card>
+      </div>
+
+      {/* Enzyme Framework Features Indicator */}
+      <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-xs text-slate-600">
+        <Activity className="h-4 w-4 text-blue-600" />
+        <span className="font-semibold">Powered by Enzyme:</span>
+        <Zap className="h-3 w-3 text-amber-500" />
+        <span>TanStack Query caching • useLatestCallback • useTrackEvent analytics • Document versioning</span>
       </div>
     </div>
   );

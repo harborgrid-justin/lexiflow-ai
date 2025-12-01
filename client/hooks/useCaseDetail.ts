@@ -1,62 +1,60 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion, DocketEntry } from '../types';
 import { OpenAIService } from '../services/openAIService';
 import { ApiService, ApiError } from '../services/apiService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLatestCallback, useIsMounted } from '@missionfabric-js/enzyme/hooks';
 
 export const useCaseDetail = (caseData: Case) => {
   const [activeTab, setActiveTab] = useState('Overview');
-
-  const [documents, setDocuments] = useState<LegalDocument[]>([]);
-  const [stages, setStages] = useState<WorkflowStage[]>([]);
   const [parties, setParties] = useState<Party[]>(caseData.parties || []);
-  const [billingEntries, setBillingEntries] = useState<TimeEntry[]>([]);
-  const [motions, setMotions] = useState<Motion[]>([]);
-  const [docketEntries, setDocketEntries] = useState<DocketEntry[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [generatingWorkflow, setGeneratingWorkflow] = useState(false);
-  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [draftPrompt, setDraftPrompt] = useState('');
   const [draftResult, setDraftResult] = useState('');
   const [isDrafting, setIsDrafting] = useState(false);
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [generatingWorkflow, setGeneratingWorkflow] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    if (!caseData?.id) return;
+  const isMounted = useIsMounted();
+  const queryClient = useQueryClient();
 
-    try {
-      setLoading(true);
-      setError(null);
+  // TanStack Query - parallel fetching with automatic caching
+  const { data: documents = [], isLoading: docsLoading } = useQuery({
+    queryKey: [`/api/v1/cases/${caseData.id}/documents`],
+    queryFn: () => ApiService.documents.getAll(caseData.id),
+    enabled: !!caseData?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-      const [docs, wf, bill, mots, dockets] = await Promise.all([
-        ApiService.documents.getAll(caseData.id),
-        ApiService.workflow.stages.getAll(caseData.id),
-        ApiService.billing.timeEntries.getAll(caseData.id),
-        ApiService.motions.getAll(caseData.id),
-        ApiService.getDocketEntries(caseData.id)
-      ]);
+  const { data: stages = [], isLoading: stagesLoading, refetch: refetchStages } = useQuery({
+    queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`],
+    queryFn: () => ApiService.workflow.stages.getAll(caseData.id),
+    enabled: !!caseData?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-      setDocuments(docs);
-      setStages(wf);
-      setBillingEntries(bill);
-      setMotions(mots);
-      setDocketEntries(dockets || []);
-    } catch (err) {
-      console.error('Failed to fetch case details:', err);
+  const { data: billingEntries = [], isLoading: billingLoading } = useQuery({
+    queryKey: [`/api/v1/cases/${caseData.id}/billing/time-entries`],
+    queryFn: () => ApiService.billing.timeEntries.getAll(caseData.id),
+    enabled: !!caseData?.id,
+    staleTime: 2 * 60 * 1000,
+  });
 
-      if (err instanceof ApiError) {
-        setError(`Failed to load case details: ${err.statusText}`);
-      } else {
-        setError('Failed to load case details. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [caseData.id]);
+  const { data: motions = [], isLoading: motionsLoading } = useQuery({
+    queryKey: [`/api/v1/cases/${caseData.id}/motions`],
+    queryFn: () => ApiService.motions.getAll(caseData.id),
+    enabled: !!caseData?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: docketEntries = [], isLoading: docketsLoading } = useQuery({
+    queryKey: [`/api/v1/cases/${caseData.id}/docket`],
+    queryFn: () => ApiService.getDocketEntries(caseData.id),
+    enabled: !!caseData?.id,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const loading = docsLoading || stagesLoading || billingLoading || motionsLoading || docketsLoading;
 
   const timelineEvents = useMemo(() => {
     const events: TimelineEvent[] = [];
@@ -92,7 +90,7 @@ export const useCaseDetail = (caseData: Case) => {
     });
 
     // Docket Entries
-    (docketEntries || []).forEach(d => {
+    (Array.isArray(docketEntries) ? docketEntries : []).forEach(d => {
         events.push({ 
           id: `docket-${d.id}`, 
           date: d.dateFiled, 
@@ -108,162 +106,134 @@ export const useCaseDetail = (caseData: Case) => {
     return events.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [caseData, documents, stages, billingEntries, motions, docketEntries]);
 
-  const handleAnalyze = async (doc: LegalDocument) => {
+  const handleAnalyze = useLatestCallback(async (doc: LegalDocument) => {
     setAnalyzingId(doc.id);
     try {
       const result = await OpenAIService.analyzeDocument(doc.content);
       await ApiService.documents.update(doc.id, { summary: result.summary, riskScore: result.riskScore });
-      setDocuments(docs => docs.map(d => d.id === doc.id ? { ...d, summary: result.summary, riskScore: result.riskScore } : d));
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/documents`] });
     } catch (err) {
       console.error('Failed to analyze document:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to analyze document: ${err.statusText}`);
-      } else {
+      if (isMounted()) {
         setError('Failed to analyze document. Please try again.');
       }
     } finally {
-      setAnalyzingId(null);
+      if (isMounted()) {
+        setAnalyzingId(null);
+      }
     }
-  };
+  });
 
-  const handleDraft = async () => {
+  const handleDraft = useLatestCallback(async () => {
     if(!draftPrompt.trim()) return;
     setIsDrafting(true);
-    const text = await OpenAIService.generateDraft(`${draftPrompt}\n\nCase: ${caseData.title}\nClient: ${caseData.client}`, 'Motion/Clause');
-    setDraftResult(text);
-    setIsDrafting(false);
-  };
+    try {
+      const text = await OpenAIService.generateDraft(`${draftPrompt}\n\nCase: ${caseData.title}\nClient: ${caseData.client}`, 'Motion/Clause');
+      if (isMounted()) {
+        setDraftResult(text);
+      }
+    } finally {
+      if (isMounted()) {
+        setIsDrafting(false);
+      }
+    }
+  });
 
-  const createDocument = async (doc: Partial<LegalDocument>) => {
+  const createDocument = useLatestCallback(async (doc: Partial<LegalDocument>) => {
     try {
       const newDoc = await ApiService.documents.create(doc);
-      setDocuments([...documents, newDoc]);
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/documents`] });
       return newDoc;
     } catch (err) {
       console.error('Failed to create document:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to create document: ${err.statusText}`);
-      } else {
+      if (isMounted()) {
         setError('Failed to create document. Please try again.');
       }
       throw err;
     }
-  };
+  });
 
-  const handleGenerateWorkflow = async () => {
+  const handleGenerateWorkflow = useLatestCallback(async () => {
     setGeneratingWorkflow(true);
-    const suggestedStages = await OpenAIService.generateWorkflow(caseData.description);
-    const newStages: WorkflowStage[] = suggestedStages.map((s, idx) => ({
-      id: `gen-stage-${idx}`, title: s.title, status: idx === 0 ? 'Active' : 'Pending',
-      tasks: s.tasks.map((t, tIdx) => ({ id: `gen-task-${idx}-${tIdx}`, title: t, status: 'Pending', assignee: 'Unassigned', dueDate: '2024-05-01', priority: 'Medium' }))
-    }));
-    setStages([...stages, ...newStages]);
-    setGeneratingWorkflow(false);
-  };
+    try {
+      const suggestedStages = await OpenAIService.generateWorkflow(caseData.description);
+      const newStages: WorkflowStage[] = suggestedStages.map((s, idx) => ({
+        id: `gen-stage-${idx}`, title: s.title, status: idx === 0 ? 'Active' : 'Pending',
+        tasks: s.tasks.map((t, tIdx) => ({ id: `gen-task-${idx}-${tIdx}`, title: t, status: 'Pending', assignee: 'Unassigned', dueDate: '2024-05-01', priority: 'Medium' }))
+      }));
+      
+      // Save to backend and refetch
+      await Promise.all(newStages.map(stage => ApiService.workflow.stages.create(stage)));
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`] });
+    } catch (err) {
+      console.error('Failed to generate workflow:', err);
+      if (isMounted()) {
+        setError('Failed to generate workflow. Please try again.');
+      }
+    } finally {
+      if (isMounted()) {
+        setGeneratingWorkflow(false);
+      }
+    }
+  });
 
-  const addTimeEntry = async (entry: Partial<TimeEntry>) => {
+  const addTimeEntry = useLatestCallback(async (entry: Partial<TimeEntry>) => {
     try {
       const newEntry = await ApiService.billing.timeEntries.create(entry);
-      setBillingEntries([newEntry, ...billingEntries]);
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/billing/time-entries`] });
       return newEntry;
     } catch (err) {
       console.error('Failed to add time entry:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to add time entry: ${err.statusText}`);
-      } else {
+      if (isMounted()) {
         setError('Failed to add time entry. Please try again.');
       }
       throw err;
     }
-  };
+  });
 
-  const toggleTask = async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
+  const toggleTask = useLatestCallback(async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
     try {
-      // Update task status in backend (using frontend format - transformer handles conversion)
+      // Update task status in backend
       await ApiService.workflow.tasks.update(taskId, { status });
       
-      // Update local state and check business rules
-      setStages(prevStages => {
-        const updatedStages = prevStages.map(stage => {
-          const updatedTasks = stage.tasks.map(t => t.id === taskId ? { ...t, status } : t);
-          
-          // Business Rule: Check if all tasks in stage are complete
-          const allTasksDone = updatedTasks.length > 0 && updatedTasks.every(t => t.status === 'Done');
-          const anyTaskInProgress = updatedTasks.some(t => t.status === 'In Progress');
-          
-          // Auto-update stage status based on task completion
-          let newStageStatus = stage.status;
-          if (allTasksDone) {
-            newStageStatus = 'Completed';
-          } else if (anyTaskInProgress || updatedTasks.some(t => t.status === 'Done')) {
-            newStageStatus = 'Active';
-          }
-          
-          return {
-            ...stage,
-            tasks: updatedTasks,
-            status: newStageStatus
-          };
-        });
-        
-        // Business Rule: Auto-activate next stage when current is completed
-        const completedIndex = updatedStages.findIndex(s => 
-          s.tasks.length > 0 && s.tasks.every(t => t.status === 'Done') && s.status === 'Completed'
-        );
-        
-        if (completedIndex >= 0 && completedIndex < updatedStages.length - 1) {
-          const nextStage = updatedStages[completedIndex + 1];
-          if (nextStage.status === 'Pending') {
-            updatedStages[completedIndex + 1] = { ...nextStage, status: 'Active' };
-            // Update backend for stage advancement
-            ApiService.workflow.stages.update(nextStage.id, { status: 'Active' }).catch(console.error);
-          }
-        }
-        
-        return updatedStages;
-      });
+      // Optimistic update handled by Enzyme cache invalidation
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`] });
       
-      // Update stage status in backend if needed
+      // Business logic for stage auto-advancement
       const stageWithTask = stages.find(s => s.tasks.some(t => t.id === taskId));
       if (stageWithTask) {
         const updatedTasks = stageWithTask.tasks.map(t => t.id === taskId ? { ...t, status } : t);
         const allDone = updatedTasks.every(t => t.status === 'Done');
         if (allDone) {
           await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Completed' });
+          queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}/workflow/stages`] });
         } else {
           await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Active' });
         }
       }
     } catch (err) {
       console.error('Failed to update task:', err);
-
-      if (err instanceof ApiError) {
-        setError(`Failed to update task: ${err.statusText}`);
-      } else {
+      if (isMounted()) {
         setError('Failed to update task. Please try again.');
       }
       throw err;
     }
-  };
+  });
 
-  const refresh = useCallback(() => {
-    return fetchData();
-  }, [fetchData]);
+  const refresh = useLatestCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [`/api/v1/cases/${caseData.id}`] });
+  });
 
   return {
     activeTab,
     setActiveTab,
     documents,
-    setDocuments,
     stages,
-    setStages,
     parties,
     setParties,
     billingEntries,
-    setBillingEntries,
+    motions,
+    docketEntries,
     loading,
     error,
     generatingWorkflow,

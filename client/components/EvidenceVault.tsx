@@ -6,9 +6,10 @@ import { EvidenceIntake } from './evidence/EvidenceIntake';
 import { EvidenceDashboard } from './evidence/EvidenceDashboard';
 import { EvidenceCustodyLog } from './evidence/EvidenceCustodyLog';
 import { PageHeader, Button } from './common';
-import { LayoutDashboard, Box, Link, Plus, ScanLine } from 'lucide-react';
+import { LayoutDashboard, Box, Link, Plus, ScanLine, Activity, Zap } from 'lucide-react';
 import { useEvidenceVault, ViewMode } from '../hooks/useEvidenceVault';
 import { User } from '../types';
+import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
 
 interface EvidenceVaultProps {
   onNavigateToCase?: (caseId: string) => void;
@@ -32,6 +33,29 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
     handleCustodyUpdate
   } = useEvidenceVault();
 
+  const trackEvent = useTrackEvent();
+
+  // Track page view
+  React.useEffect(() => {
+    trackEvent('evidence_vault_viewed', {
+      view,
+      itemCount: evidenceItems.length,
+      filteredCount: filteredItems.length
+    });
+  }, [view]);
+
+  // Stable callback for view changes with analytics
+  const handleViewChange = useLatestCallback((newView: ViewMode) => {
+    trackEvent('evidence_view_changed', { from: view, to: newView });
+    setView(newView);
+  });
+
+  // Stable callback for intake with analytics
+  const handleIntakeClick = useLatestCallback(() => {
+    trackEvent('evidence_intake_started');
+    setView('intake');
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       {view !== 'detail' && (
@@ -40,7 +64,7 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
             title="Evidence Vault" 
             subtitle="Secure Chain of Custody & Forensic Asset Management."
             actions={
-            <Button variant="primary" icon={Plus} onClick={() => setView('intake')}>Log New Item</Button>
+            <Button variant="primary" icon={Plus} onClick={handleIntakeClick}>Log New Item</Button>
             }
         />
 
@@ -54,7 +78,7 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
             ].map(item => (
                 <button 
                 key={item.id}
-                onClick={() => setView(item.id as ViewMode)}
+                onClick={() => handleViewChange(item.id as ViewMode)}
                 className={`pb-3 px-2 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors ${
                     view === item.id 
                     ? 'border-blue-600 text-blue-600' 
@@ -72,7 +96,7 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
 
       <div className="min-h-[500px]">
         {view === 'dashboard' && (
-            <EvidenceDashboard onNavigate={(v) => setView(v as ViewMode)} />
+            <EvidenceDashboard onNavigate={(v) => handleViewChange(v as ViewMode)} />
         )}
 
         {view === 'inventory' && (
@@ -82,7 +106,7 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
             filters={filters}
             setFilters={setFilters}
             onItemClick={handleItemClick}
-            onIntakeClick={() => setView('intake')}
+            onIntakeClick={handleIntakeClick}
           />
         )}
 
@@ -108,6 +132,14 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
             currentUser={currentUser}
           />
         )}
+      </div>
+
+      {/* Enzyme Framework Features Indicator */}
+      <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-xs text-slate-600">
+        <Activity className="h-4 w-4 text-blue-600" />
+        <span className="font-semibold">Powered by Enzyme:</span>
+        <Zap className="h-3 w-3 text-amber-500" />
+        <span>TanStack Query caching • useLatestCallback • useTrackEvent analytics • Chain of Custody tracking</span>
       </div>
     </div>
   );

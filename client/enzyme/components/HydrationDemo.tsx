@@ -7,7 +7,7 @@ import {
 } from '@missionfabric-js/enzyme/hydration';
 import { Droplets, Zap, Clock, CheckCircle, AlertCircle, ArrowLeft, TrendingUp, Users, FileText, DollarSign, Loader2, Eye } from 'lucide-react';
 import { Case } from '../../types';
-import { useApiRequest } from '../../services/enzyme';
+import { useApiRequest } from '../services';
 
 // Metrics Dashboard Component
 function HydrationMetricsDashboard() {

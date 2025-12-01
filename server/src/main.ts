@@ -137,9 +137,10 @@ async function bootstrap() {
 
   // Generate a long-lived dev token for Swagger UI (only in development)
   const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@lexiflow.com';
   const devToken = jwt.sign(
     {
-      email: 'admin@lexiflow.com',
+      email: adminEmail,
       sub: 'f937bb0d-d9cc-4b76-b18c-0579393a496a', // Admin user ID from seed
       orgId: '77492804-16e3-4cad-abe5-34fcb57ee308', // Org ID from seed
     },

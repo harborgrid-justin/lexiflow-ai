@@ -1,13 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Case, CaseStatus, User } from '../types';
 import { 
   Plus, Briefcase, UserPlus, ShieldAlert, Users, Calendar, CheckSquare,
-  DollarSign, Gavel, Mic2, FileCheck, Archive, FileInput, Activity, Zap
+  DollarSign, Gavel, Mic2, FileCheck, Archive, FileInput
 } from 'lucide-react';
 import { PageHeader, Button, Modal } from './common';
 import { useCaseList } from '../hooks/useCaseList';
-import { useTrackEvent, useLatestCallback, useIsMounted } from '@missionfabric-js/enzyme/hooks';
 import { CaseListActive } from './case-list/CaseListActive';
 import { CaseListIntake } from './case-list/CaseListIntake';
 import { CaseListDocket } from './case-list/CaseListDocket';
@@ -18,9 +16,12 @@ import {
   CaseListConflicts, CaseListTasks, CaseListReporters, 
   CaseListClosing, CaseListArchived 
 } from './case-list/CaseListMisc';
+import { CaseDetail } from './CaseDetail';
 
-interface CaseListProps {
+interface CaseManagementProps {
+  selectedCase: Case | null;
   onSelectCase: (c: Case) => void;
+  onBackToList: () => void;
   currentUser?: User;
   navigateTo?: (view: string) => void;
 }
@@ -29,7 +30,13 @@ type CaseView =
   'active' | 'docket' | 'tasks' | 'intake' | 'conflicts' | 
   'resources' | 'trust' | 'experts' | 'reporters' | 'closing' | 'archived';
 
-export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser, navigateTo }) => {
+export const CaseManagement: React.FC<CaseManagementProps> = ({ 
+  selectedCase, 
+  onSelectCase, 
+  onBackToList,
+  currentUser, 
+  navigateTo 
+}) => {
   const {
     isModalOpen,
     setIsModalOpen,
@@ -39,40 +46,10 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser, n
     setTypeFilter,
     filteredCases,
     resetFilters,
-    addCase,
-    isLoading
+    addCase
   } = useCaseList();
 
   const [view, setView] = useState<CaseView>('active');
-  
-  // ✅ ENZYME HOOKS: Track analytics and safe updates
-  const trackEvent = useTrackEvent();
-  const isMounted = useIsMounted();
-
-  useEffect(() => {
-    if (isMounted()) {
-      trackEvent('case_list_viewed', { 
-        view, 
-        totalCases: filteredCases.length,
-        filter: statusFilter 
-      });
-    }
-  }, [view, filteredCases.length, statusFilter, trackEvent, isMounted]);
-
-  // ✅ ENZYME HOOK: Stable callbacks
-  const handleSelectCase = useLatestCallback((caseItem: Case) => {
-    trackEvent('case_selected', { 
-      caseId: caseItem.id, 
-      source: 'case_list',
-      view 
-    });
-    onSelectCase(caseItem);
-  });
-
-  const handleViewChange = useLatestCallback((newView: CaseView) => {
-    trackEvent('case_view_changed', { from: view, to: newView });
-    setView(newView);
-  });
 
   const menuItems = [
     { id: 'active', label: 'Matters', icon: Briefcase },
@@ -106,15 +83,18 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser, n
           {menuItems.map(item => (
             <button 
               key={item.id}
-              onClick={() => handleViewChange(item.id as CaseView)}
+              onClick={() => {
+                setView(item.id as CaseView);
+                onBackToList();
+              }}
               className={`
                 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-200
-                ${view === item.id 
+                ${view === item.id && !selectedCase
                   ? 'bg-white text-blue-700 shadow-sm ring-1 ring-black/5' 
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}
               `}
             >
-              <item.icon className={`h-4 w-4 ${view === item.id ? 'text-blue-600' : 'text-slate-400'}`} />
+              <item.icon className={`h-4 w-4 ${view === item.id && !selectedCase ? 'text-blue-600' : 'text-slate-400'}`} />
               {item.label}
             </button>
           ))}
@@ -122,40 +102,34 @@ export const CaseList: React.FC<CaseListProps> = ({ onSelectCase, currentUser, n
       </div>
 
       <div className="min-h-[400px]">
-        {view === 'active' && (
-          <CaseListActive 
-            filteredCases={filteredCases}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            typeFilter={typeFilter}
-            setTypeFilter={setTypeFilter}
-            resetFilters={resetFilters}
-            onSelectCase={handleSelectCase}
-          />
+        {selectedCase ? (
+          <CaseDetail caseData={selectedCase} onBack={onBackToList} currentUser={currentUser} hideHeader={true} />
+        ) : (
+          <>
+            {view === 'active' && (
+              <CaseListActive 
+                filteredCases={filteredCases}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                typeFilter={typeFilter}
+                setTypeFilter={setTypeFilter}
+                resetFilters={resetFilters}
+                onSelectCase={onSelectCase}
+              />
+            )}
+            {view === 'intake' && <CaseListIntake />}
+            {view === 'docket' && <CaseListDocket />}
+            {view === 'resources' && <CaseListResources />}
+            {view === 'trust' && <CaseListTrust />}
+            {view === 'experts' && <CaseListExperts />}
+            {view === 'conflicts' && <CaseListConflicts />}
+            {view === 'tasks' && <CaseListTasks />}
+            {view === 'reporters' && <CaseListReporters />}
+            {view === 'closing' && <CaseListClosing />}
+            {view === 'archived' && <CaseListArchived />}
+          </>
         )}
-        {view === 'intake' && <CaseListIntake />}
-        {view === 'docket' && <CaseListDocket />}
-        {view === 'resources' && <CaseListResources />}
-        {view === 'trust' && <CaseListTrust />}
-        {view === 'experts' && <CaseListExperts />}
-        {view === 'conflicts' && <CaseListConflicts />}
-        {view === 'tasks' && <CaseListTasks />}
-        {view === 'reporters' && <CaseListReporters />}
-        {view === 'closing' && <CaseListClosing />}
-        {view === 'archived' && <CaseListArchived />}
       </div>
-      
-      {/* Enzyme Features Indicator */}
-      {!isLoading && (
-        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg text-white text-sm">
-          <Zap className="h-4 w-4" />
-          <div className="flex-1">
-            <span className="font-medium">Enzyme Framework Active:</span>
-            <span className="opacity-90 ml-2">TanStack Query • useLatestCallback • useTrackEvent • useIsMounted</span>
-          </div>
-          <Activity className="h-4 w-4 animate-pulse" />
-        </div>
-      )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Matter Wizard" size="sm">
         <div className="p-6">

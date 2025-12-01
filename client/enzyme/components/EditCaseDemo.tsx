@@ -9,7 +9,7 @@ import {
 import { DOMContextProvider } from '@missionfabric-js/enzyme/layouts';
 import { ArrowLeft, Save, X, AlertCircle, CheckCircle2, Loader2, Search, ChevronDown } from 'lucide-react';
 import { Case } from '../../types';
-import { useApiRequest, useApiMutation } from '../../services/enzyme';
+import { useApiRequest, useApiMutation } from '../services';
 import { useDebouncedValue } from '@missionfabric-js/enzyme/hooks';
 
 // Form validation schema with Zod

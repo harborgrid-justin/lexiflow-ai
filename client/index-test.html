@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug Test</title>
+</head>
+<body>
+  <div id="root">Loading...</div>
+  <div id="debug"></div>
+  <script type="module">
+    const debug = document.getElementById('debug');
+    debug.innerHTML = 'Script started<br>';
+    
+    try {
+      debug.innerHTML += 'Importing React...<br>';
+      const React = await import('http://localhost:3000/node_modules/.vite/deps/react.js?v=89aa6b3d');
+      debug.innerHTML += 'React loaded<br>';
+      
+      debug.innerHTML += 'Importing ReactDOM...<br>';
+      const ReactDOM = await import('http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=89aa6b3d');
+      debug.innerHTML += 'ReactDOM loaded<br>';
+      
+      debug.innerHTML += 'Importing App...<br>';
+      const App = await import('http://localhost:3000/App.tsx');
+      debug.innerHTML += 'App loaded<br>';
+      
+      debug.innerHTML += 'All imports successful!<br>';
+    } catch (e) {
+      debug.innerHTML += `<span style="color:red">ERROR: ${e.message}</span><br>`;
+      debug.innerHTML += `<pre>${e.stack}</pre>`;
+      console.error('Import error:', e);
+    }
+  </script>
+</body>
+</html>

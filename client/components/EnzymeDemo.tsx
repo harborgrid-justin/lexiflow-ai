@@ -7,7 +7,9 @@ import {
   ExternalLink, Shield, Gauge, Radio, Flag, Palette, Database, GitBranch,
   Layers, Cpu, Wifi, Moon, Lock, BarChart2, BookOpen, Droplets, ArrowRight
 } from 'lucide-react';
-import { enzymeCasesService, useApiRequest, useApiMutation, type ApiError } from '../services/enzyme';
+import { enzymeCasesService } from '../enzyme/services/cases.service';
+import { useApiRequest, useApiMutation } from '../enzyme/services/hooks';
+import type { ApiError } from '@missionfabric-js/enzyme/api';
 import { Case } from '../types';
 import { 
   useIsMounted, 

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Case, TimelineEvent, User } from '../types';
 import { ArrowLeft, MapPin, DollarSign } from 'lucide-react';
-import { PageHeader } from './common';
+import { PageHeader, Button } from './common';
 import { CaseOverview } from './case-detail/CaseOverview';
 import { CaseDocuments } from './case-detail/CaseDocuments';
 import { CaseWorkflow } from './case-detail/CaseWorkflow';
@@ -25,11 +25,12 @@ interface CaseDetailProps {
   caseData: Case;
   onBack: () => void;
   currentUser?: User;
+  hideHeader?: boolean;
 }
 
 const TABS = ['Overview', 'Team', 'Motions', 'Parties', 'Docket', 'Documents', 'Evidence', 'Discovery', 'Messages', 'Workflow', 'Drafting', 'Contract Review', 'Billing'];
 
-export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, currentUser }) => {
+export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, currentUser, hideHeader = false }) => {
   const {
     activeTab,
     setActiveTab,
@@ -82,39 +83,41 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader 
-        title={caseData.title}
-        subtitle={
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 mt-1">
-            <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-xs">{caseData.id}</span>
-            <span className="hidden md:inline text-slate-300">•</span>
-            <span className="line-clamp-1">{caseData.client}</span>
-            {caseData.jurisdiction && (
-              <>
-                <span className="hidden md:inline text-slate-300">•</span>
-                <span className="flex items-center text-slate-600"><MapPin className="h-3 w-3 mr-1"/> {caseData.jurisdiction}</span>
-              </>
-            )}
-            <span className="hidden md:inline text-slate-300">•</span>
-            <span className="flex items-center font-semibold text-slate-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
-              <DollarSign className="h-3 w-3 mr-0.5 text-green-600"/>
-              {(caseData.value ?? 0).toLocaleString()}
-            </span>
-          </div>
-        }
-        actions={
-          <>
-            <WorkflowQuickActions 
-              userId={currentUser?.id || '1'}
-              caseId={caseData.id}
-              compact
-            />
-            <Button variant="secondary" icon={ArrowLeft} onClick={onBack}>
-              Back to Cases
-            </Button>
-          </>
-        }
-      />
+      {!hideHeader && (
+        <PageHeader 
+          title={caseData.title}
+          subtitle={
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 mt-1">
+              <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-xs">{caseData.id}</span>
+              <span className="hidden md:inline text-slate-300">•</span>
+              <span className="line-clamp-1">{caseData.client}</span>
+              {caseData.jurisdiction && (
+                <>
+                  <span className="hidden md:inline text-slate-300">•</span>
+                  <span className="flex items-center text-slate-600"><MapPin className="h-3 w-3 mr-1"/> {caseData.jurisdiction}</span>
+                </>
+              )}
+              <span className="hidden md:inline text-slate-300">•</span>
+              <span className="flex items-center font-semibold text-slate-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                <DollarSign className="h-3 w-3 mr-0.5 text-green-600"/>
+                {(caseData.value ?? 0).toLocaleString()}
+              </span>
+            </div>
+          }
+          actions={
+            <>
+              <WorkflowQuickActions 
+                userId={currentUser?.id || '1'}
+                caseId={caseData.id}
+                compact
+              />
+              <Button variant="secondary" icon={ArrowLeft} onClick={onBack}>
+                Back to Cases
+              </Button>
+            </>
+          }
+        />
+      )}
 
       <TabNavigation
         tabs={TABS}

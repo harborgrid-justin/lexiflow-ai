@@ -1,34 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ApiService } from '../services/apiService';
 import { ResearchSession, User } from '../types';
+import { useApiRequest, useApiMutation, useLatestCallback, useIsMounted } from '../enzyme';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useResearch = (currentUser?: User) => {
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [history, setHistory] = useState<ResearchSession[]>([]);
   const [currentResults, setCurrentResults] = useState<any | null>(null);
   const [jurisdiction, setJurisdiction] = useState('');
   const [searchType, setSearchType] = useState<'comprehensive' | 'case_law' | 'statutes' | 'news'>('comprehensive');
+  
+  const queryClient = useQueryClient();
+  const isMounted = useIsMounted();
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const sessions = await ApiService.getResearchHistory();
-        setHistory(sessions || []);
-      } catch (error) {
-        console.error('Failed to fetch research history:', error);
-        setHistory([]);
-      }
-    };
-    fetchHistory();
-  }, []);
+  // Fetch research history with Enzyme
+  const { data: history = [], isLoading: isLoadingHistory } = useApiRequest<ResearchSession[]>({
+    endpoint: '/api/v1/research/history',
+    options: { staleTime: 2 * 60 * 1000 } // 2 min cache
+  });
 
-  const handleSearch = async (e: React.FormEvent) => {
+  // Mutation for saving research sessions
+  const { mutateAsync: saveSession, isPending: isLoading } = useApiMutation<ResearchSession, ResearchSession>({
+    method: 'POST',
+    endpoint: '/api/v1/research/sessions',
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/research/history'] });
+    }
+  });
+
+  const handleSearch = useLatestCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
-    setIsLoading(true);
-    setCurrentResults(null);
+    if (isMounted()) setCurrentResults(null);
 
     try {
       let normalizedResults: any | null = null;
@@ -62,9 +66,9 @@ export const useResearch = (currentUser?: User) => {
         };
       }
 
-      setCurrentResults(normalizedResults);
+      if (isMounted()) setCurrentResults(normalizedResults);
 
-      // Save to history
+      // Save to history using Enzyme mutation
       const newSession: ResearchSession = {
         id: Date.now().toString(),
         query,
@@ -74,26 +78,21 @@ export const useResearch = (currentUser?: User) => {
         userId: currentUser?.id,
       };
 
-      const savedSession = await ApiService.saveResearchSession(newSession);
-      setHistory((prev) => [savedSession, ...prev]);
+      await saveSession({ data: newSession });
     } catch (error) {
       console.error('Research failed:', error);
       alert('Research failed. Please check your Google Custom Search API configuration.');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  });
 
-  const handleFeedback = async (id: string, type: 'positive' | 'negative') => {
+  const handleFeedback = useLatestCallback(async (id: string, type: 'positive' | 'negative') => {
     try {
       await ApiService.submitResearchFeedback(id, type);
-      setHistory((prev) => prev.map(session =>
-        session.id === id ? { ...session, feedback: type } : session
-      ));
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/research/history'] });
     } catch (e) {
       console.error(e);
     }
-  };
+  });
 
   return {
     query,
