@@ -30,4 +30,7 @@ client/node_modules/
 node_modules/
 server/.env
 client/.env
+enzyme-server/.env
+enzyme-server/node_modules/
+enzyme-server/dist/
 .env
