@@ -33,4 +33,8 @@ client/.env
 enzyme-server/.env
 enzyme-server/node_modules/
 enzyme-server/dist/
+
+# Docker persistent data
+data/
+
 .env

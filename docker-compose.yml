@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lexiflow_secure_password}
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ${DATA_PATH:-./data}/postgres:/var/lib/postgresql/data
       - ./server/src/database/init:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
@@ -53,7 +53,8 @@ services:
     networks:
       - lexiflow-network
     volumes:
-      - backend_logs:/app/server/logs
+      - ${DATA_PATH:-./data}/backend/logs:/app/server/logs
+      - ${DATA_PATH:-./data}/backend/uploads:/app/server/uploads
 
   # React Frontend (Vite)
   frontend:
@@ -76,9 +77,3 @@ services:
 networks:
   lexiflow-network:
     driver: bridge
-
-volumes:
-  postgres_data:
-    driver: local
-  backend_logs:
-    driver: local
