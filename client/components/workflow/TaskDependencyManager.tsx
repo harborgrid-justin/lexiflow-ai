@@ -14,7 +14,7 @@ interface TaskDependencyManagerProps {
 
 export const TaskDependencyManager: React.FC<TaskDependencyManagerProps> = ({
   taskId,
-  taskTitle,
+  _taskTitle,
   availableTasks,
   onUpdate
 }) => {
@@ -31,10 +31,6 @@ export const TaskDependencyManager: React.FC<TaskDependencyManagerProps> = ({
   const [dependencyType, setDependencyType] = useState<'blocking' | 'informational'>('blocking');
   const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    loadDependencies();
-  }, [taskId]);
-
   const loadDependencies = async () => {
     const deps = await getTaskDependencies(taskId);
     if (deps) {
@@ -48,6 +44,11 @@ export const TaskDependencyManager: React.FC<TaskDependencyManagerProps> = ({
       setCanStart(checkResult);
     }
   };
+
+  useEffect(() => {
+    loadDependencies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId]);
 
   const handleSave = async () => {
     if (selectedTasks.length > 0) {

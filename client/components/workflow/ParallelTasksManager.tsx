@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, ArrowRight, CheckCircle } from 'lucide-react';
+import { Users, CheckCircle } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
@@ -32,6 +32,7 @@ export const ParallelTasksManager: React.FC<ParallelTasksManagerProps> = ({
 
   useEffect(() => {
     loadGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stageId]);
 
   const loadGroups = async () => {

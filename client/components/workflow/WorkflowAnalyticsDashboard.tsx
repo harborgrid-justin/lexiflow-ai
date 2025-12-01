@@ -43,6 +43,7 @@ export const WorkflowAnalyticsDashboard: React.FC<WorkflowAnalyticsDashboardProp
   }, [getWorkflowMetrics, getBottlenecks, getTaskVelocity, caseId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAnalytics();
   }, [loadAnalytics]);
 

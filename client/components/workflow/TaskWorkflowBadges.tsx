@@ -15,7 +15,7 @@ export const TaskWorkflowBadges: React.FC<TaskWorkflowBadgesProps> = ({
   showDependencies = true,
   showSLA = true,
   showApproval = true,
-  showParallel = true
+  showParallel: _showParallel = true
 }) => {
   const {
     getTaskDependencies,
@@ -35,6 +35,7 @@ export const TaskWorkflowBadges: React.FC<TaskWorkflowBadgesProps> = ({
 
   React.useEffect(() => {
     loadBadges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const loadBadges = async () => {

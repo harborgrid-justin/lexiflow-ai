@@ -22,10 +22,6 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadAuditLog();
-  }, [caseId, entityType, entityId, limit]);
-
   const loadAuditLog = async () => {
     setLoading(true);
     try {
@@ -40,6 +36,10 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAuditLog();
+  }, [caseId, entityType, entityId, limit, loadAuditLog]);
 
   const getActionColor = (action: string) => {
     if (action.includes('created') || action.includes('approved')) return 'text-green-700';

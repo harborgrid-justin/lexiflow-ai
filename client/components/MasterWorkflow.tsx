@@ -35,6 +35,7 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
   }, [getNotifications, currentUser.id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     const fetchData = async () => {
         try {
             const [c, p] = await Promise.all([

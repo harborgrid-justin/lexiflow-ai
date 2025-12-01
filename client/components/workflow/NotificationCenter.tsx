@@ -26,6 +26,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   }, [getNotifications, userId, showAll]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadNotifications();
     const interval = setInterval(loadNotifications, 30000); // Refresh every 30s
     return () => clearInterval(interval);

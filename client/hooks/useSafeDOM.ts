@@ -62,6 +62,7 @@ export function useScrollIntoView<T extends HTMLElement>(
 ): RefObject<T> {
   const ref = useRef<T>(null);
 
+   
   useEffect(() => {
     if (ref.current) {
       safeScrollIntoView(ref.current, { behavior: 'smooth', block: 'nearest' });

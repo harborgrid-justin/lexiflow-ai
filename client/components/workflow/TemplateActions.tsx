@@ -1,5 +1,5 @@
 import React from 'react';
-import { Save, Download, Upload, FileText } from 'lucide-react';
+import { Save, Download, Upload } from 'lucide-react';
 import { Button } from '../common/Button';
 
 interface TemplateActionsProps {

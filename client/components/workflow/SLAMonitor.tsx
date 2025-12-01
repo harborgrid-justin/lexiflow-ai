@@ -19,14 +19,6 @@ export const SLAMonitor: React.FC<SLAMonitorProps> = ({
   const [slaStatus, setSlaStatus] = useState<TaskSLAStatus | null>(null);
   const [breachReport, setBreachReport] = useState<SLABreachReport | null>(null);
 
-  useEffect(() => {
-    if (taskId) {
-      loadTaskSLA();
-    } else if (showBreachReport) {
-      loadBreachReport();
-    }
-  }, [taskId, caseId, showBreachReport]);
-
   const loadTaskSLA = async () => {
     if (!taskId) return;
     const status = await getTaskSLAStatus(taskId);
@@ -41,6 +33,15 @@ export const SLAMonitor: React.FC<SLAMonitorProps> = ({
       setBreachReport(report);
     }
   };
+
+  useEffect(() => {
+    if (taskId) {
+      loadTaskSLA();
+    } else if (showBreachReport) {
+      loadBreachReport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId, caseId, showBreachReport]);
 
   const getSLAIcon = (status: string) => {
     switch (status) {

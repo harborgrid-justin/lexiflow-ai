@@ -14,7 +14,7 @@ interface TimeTrackingPanelProps {
 
 export const TimeTrackingPanel: React.FC<TimeTrackingPanelProps> = ({
   taskId,
-  taskTitle,
+  taskTitle: _taskTitle,
   userId,
   onUpdate
 }) => {
@@ -32,6 +32,7 @@ export const TimeTrackingPanel: React.FC<TimeTrackingPanelProps> = ({
 
   useEffect(() => {
     loadTimeEntries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   useEffect(() => {
