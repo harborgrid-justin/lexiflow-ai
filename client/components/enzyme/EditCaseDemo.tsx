@@ -10,7 +10,7 @@ import { DOMContextProvider } from '@missionfabric-js/enzyme/layouts';
 import { ArrowLeft, Save, X, AlertCircle, CheckCircle2, Loader2, Search, ChevronDown } from 'lucide-react';
 import { Case } from '../../types';
 import { useApiRequest, useApiMutation } from '../../services/enzyme';
-import { useDebouncedValue, usePrefetchRoute } from '@missionfabric-js/enzyme/hooks';
+import { useDebouncedValue } from '@missionfabric-js/enzyme/hooks';
 
 // Form validation schema with Zod
 const caseSchema = z.object({
@@ -63,7 +63,7 @@ function CaseFormFields({ register, errors, clients, setValue, watch, clientsLoa
     client.company?.toLowerCase().includes(debouncedSearch.toLowerCase())
   ).slice(0, 10);
   
-  const currentClientName = watch('client_name');
+  const _currentClientName = watch('client_name');
   
   // Handle clicks outside to close dropdown
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText, AlertCircle, CheckCircle, Loader, GripVertical, ArrowRight, RefreshCw } from 'lucide-react';
 import { ApiService } from '../services/apiService';
+import { Badge } from './common/Badge';
 
 interface PacerImportModalProps {
   onClose: () => void;
@@ -198,7 +199,7 @@ export function PacerImportModalEnhanced({ onClose, onImportComplete }: PacerImp
     setStep('preview');
   };
 
-  const validateFieldValue = (value: string, fieldKey: string): boolean => {
+  const _validateFieldValue = (value: string, fieldKey: string): boolean => {
     if (!value || value === 'null') return false;
     if (fieldKey === 'filingDate') {
       return !isNaN(Date.parse(value));
@@ -347,13 +348,11 @@ Smith v. Jones Corporation
                               </span>
                               <button
                                 onClick={() => toggleFieldValidity(mapping.source)}
-                                className={`text-xs px-2 py-0.5 rounded ${
-                                  mapping.isValid
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    : 'bg-red-100 text-red-700 hover:bg-red-200'
-                                }`}
+                                className="text-xs px-2 py-0.5 rounded"
                               >
-                                {mapping.isValid ? 'Valid' : 'Invalid'}
+                                <Badge variant={mapping.isValid ? 'success' : 'error'} size="sm">
+                                  {mapping.isValid ? 'Valid' : 'Invalid'}
+                                </Badge>
                               </button>
                             </div>
                             <p className="text-sm text-slate-900 truncate" title={mapping.value}>
@@ -393,9 +392,7 @@ Smith v. Jones Corporation
                               {target.label}
                             </span>
                             {target.required && (
-                              <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">
-                                Required
-                              </span>
+                              <Badge variant="warning" size="sm">Required</Badge>
                             )}
                           </div>
                           {mapping && (
@@ -467,9 +464,9 @@ Smith v. Jones Corporation
                           <p className="font-medium text-slate-900">{party.name}</p>
                           <p className="text-sm text-slate-600 mt-1">{party.role}</p>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-slate-100 rounded text-slate-700">
+                        <Badge variant="inactive" size="sm">
                           {party.type}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
                   ))}

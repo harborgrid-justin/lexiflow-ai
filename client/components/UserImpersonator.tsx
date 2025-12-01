@@ -2,28 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { Users, ChevronDown, Crown, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { ApiService } from '../services/apiService';
+import { Badge } from './common/Badge';
 
 interface UserImpersonatorProps {
   onImpersonate: (user: User) => void;
   currentUser: User | null;
 }
 
-const getRoleBadgeColor = (role: UserRole | string) => {
+const getRoleBadgeVariant = (role: UserRole | string): string => {
   switch (role) {
     case 'Administrator':
-      return 'bg-purple-100 text-purple-700 border-purple-200';
+      return 'role-administrator';
     case 'Senior Partner':
-      return 'bg-blue-100 text-blue-700 border-blue-200';
+      return 'role-senior-partner';
     case 'Partner':
-      return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      return 'role-partner';
     case 'Associate':
-      return 'bg-green-100 text-green-700 border-green-200';
+      return 'role-associate';
     case 'Paralegal':
-      return 'bg-amber-100 text-amber-700 border-amber-200';
+      return 'role-paralegal';
     case 'Clerk':
-      return 'bg-slate-100 text-slate-700 border-slate-200';
+      return 'role-clerk';
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-200';
+      return 'inactive';
   }
 };
 
@@ -147,7 +148,9 @@ export const UserImpersonator: React.FC<UserImpersonatorProps> = ({ onImpersonat
                             </div>
                             <p className="text-xs text-slate-500 truncate mb-1">{user.email}</p>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getRoleBadgeColor(user.role)}`}>{user.role}</span>
+                              <Badge variant={getRoleBadgeVariant(user.role)} size="sm">
+                                {user.role}
+                              </Badge>
                               {user.office && <span className="text-xs text-slate-400">📍 {user.office}</span>}
                               {user.status && <span className={`text-xs ${user.status === 'Active' ? 'text-green-600' : 'text-slate-400'}`}>• {user.status}</span>}
                             </div>

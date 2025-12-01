@@ -5,6 +5,7 @@ import { Filter, Briefcase, RefreshCcw, ChevronRight, User, DollarSign } from 'l
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { FilterBar, FilterItem } from '../common/FilterBar';
 
 interface CaseListActiveProps {
   filteredCases: Case[];
@@ -25,33 +26,53 @@ export const CaseListActive: React.FC<CaseListActiveProps> = ({
   resetFilters,
   onSelectCase
 }) => {
+  const filterItems: FilterItem[] = [
+    {
+      id: 'status',
+      label: 'Status',
+      icon: Filter,
+      value: statusFilter,
+      options: [
+        { value: 'All', label: 'All Statuses' },
+        ...Object.values(CaseStatus).map(s => ({ value: s, label: s }))
+      ]
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      icon: Briefcase,
+      value: typeFilter,
+      options: [
+        { value: 'All', label: 'All Types' },
+        { value: 'Litigation', label: 'Litigation' },
+        { value: 'M&A', label: 'M&A' },
+        { value: 'IP', label: 'IP' },
+        { value: 'Real Estate', label: 'Real Estate' }
+      ]
+    }
+  ];
+
+  const filterValues = {
+    status: statusFilter,
+    type: typeFilter
+  };
+
+  const handleFilterChange = (filterId: string, value: string) => {
+    if (filterId === 'status') {
+      setStatusFilter(value);
+    } else if (filterId === 'type') {
+      setTypeFilter(value);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="h-4 w-4 text-slate-400 ml-1"/>
-          <select className="text-sm border-none bg-transparent outline-none text-slate-700 font-medium cursor-pointer hover:text-blue-600" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="All">All Statuses</option>
-            {Object.values(CaseStatus).map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        
-        <div className="hidden sm:block h-4 w-px bg-slate-300 mx-2"></div>
-        
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Briefcase className="h-4 w-4 text-slate-400"/>
-          <select className="text-sm border-none bg-transparent outline-none text-slate-700 font-medium cursor-pointer hover:text-blue-600" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="All">All Types</option>
-            <option value="Litigation">Litigation</option>
-            <option value="M&A">M&A</option>
-            <option value="IP">IP</option>
-            <option value="Real Estate">Real Estate</option>
-          </select>
-        </div>
-
-        <div className="flex-1"></div>
-        <Button variant="ghost" size="sm" icon={RefreshCcw} onClick={resetFilters} className="text-slate-400 hover:text-slate-600">Reset</Button>
-      </div>
+      <FilterBar
+        filters={filterItems}
+        values={filterValues}
+        onChange={handleFilterChange}
+        onReset={resetFilters}
+      />
 
       {/* Desktop Table View */}
       <div className="hidden md:block">

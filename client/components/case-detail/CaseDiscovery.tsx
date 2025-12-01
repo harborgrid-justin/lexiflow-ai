@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { ApiService } from '../../services/apiService';
 import { DiscoveryRequest } from '../../types';
 import { DiscoveryRequests } from '../discovery/DiscoveryRequests';
+import { EmptyState } from '../common/EmptyState';
+import { Search } from 'lucide-react';
 
 interface CaseDiscoveryProps {
   caseId: string;
@@ -35,7 +37,12 @@ export const CaseDiscovery: React.FC<CaseDiscoveryProps> = ({ caseId }) => {
       </div>
       <div className="flex-1 overflow-y-auto pr-2">
         {caseRequests.length === 0 ? (
-          <p className="text-slate-500 italic">No discovery requests found for this case.</p>
+          <EmptyState
+            icon={Search}
+            title="No discovery requests found"
+            description="Discovery requests and responses will appear here once they are filed in this case."
+            variant="card"
+          />
         ) : (
           <DiscoveryRequests 
               items={caseRequests}

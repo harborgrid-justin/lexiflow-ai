@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin, User, Clock, FileText, ExternalLink } from 'lucide-react';
 import { ApiService } from '../../services/apiService';
+import { Badge } from '../common/Badge';
 
 interface Hearing {
   id: number | string;
@@ -48,7 +49,7 @@ export const CalendarHearings: React.FC = () => {
       {hearings.map(h => (
         <div key={h.id} className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
           <div className="flex justify-between items-start mb-2">
-            <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded border border-red-200">Hearing</span>
+            <Badge variant="error" size="sm">Hearing</Badge>
             <span className="text-slate-500 text-xs font-mono flex items-center"><Clock className="h-3 w-3 mr-1"/> {h.time}</span>
           </div>
           <h4 className="font-bold text-slate-900 text-lg">{h.title}</h4>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Case, User } from '../../types';
-import { Clock, FileText, Globe, Gavel, Users, DollarSign, Scale, Briefcase, FileCheck, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
+import { Clock, FileText, Globe, Gavel, Users, DollarSign, Scale, Briefcase, FileCheck, Calendar as CalendarIcon } from 'lucide-react';
 import { TimeEntryModal } from '../TimeEntryModal';
 import { ConsolidatedCasesCard } from './ConsolidatedCasesCard';
 

@@ -9,7 +9,6 @@ import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 import { Modal } from './common/Modal';
 import { useCaseList } from '../hooks/useCaseList';
-import { ApiService } from '../services/apiService';
 import { CaseListActive } from './case-list/CaseListActive';
 import { CaseListIntake } from './case-list/CaseListIntake';
 import { CaseListDocket } from './case-list/CaseListDocket';

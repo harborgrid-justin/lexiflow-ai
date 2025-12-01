@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
+import { StatCard } from '../common/Stats';
 import { ApiService } from '../../services/apiService';
 import { EvidenceItem } from '../../types';
 import { ShieldCheck, AlertTriangle, HardDrive, Box, Activity } from 'lucide-react';
@@ -46,50 +47,34 @@ export const EvidenceDashboard: React.FC<EvidenceDashboardProps> = ({ onNavigate
     <div className="space-y-6 animate-fade-in">
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card noPadding className="border-l-4 border-l-blue-600">
-          <div className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase">Total Evidence</p>
-                <p className="text-2xl font-bold text-slate-900">{totalItems}</p>
-              </div>
-              <Box className="h-6 w-6 text-blue-100" />
-            </div>
-          </div>
-        </Card>
-        <Card noPadding className="border-l-4 border-l-purple-600">
-          <div className="p-4">
-             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase">Digital Assets</p>
-                <p className="text-2xl font-bold text-slate-900">{digitalItems}</p>
-              </div>
-              <HardDrive className="h-6 w-6 text-purple-100" />
-            </div>
-          </div>
-        </Card>
-        <Card noPadding className="border-l-4 border-l-amber-500">
-          <div className="p-4">
-             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase">Admissibility Risk</p>
-                <p className="text-2xl font-bold text-slate-900">{challengedItems}</p>
-              </div>
-              <AlertTriangle className="h-6 w-6 text-amber-100" />
-            </div>
-          </div>
-        </Card>
-        <Card noPadding className="border-l-4 border-l-green-600">
-          <div className="p-4">
-             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase">Chain Integrity</p>
-                <p className="text-2xl font-bold text-slate-900">100%</p>
-              </div>
-              <ShieldCheck className="h-6 w-6 text-green-100" />
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          label="Total Evidence"
+          value={totalItems}
+          icon={Box}
+          color="text-blue-600"
+          bg="bg-blue-50"
+        />
+        <StatCard
+          label="Digital Assets"
+          value={digitalItems}
+          icon={HardDrive}
+          color="text-purple-600"
+          bg="bg-purple-50"
+        />
+        <StatCard
+          label="Admissibility Risk"
+          value={challengedItems}
+          icon={AlertTriangle}
+          color="text-amber-600"
+          bg="bg-amber-50"
+        />
+        <StatCard
+          label="Chain Integrity"
+          value="100%"
+          icon={ShieldCheck}
+          color="text-green-600"
+          bg="bg-green-50"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

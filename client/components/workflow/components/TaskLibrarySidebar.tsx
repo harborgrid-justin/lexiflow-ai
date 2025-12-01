@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, LayoutTemplate, GripVertical, Zap, Users, Clock } from 'lucide-react';
 import { Button } from '../../common/Button';
+import { Badge } from '../../common/Badge';
 import type { WorkflowTaskTemplate, WorkflowStageTemplate } from '../types/workflow-template.types';
 
 interface TaskLibrarySidebarProps {
@@ -78,9 +79,9 @@ export const TaskLibrarySidebar: React.FC<TaskLibrarySidebarProps> = ({
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold text-sm text-slate-900 truncate">{task.title}</span>
                   {task.automated && (
-                    <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded flex items-center font-medium flex-shrink-0">
-                      <Zap className="h-3 w-3"/>
-                    </span>
+                    <Badge variant="info" size="sm" className="flex items-center">
+                      <Zap className="h-3 w-3 mr-1"/>
+                    </Badge>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 line-clamp-1">{task.description}</p>

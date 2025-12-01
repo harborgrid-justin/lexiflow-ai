@@ -7,7 +7,8 @@ import { Button } from '../common/Button';
 import { Plus, Edit2, Trash2, User, Building, Gavel, Mail, Link, ChevronDown, ChevronRight, UserPlus } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Inputs';
-import { Badge } from '../common/Badge';
+import { EmptyState } from '../common/EmptyState';
+import { FormSection, FormFieldGroup } from '../common';
 import { AttorneyCard } from '../common/AttorneyCard';
 
 interface CasePartiesProps {
@@ -264,7 +265,13 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
                 )})}
                 {parties.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-slate-400 italic">No parties recorded.</TableCell>
+                        <TableCell colSpan={6}>
+                            <EmptyState
+                                title="No parties recorded"
+                                description="Add parties to this case to track involved individuals and organizations."
+                                variant="inline"
+                            />
+                        </TableCell>
                     </TableRow>
                 )}
             </TableBody>
@@ -345,7 +352,11 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
             </div>
         )})}
         {parties.length === 0 && (
-            <div className="text-center py-8 text-slate-400 italic bg-slate-50 rounded-lg">No parties recorded.</div>
+            <EmptyState
+                title="No parties recorded"
+                description="Add parties to this case to track involved individuals and organizations."
+                variant="card"
+            />
         )}
       </div>
 
@@ -454,129 +465,132 @@ export const CaseParties: React.FC<CasePartiesProps> = ({ parties = [], onUpdate
                   />
               </div>
 
-              <div className="border-t pt-4">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Contact Information</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                      <Input 
-                        label="Email" 
-                        type="email"
-                        value={currentAttorney.email || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, email: e.target.value})} 
-                      />
-                      <Input 
-                        label="Primary Phone" 
-                        value={currentAttorney.phone || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, phone: e.target.value})} 
-                      />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 mt-4">
-                      <Input 
-                        label="Business Phone" 
-                        value={currentAttorney.businessPhone || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, businessPhone: e.target.value})} 
-                      />
-                      <Input 
-                        label="Personal Phone" 
-                        value={currentAttorney.personalPhone || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, personalPhone: e.target.value})} 
-                      />
-                      <Input 
-                        label="Fax" 
-                        value={currentAttorney.fax || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, fax: e.target.value})} 
-                      />
-                  </div>
-              </div>
+              <FormSection title="Contact Information">
+                <FormFieldGroup columns={2}>
+                  <Input
+                    label="Email"
+                    type="email"
+                    value={currentAttorney.email || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, email: e.target.value})}
+                  />
+                  <Input
+                    label="Primary Phone"
+                    value={currentAttorney.phone || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, phone: e.target.value})}
+                  />
+                </FormFieldGroup>
+                <FormFieldGroup columns={3} className="mt-4">
+                  <Input
+                    label="Business Phone"
+                    value={currentAttorney.businessPhone || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, businessPhone: e.target.value})}
+                  />
+                  <Input
+                    label="Personal Phone"
+                    value={currentAttorney.personalPhone || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, personalPhone: e.target.value})}
+                  />
+                  <Input
+                    label="Fax"
+                    value={currentAttorney.fax || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, fax: e.target.value})}
+                  />
+                </FormFieldGroup>
+              </FormSection>
 
-              <div className="border-t pt-4">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Address</h4>
-                  <div className="space-y-3">
-                      <Input 
-                        label="Address Line 1" 
-                        value={currentAttorney.address1 || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, address1: e.target.value})} 
-                      />
-                      <Input 
-                        label="Address Line 2" 
-                        value={currentAttorney.address2 || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, address2: e.target.value})} 
-                      />
-                      <Input 
-                        label="Address Line 3" 
-                        value={currentAttorney.address3 || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, address3: e.target.value})} 
-                      />
-                      <div className="grid grid-cols-3 gap-4">
-                          <Input 
-                            label="City" 
-                            value={currentAttorney.city || ''} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, city: e.target.value})} 
-                          />
-                          <Input 
-                            label="State" 
-                            value={currentAttorney.state || ''} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, state: e.target.value})} 
-                          />
-                          <Input 
-                            label="ZIP" 
-                            value={currentAttorney.zip || ''} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, zip: e.target.value})} 
-                          />
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                          <Input 
-                            label="Office" 
-                            value={currentAttorney.office || ''} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, office: e.target.value})} 
-                          />
-                          <Input 
-                            label="Unit" 
-                            value={currentAttorney.unit || ''} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, unit: e.target.value})} 
-                          />
-                          <Input 
-                            label="Room" 
-                            value={currentAttorney.room || ''} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, room: e.target.value})} 
-                          />
-                      </div>
-                  </div>
-              </div>
+              <FormSection title="Address">
+                <FormFieldGroup columns={1}>
+                  <Input
+                    label="Address Line 1"
+                    value={currentAttorney.address1 || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, address1: e.target.value})}
+                  />
+                </FormFieldGroup>
+                <FormFieldGroup columns={1} className="mt-3">
+                  <Input
+                    label="Address Line 2"
+                    value={currentAttorney.address2 || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, address2: e.target.value})}
+                  />
+                </FormFieldGroup>
+                <FormFieldGroup columns={1} className="mt-3">
+                  <Input
+                    label="Address Line 3"
+                    value={currentAttorney.address3 || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, address3: e.target.value})}
+                  />
+                </FormFieldGroup>
+                <FormFieldGroup columns={3} className="mt-4">
+                  <Input
+                    label="City"
+                    value={currentAttorney.city || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, city: e.target.value})}
+                  />
+                  <Input
+                    label="State"
+                    value={currentAttorney.state || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, state: e.target.value})}
+                  />
+                  <Input
+                    label="ZIP"
+                    value={currentAttorney.zip || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, zip: e.target.value})}
+                  />
+                </FormFieldGroup>
+                <FormFieldGroup columns={3} className="mt-4">
+                  <Input
+                    label="Office"
+                    value={currentAttorney.office || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, office: e.target.value})}
+                  />
+                  <Input
+                    label="Unit"
+                    value={currentAttorney.unit || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, unit: e.target.value})}
+                  />
+                  <Input
+                    label="Room"
+                    value={currentAttorney.room || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, room: e.target.value})}
+                  />
+                </FormFieldGroup>
+              </FormSection>
 
-              <div className="border-t pt-4">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Additional Information</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                      <div>
-                          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Status</label>
-                          <select 
-                            className="w-full px-3 py-2 border rounded-md text-sm bg-white" 
-                            value={currentAttorney.status || 'Active'} 
-                            onChange={e => setCurrentAttorney({...currentAttorney, status: e.target.value})}
-                          >
-                              <option value="Active">Active</option>
-                              <option value="Terminated">Terminated</option>
-                              <option value="Pro Hac Vice">Pro Hac Vice</option>
-                              <option value="Lead Counsel">Lead Counsel</option>
-                          </select>
-                      </div>
-                      <Input 
-                        label="Termination Date" 
-                        type="date"
-                        value={currentAttorney.terminationDate || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, terminationDate: e.target.value})} 
-                      />
+              <FormSection title="Additional Information">
+                <FormFieldGroup columns={2}>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Status</label>
+                    <select
+                      className="w-full px-3 py-2 border rounded-md text-sm bg-white"
+                      value={currentAttorney.status || 'Active'}
+                      onChange={e => setCurrentAttorney({...currentAttorney, status: e.target.value})}
+                    >
+                        <option value="Active">Active</option>
+                        <option value="Terminated">Terminated</option>
+                        <option value="Pro Hac Vice">Pro Hac Vice</option>
+                        <option value="Lead Counsel">Lead Counsel</option>
+                    </select>
                   </div>
-                  <div className="mt-3">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Notice Information</label>
-                      <textarea 
-                        className="w-full px-3 py-2 border rounded-md text-sm" 
-                        rows={2}
-                        value={currentAttorney.noticeInfo || ''} 
-                        onChange={e => setCurrentAttorney({...currentAttorney, noticeInfo: e.target.value})}
-                        placeholder="e.g., Notice by Electronic Service Consented, Designation of Electronic Service"
-                      />
+                  <Input
+                    label="Termination Date"
+                    type="date"
+                    value={currentAttorney.terminationDate || ''}
+                    onChange={e => setCurrentAttorney({...currentAttorney, terminationDate: e.target.value})}
+                  />
+                </FormFieldGroup>
+                <FormFieldGroup columns={1} className="mt-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Notice Information</label>
+                    <textarea
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      rows={2}
+                      value={currentAttorney.noticeInfo || ''}
+                      onChange={e => setCurrentAttorney({...currentAttorney, noticeInfo: e.target.value})}
+                      placeholder="e.g., Notice by Electronic Service Consented, Designation of Electronic Service"
+                    />
                   </div>
-              </div>
+                </FormFieldGroup>
+              </FormSection>
 
               <div className="pt-4 flex justify-end gap-2 border-t">
                   <Button variant="secondary" onClick={() => setIsAttorneyModalOpen(false)}>Cancel</Button>

@@ -7,6 +7,7 @@ import { PageHeader } from './common/PageHeader';
 import { StatCard } from './common/Stats';
 import { Card } from './common/Card';
 import { Button } from './common/Button';
+import { StatusCard } from './common/StatusCard';
 import { useWorkflowEngine } from '../hooks/useWorkflowEngine';
 
 interface DashboardProps {
@@ -76,35 +77,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
 
       {/* Workflow Status Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card title="SLA Warnings" className="bg-amber-50 border-amber-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-amber-600">{slaBreaches.warnings}</p>
-              <p className="text-sm text-amber-700 mt-1">Tasks approaching deadline</p>
-            </div>
-            <Clock className="h-12 w-12 text-amber-400 opacity-50" />
-          </div>
-        </Card>
+        <StatusCard
+          title="SLA Warnings"
+          value={slaBreaches.warnings}
+          subtitle="Tasks approaching deadline"
+          status="warning"
+          icon={Clock}
+        />
 
-        <Card title="SLA Breaches" className="bg-red-50 border-red-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-red-600">{slaBreaches.breaches}</p>
-              <p className="text-sm text-red-700 mt-1">Overdue tasks</p>
-            </div>
-            <AlertTriangle className="h-12 w-12 text-red-400 opacity-50" />
-          </div>
-        </Card>
+        <StatusCard
+          title="SLA Breaches"
+          value={slaBreaches.breaches}
+          subtitle="Overdue tasks"
+          status="error"
+          icon={AlertTriangle}
+        />
 
-        <Card title="Workflow Efficiency" className="bg-green-50 border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-green-600">87%</p>
-              <p className="text-sm text-green-700 mt-1">On-time completion rate</p>
-            </div>
-            <CheckCircle2 className="h-12 w-12 text-green-400 opacity-50" />
-          </div>
-        </Card>
+        <StatusCard
+          title="Workflow Efficiency"
+          value="87%"
+          subtitle="On-time completion rate"
+          status="success"
+          icon={CheckCircle2}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -4,6 +4,7 @@ import { TimeEntry, BillingModel } from '../../types';
 import { Download, Clock, DollarSign } from 'lucide-react';
 import { toNumber } from '../../utils/type-transformers';
 import { Badge } from '../common';
+import { EmptyState } from '../common/EmptyState';
 
 interface CaseBillingProps {
     billingModel: BillingModel;
@@ -67,7 +68,13 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 italic">No time entries recorded yet.</td>
+                                    <td colSpan={5}>
+                                        <EmptyState
+                                            title="No time entries recorded yet"
+                                            description="Track billable hours and expenses for this case."
+                                            variant="inline"
+                                        />
+                                    </td>
                                 </tr>
                             )}
                         </tbody>
@@ -91,7 +98,11 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                             </div>
                         </div>
                     )) : (
-                        <div className="p-8 text-center text-slate-500 italic">No time entries recorded yet.</div>
+                        <EmptyState
+                            title="No time entries recorded yet"
+                            description="Track billable hours and expenses for this case."
+                            variant="card"
+                        />
                     )}
                 </div>
             </div>

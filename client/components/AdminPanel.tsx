@@ -9,10 +9,19 @@ import { AdminHierarchy } from './admin/AdminHierarchy';
 import { PageHeader } from './common/PageHeader';
 import { Card } from './common/Card';
 import { Button } from './common/Button';
+import { SidebarNavigation } from './common/SidebarNavigation';
 
 export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('hierarchy');
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+
+  const navigationItems = [
+    { id: 'hierarchy', label: 'Hierarchy & Access', icon: Network },
+    { id: 'logs', label: 'Audit Logs', icon: Activity },
+    { id: 'security', label: 'Security & Roles', icon: Shield },
+    { id: 'integrations', label: 'Integrations', icon: Link },
+    { id: 'data', label: 'Platform Data', icon: Database }
+  ];
 
   useEffect(() => {
     if (activeTab === 'logs') {
@@ -28,23 +37,11 @@ export const AdminPanel: React.FC = () => {
       />
       
       <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
-        <div className="w-full md:w-64 flex flex-col space-y-2 shrink-0">
-            <button onClick={() => setActiveTab('hierarchy')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'hierarchy' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Network className="h-4 w-4 mr-3"/> Hierarchy & Access
-            </button>
-            <button onClick={() => setActiveTab('logs')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'logs' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Activity className="h-4 w-4 mr-3"/> Audit Logs
-            </button>
-            <button onClick={() => setActiveTab('security')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'security' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Shield className="h-4 w-4 mr-3"/> Security & Roles
-            </button>
-            <button onClick={() => setActiveTab('integrations')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'integrations' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Link className="h-4 w-4 mr-3"/> Integrations
-            </button>
-            <button onClick={() => setActiveTab('data')} className={`p-3 rounded-lg text-left font-medium flex items-center transition-colors ${activeTab === 'data' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <Database className="h-4 w-4 mr-3"/> Platform Data
-            </button>
-        </div>
+        <SidebarNavigation
+          items={navigationItems}
+          activeItem={activeTab}
+          onItemChange={setActiveTab}
+        />
 
         <Card className="flex-1 overflow-hidden flex flex-col p-0">
             {activeTab === 'hierarchy' && <AdminHierarchy />}

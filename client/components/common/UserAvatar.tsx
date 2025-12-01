@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { COLORS } from '../../constants/design-tokens';
 
 interface UserAvatarProps {
   name: string;
@@ -16,8 +17,13 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 'md', class
 
   const safeName = name || '??';
   const initials = safeName.substring(0, 2).toUpperCase();
-  const colors = ['bg-blue-100 text-blue-700', 'bg-slate-200 text-slate-600', 'bg-purple-100 text-purple-700', 'bg-green-100 text-green-700'];
-  const colorClass = colors[safeName.length % colors.length];
+  const colorVariants = [
+    `${COLORS.status.active.bg} ${COLORS.status.active.text}`,
+    `${COLORS.status.inactive.bg} ${COLORS.status.inactive.text}`,
+    `${COLORS.status.info.bg} ${COLORS.status.info.text}`,
+    `${COLORS.status.success.bg} ${COLORS.status.success.text}`
+  ];
+  const colorClass = colorVariants[safeName.length % colorVariants.length];
 
   return (
     <div className={`${sizeClasses[size]} ${colorClass} rounded-full flex items-center justify-center font-bold shrink-0 ${className}`}>

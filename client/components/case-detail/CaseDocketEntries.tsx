@@ -4,9 +4,8 @@ import { DocketEntry } from '../../types';
 import { ApiService } from '../../services/apiService';
 import { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Button } from '../common/Button';
-import { Plus, ExternalLink, FileText, Filter, Calendar, Download, Search } from 'lucide-react';
+import { Plus, ExternalLink, FileText, Calendar, Download, Search } from 'lucide-react';
 import { Badge } from '../common/Badge';
-import { Input } from '../common/Inputs';
 
 interface CaseDocketEntriesProps {
   caseId: string;

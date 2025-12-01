@@ -5,6 +5,7 @@ import { useCalendarView } from '../../hooks/useCalendarView';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
+import { BADGE_VARIANTS } from '../../constants/design-tokens';
 
 interface CalendarMasterProps {
   onNavigateToCase?: (caseId: string) => void;
@@ -22,9 +23,9 @@ export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   const getEventStyle = (type: string, priority: string) => {
-    if (type === 'case') return 'bg-purple-50 border-purple-100 text-purple-700';
-    if (type === 'compliance') return 'bg-amber-50 border-amber-100 text-amber-700';
-    return priority === 'High' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-blue-50 border-blue-100 text-blue-700';
+    if (type === 'case') return BADGE_VARIANTS['event-case'];
+    if (type === 'compliance') return BADGE_VARIANTS['event-compliance'];
+    return priority === 'High' ? BADGE_VARIANTS['event-task-high'] : BADGE_VARIANTS['event-task-normal'];
   };
 
   const getEventIcon = (type: string) => {

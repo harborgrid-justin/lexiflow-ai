@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertTriangle, ShieldAlert, MapPin } from 'lucide-react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { ApiService } from '../../services/apiService';
+import { Badge } from '../common/Badge';
 
 interface SOLData {
   date: string;
@@ -80,9 +81,9 @@ export const CalendarSOL: React.FC = () => {
             <div key={i} className={`p-4 rounded-lg border shadow-sm ${row.critical ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-2">
                     <span className={`text-lg font-bold ${row.critical ? 'text-red-700' : 'text-slate-700'}`}>{row.date}</span>
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${row.critical ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>
+                    <Badge variant={row.critical ? 'error' : 'inactive'} size="sm">
                         {row.daysLeft} Days Left
-                    </span>
+                    </Badge>
                 </div>
                 <h4 className="font-bold text-slate-900 text-sm mb-1">{row.matter}</h4>
                 <p className="text-xs text-slate-600 mb-3">{row.cause}</p>

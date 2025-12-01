@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Card } from '../common/Card';
+import { COLORS } from '../../constants/design-tokens';
 import type { TaskSLAStatus, SLABreachReport } from '../../types/workflow-engine';
 
 interface SLAMonitorProps {
@@ -57,11 +58,11 @@ export const SLAMonitor: React.FC<SLAMonitorProps> = ({
   const getSLAColor = (status: string) => {
     switch (status) {
       case 'breached':
-        return 'bg-red-50 border-red-200 text-red-800';
+        return `${COLORS.status.error.bg} ${COLORS.status.error.border} ${COLORS.status.error.text}`;
       case 'warning':
-        return 'bg-amber-50 border-amber-200 text-amber-800';
+        return `${COLORS.status.warning.bg} ${COLORS.status.warning.border} ${COLORS.status.warning.text}`;
       default:
-        return 'bg-green-50 border-green-200 text-green-800';
+        return `${COLORS.status.success.bg} ${COLORS.status.success.border} ${COLORS.status.success.text}`;
     }
   };
 

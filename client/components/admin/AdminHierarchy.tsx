@@ -81,6 +81,7 @@ export const AdminHierarchy: React.FC = () => {
                       <Badge variant={org.type === 'Corporate' ? 'active' : 'inactive'} size="sm" className="mt-1">
                         {org.type}
                       </Badge>
+                    </div>
                   </div>
                   {selectedOrgId === org.id && <ChevronRight className="h-4 w-4 text-blue-600 hidden md:block"/>}
                 </div>
@@ -125,7 +126,9 @@ export const AdminHierarchy: React.FC = () => {
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {(group.permissions || []).slice(0, 2).map(p => (
-                        <span key={p} className="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">{p.replace('_', ' ')}</span>
+                        <Badge key={p} variant="permission" size="sm" className="text-[9px]">
+                          {p.replace('_', ' ')}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -181,13 +184,9 @@ export const AdminHierarchy: React.FC = () => {
                             <div className="text-xs font-medium text-slate-700">{user.role}</div>
                         </td>
                         <td className="px-4 py-3">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                            user.userType === 'Internal' 
-                                ? 'bg-purple-50 text-purple-700 border-purple-100' 
-                                : 'bg-amber-50 text-amber-700 border-amber-100'
-                            }`}>
-                            {user.userType}
-                            </span>
+                            <Badge variant={user.userType === 'Internal' ? 'user-internal' : 'user-external'} size="sm">
+                              {user.userType}
+                            </Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
                             <span className="flex items-center justify-end text-xs text-green-600 font-medium">

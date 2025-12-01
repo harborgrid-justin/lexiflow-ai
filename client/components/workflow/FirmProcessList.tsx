@@ -3,6 +3,7 @@ import React from 'react';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { ActionButtonGroup, ActionButton } from '../common/ActionButtonGroup';
 import { UserPlus, FileCheck, RefreshCw, Play, Database, ShieldAlert, Scale, Archive, Lock } from 'lucide-react';
 
 interface Process {
@@ -28,7 +29,7 @@ export const FirmProcessList: React.FC<FirmProcessListProps> = ({ processes }) =
     if (name.includes('Admission') || name.includes('Pro Hac')) return <Scale className="h-5 w-5 text-indigo-600"/>;
     if (name.includes('Closing') || name.includes('Archive')) return <Archive className="h-5 w-5 text-slate-600"/>;
     if (name.includes('Hold') || name.includes('Enforcement')) return <Lock className="h-5 w-5 text-amber-600"/>;
-    return <RefreshCw className="h-5 w-5 text-gray-600"/>;
+    return <RefreshCw className="h-5 w-5 text-slate-600"/>;
   };
 
   return (
@@ -73,10 +74,17 @@ export const FirmProcessList: React.FC<FirmProcessListProps> = ({ processes }) =
                 )}
             </div>
 
-            <div className="p-3 border-t border-slate-100 flex gap-2">
-                <Button variant="ghost" size="sm" className="flex-1 text-xs">Log</Button>
-                <Button variant="outline" size="sm" className="flex-1 text-xs">Configure</Button>
-                {bp.status !== 'Active' && <Button variant="primary" size="sm" className="flex-1 text-xs" icon={Play}>Start</Button>}
+            <div className="p-3 border-t border-slate-100">
+              <ActionButtonGroup
+                actions={[
+                  { label: 'Log', onClick: () => {}, variant: 'ghost', size: 'sm' },
+                  { label: 'Configure', onClick: () => {}, variant: 'outline', size: 'sm' },
+                  ...(bp.status !== 'Active' ? [
+                    { label: 'Start', onClick: () => {}, variant: 'primary', size: 'sm', icon: Play }
+                  ] : [])
+                ]}
+                justify="start"
+              />
             </div>
             </Card>
         ))}

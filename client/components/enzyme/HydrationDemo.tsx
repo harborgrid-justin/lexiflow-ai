@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   HydrationProvider,
   HydrationBoundary,
@@ -8,7 +8,6 @@ import {
 import { Droplets, Zap, Clock, CheckCircle, AlertCircle, ArrowLeft, TrendingUp, Users, FileText, DollarSign, Loader2, Eye } from 'lucide-react';
 import { Case } from '../../types';
 import { useApiRequest } from '../../services/enzyme';
-import { CaseCard } from './CaseCard';
 
 // Metrics Dashboard Component
 function HydrationMetricsDashboard() {

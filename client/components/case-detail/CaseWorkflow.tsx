@@ -9,6 +9,7 @@ import {
 import { Button, Badge } from '../common';
 import { UserAvatar } from '../common/UserAvatar';
 import { EnhancedWorkflowPanel } from '../workflow/EnhancedWorkflowPanel';
+import { BUTTON_VARIANTS } from '../../constants/design-tokens';
 
 interface CaseWorkflowProps {
   stages: WorkflowStage[];
@@ -124,12 +125,18 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
                             onClick={() => setExpandedStage(isExpanded ? null : stage.id)}
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 text-xs font-bold ${
-                                    stage.status === 'Completed' ? 'bg-green-100 border-green-500 text-green-700' :
-                                    stage.status === 'Active' ? 'bg-blue-100 border-blue-500 text-blue-700' :
-                                    'bg-slate-50 border-slate-300 text-slate-400'
-                                }`}>
-                                    {stage.status === 'Completed' ? <CheckCircle className="h-5 w-5"/> : index + 1}
+                                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 text-xs font-bold`}>
+                                    {stage.status === 'Completed' ? (
+                                        <Badge variant="stage-completed" size="sm" className="w-6 h-6 flex items-center justify-center p-0">
+                                            <CheckCircle className="h-4 w-4"/>
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant={
+                                            stage.status === 'Active' ? 'stage-active' : 'stage-pending'
+                                        } size="sm" className="w-6 h-6 flex items-center justify-center p-0">
+                                            {index + 1}
+                                        </Badge>
+                                    )}
                                 </div>
                                 <div>
                                     <h4 className={`font-bold text-lg ${isActive ? 'text-blue-900' : 'text-slate-800'}`}>{stage.title}</h4>
@@ -191,7 +198,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
                                         {task.relatedModule && onNavigateToModule && (
                                             <button 
                                                 onClick={() => onNavigateToModule(task.relatedModule!)}
-                                                className="w-full md:w-auto mt-2 md:mt-0 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md text-xs font-bold flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+                                                className={`${BUTTON_VARIANTS.indigo} flex items-center justify-center gap-2 whitespace-nowrap`}
                                             >
                                                 {getModuleIcon(task.relatedModule)}
                                                 {task.actionLabel || 'View Module'}

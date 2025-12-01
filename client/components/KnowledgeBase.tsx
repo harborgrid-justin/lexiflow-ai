@@ -4,6 +4,7 @@ import { Search, Book, FileText, Lightbulb, MessageCircle } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { Card } from './common/Card';
+import { Badge } from './common/Badge';
 import { ApiService } from '../services/apiService';
 import { KnowledgeItem } from '../types';
 import { ensureTagsArray } from '../utils/type-transformers';
@@ -73,7 +74,9 @@ export const KnowledgeBase: React.FC = () => {
                      <Card key={item.id} className="hover:border-blue-300 cursor-pointer group transition-all">
                         <div className="flex items-center justify-between mb-2">
                             {item.metadata.icon === 'Book' ? <Book className="h-5 w-5 text-purple-500"/> : <Lightbulb className="h-5 w-5 text-amber-500"/>}
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${item.metadata.color === 'purple' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}>{item.category}</span>
+                            <Badge variant={item.metadata.color === 'purple' ? 'category-purple' : 'category-amber'} size="sm">
+                              {item.category}
+                            </Badge>
                         </div>
                         <h3 className="font-bold text-slate-900 group-hover:text-blue-600">{item.title}</h3>
                         <p className="text-sm text-slate-500 mt-2">{item.summary}</p>

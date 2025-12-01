@@ -58,7 +58,7 @@ const LoginForm: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="relative block w-full px-3 py-2 border border-gray-300 rounded-t-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="relative block w-full px-3 py-2 border border-slate-300 rounded-t-md placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="Email address"
           />
         </div>
@@ -68,7 +68,7 @@ const LoginForm: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="relative block w-full px-3 py-2 border border-gray-300 rounded-b-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="relative block w-full px-3 py-2 border border-slate-300 rounded-b-md placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="Password"
           />
         </div>
@@ -110,15 +110,15 @@ const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
           <div className="px-4 py-2 border-b">
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            <p className="text-sm font-medium text-slate-900">{user.name}</p>
+            <p className="text-sm text-slate-500">{user.email}</p>
           </div>
           <button
             onClick={() => {
               logout();
               setIsOpen(false);
             }}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
           >
             Sign out
           </button>

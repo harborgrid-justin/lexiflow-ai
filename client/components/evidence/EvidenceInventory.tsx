@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
+import { StatCard } from '../common/Stats';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Plus, Box, Activity, FileText, Fingerprint, Filter } from 'lucide-react';
 import { EvidenceItem } from '../../types';
@@ -108,31 +109,34 @@ export const EvidenceInventory: React.FC<EvidenceInventoryProps> = ({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card noPadding className="border-l-4 border-l-blue-500">
-            <div className="p-4">
-                <p className="text-xs font-bold text-slate-500 uppercase">Filtered Items</p>
-                <p className="text-2xl font-bold text-slate-900">{filteredItems.length}</p>
-            </div>
-        </Card>
-        {/* Statistics could be dynamic based on filtered items */}
-        <Card noPadding className="border-l-4 border-l-amber-500">
-            <div className="p-4">
-                <p className="text-xs font-bold text-slate-500 uppercase">Challenged (Visible)</p>
-                <p className="text-2xl font-bold text-slate-900">{filteredItems.filter(e => e.admissibility === 'Challenged').length}</p>
-            </div>
-        </Card>
-        <Card noPadding className="border-l-4 border-l-green-500">
-            <div className="p-4">
-                <p className="text-xs font-bold text-slate-500 uppercase">Secure Storage</p>
-                <p className="text-2xl font-bold text-slate-900">100%</p>
-            </div>
-        </Card>
-        <Card noPadding className="border-l-4 border-l-purple-500">
-            <div className="p-4">
-                <p className="text-xs font-bold text-slate-500 uppercase">Digital Assets</p>
-                <p className="text-2xl font-bold text-slate-900">{filteredItems.filter(e => e.type === 'Digital').length}</p>
-            </div>
-        </Card>
+        <StatCard
+          label="Filtered Items"
+          value={filteredItems.length}
+          icon={Box}
+          color="text-blue-600"
+          bg="bg-blue-50"
+        />
+        <StatCard
+          label="Challenged (Visible)"
+          value={filteredItems.filter(e => e.admissibility === 'Challenged').length}
+          icon={Activity}
+          color="text-amber-600"
+          bg="bg-amber-50"
+        />
+        <StatCard
+          label="Secure Storage"
+          value="100%"
+          icon={Fingerprint}
+          color="text-green-600"
+          bg="bg-green-50"
+        />
+        <StatCard
+          label="Digital Assets"
+          value={filteredItems.filter(e => e.type === 'Digital').length}
+          icon={FileText}
+          color="text-purple-600"
+          bg="bg-purple-50"
+        />
       </div>
 
       <TableContainer>

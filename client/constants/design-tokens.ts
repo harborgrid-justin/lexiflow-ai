@@ -153,6 +153,24 @@ export const BADGE_VARIANTS = {
   high: 'bg-red-100 text-red-700',
   medium: 'bg-amber-100 text-amber-700',
   low: 'bg-blue-100 text-blue-700',
+  
+  // Calendar event types
+  'event-case': 'bg-purple-50 border-purple-100 text-purple-700',
+  'event-compliance': 'bg-amber-50 border-amber-100 text-amber-700',
+  'event-task-high': 'bg-red-50 border-red-100 text-red-700',
+  'event-task-normal': 'bg-blue-50 border-blue-100 text-blue-700',
+  
+  // User types
+  'user-internal': 'bg-purple-50 text-purple-700 border-purple-100',
+  'user-external': 'bg-amber-50 text-amber-700 border-amber-100',
+  
+  // Permission badges
+  permission: 'bg-slate-200 text-slate-600',
+  
+  // Stage status badges
+  'stage-completed': 'bg-green-100 border-green-500 text-green-700',
+  'stage-active': 'bg-blue-100 border-blue-500 text-blue-700',
+  'stage-pending': 'bg-slate-50 border-slate-300 text-slate-400',
 } as const;
 
 // Layout container classes
@@ -177,6 +195,7 @@ export const BUTTON_VARIANTS = {
   secondary: `${COLORS.neutral[100]} hover:bg-slate-200 ${COLORS.neutral.text} px-4 py-2 rounded-md font-medium ${ANIMATIONS.transition}`,
   outline: `border ${COLORS.neutral.border} ${COLORS.neutral.text} hover:bg-slate-50 px-4 py-2 rounded-md font-medium ${ANIMATIONS.transition}`,
   ghost: `${COLORS.neutral.text} hover:bg-slate-100 px-4 py-2 rounded-md font-medium ${ANIMATIONS.transition}`,
+  indigo: `bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-md text-xs font-bold ${ANIMATIONS.transition}`,
 } as const;
 
 // Input field styles

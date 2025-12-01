@@ -2,6 +2,7 @@
 import React from 'react';
 import { TimelineEvent } from '../../types';
 import { FileText, CheckCircle, DollarSign, Flag, Briefcase, Gavel, Calendar, ExternalLink, Scale } from 'lucide-react';
+import { EmptyState } from '../common/EmptyState';
 
 interface CaseTimelineProps {
   events: TimelineEvent[];
@@ -43,7 +44,12 @@ export const CaseTimeline: React.FC<CaseTimelineProps> = ({ events, onEventClick
       </div>
       <div className="overflow-y-auto p-4 flex-1">
         {events.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center italic py-4">No events recorded.</p>
+          <EmptyState
+            icon={Calendar}
+            title="No events recorded"
+            description="Case timeline will populate as documents, motions, and billing entries are added."
+            variant="card"
+          />
         ) : (
           <div className="relative border-l-2 border-slate-200 ml-3 space-y-6 pb-2">
             {events.map((event) => (

@@ -114,7 +114,7 @@ export function PacerImportModal({ onClose, onImportComplete }: PacerImportModal
 
       setDocketText(text);
       setError(null);
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to read the uploaded file. Please try again.');
     }
   };
@@ -202,7 +202,6 @@ export function PacerImportModal({ onClose, onImportComplete }: PacerImportModal
   const handleDrop = (targetField: string) => {
     if (draggedField && parsedData) {
       // Swap field values
-      const temp = { ...parsedData };
       // This is a simplified version - you'd implement actual field swapping logic
       console.log(`Mapping ${draggedField} to ${targetField}`);
     }

@@ -4,6 +4,8 @@ import { ArrowLeft, Upload, FileText, Check, Settings, ShieldCheck } from 'lucid
 import { Button } from '../common/Button';
 import { DiscoveryRequest } from '../../types';
 import { DocumentService } from '../../services/documentService';
+import { FormSection } from '../common/FormSection';
+import { FormFieldGroup } from '../common/FormFieldGroup';
 
 interface DiscoveryProductionProps {
   request: DiscoveryRequest | null;
@@ -45,13 +47,14 @@ export const DiscoveryProduction: React.FC<DiscoveryProductionProps> = ({ reques
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Configuration */}
             <div className="w-full md:w-80 border-r border-slate-200 p-6 bg-slate-50/50 space-y-6">
-                <div>
-                    <h3 className="font-bold text-sm text-slate-800 flex items-center mb-3"><Settings className="h-4 w-4 mr-2"/> Production Settings</h3>
-                    <div className="space-y-4">
+                <FormSection title="Production Settings" icon={Settings}>
+                    <FormFieldGroup columns={1}>
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Bates Numbering Start</label>
                             <input className="w-full p-2 border rounded text-sm font-mono" value={batesStart} onChange={e => setBatesStart(e.target.value)} />
                         </div>
+                    </FormFieldGroup>
+                    <FormFieldGroup columns={1} className="mt-4">
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Format</label>
                             <select className="w-full p-2 border rounded text-sm">
@@ -60,6 +63,8 @@ export const DiscoveryProduction: React.FC<DiscoveryProductionProps> = ({ reques
                                 <option>TIFF (Single Page)</option>
                             </select>
                         </div>
+                    </FormFieldGroup>
+                    <FormFieldGroup columns={1} className="mt-4">
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Confidentiality Stamp</label>
                             <select className="w-full p-2 border rounded text-sm">
@@ -68,9 +73,9 @@ export const DiscoveryProduction: React.FC<DiscoveryProductionProps> = ({ reques
                                 <option>ATTORNEY EYES ONLY</option>
                             </select>
                         </div>
-                    </div>
-                </div>
-                
+                    </FormFieldGroup>
+                </FormSection>
+
                 <div className="p-3 bg-green-50 border border-green-200 rounded text-green-800 text-xs flex items-start">
                     <ShieldCheck className="h-4 w-4 mr-2 shrink-0"/>
                     <p>Privilege filter active. Documents tagged 'Privileged' will be auto-flagged for withheld log.</p>

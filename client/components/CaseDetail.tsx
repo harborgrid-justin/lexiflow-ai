@@ -19,7 +19,7 @@ import { CaseTeam } from './case-detail/CaseTeam';
 import { CaseDocketEntries } from './case-detail/CaseDocketEntries';
 import { useCaseDetail } from '../hooks/useCaseDetail';
 import { WorkflowQuickActions } from './workflow/WorkflowQuickActions';
-import { Button } from './common/Button';
+import { TabNavigation } from './common/TabNavigation';
 
 interface CaseDetailProps {
   caseData: Case;
@@ -116,13 +116,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
         }
       />
 
-      <div className="border-b border-slate-200 mb-6">
-        <nav className="flex space-x-8 overflow-x-auto no-scrollbar pb-1">
-          {TABS.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{tab}</button>
-          ))}
-        </nav>
-      </div>
+      <TabNavigation
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        variant="underline"
+        className="mb-6"
+      />
 
       <div className="flex-1 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
