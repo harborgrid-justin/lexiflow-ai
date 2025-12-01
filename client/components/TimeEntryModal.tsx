@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Clock, Wand2, DollarSign } from 'lucide-react';
-import { OpenAIService } from '../services/openAIService';
 import { Modal } from './common/Modal';
 import { Button } from './common/Button';
 import { Input, TextArea } from './common/Inputs';
 import { FormSection } from './common/FormSection';
 import { FormFieldGroup } from './common/FormFieldGroup';
+import { useTimeEntryModal } from '../hooks/useTimeEntryModal';
 
 interface TimeEntryModalProps {
   isOpen: boolean;
@@ -16,29 +16,10 @@ interface TimeEntryModalProps {
 }
 
 export const TimeEntryModal: React.FC<TimeEntryModalProps> = ({ isOpen, onClose, caseId, onSave }) => {
-  const [desc, setDesc] = useState('');
-  const [duration, setDuration] = useState('0.5');
-  const [isRefining, setIsRefining] = useState(false);
+  const { desc, setDesc, duration, setDuration, isRefining, handleRefine, handleSave } = useTimeEntryModal();
 
-  const handleRefine = async () => {
-    if (!desc) return;
-    setIsRefining(true);
-    const polished = await OpenAIService.refineTimeEntry(desc);
-    setDesc(polished);
-    setIsRefining(false);
-  };
-
-  const handleSave = () => {
-    onSave({ 
-      caseId: caseId || 'General', 
-      date: new Date().toISOString().split('T')[0], 
-      duration: parseFloat(duration) * 60, 
-      description: desc, 
-      rate: 450, 
-      total: parseFloat(duration) * 450, 
-      status: 'Unbilled' 
-    });
-    setDesc('');
+  const onSaveEntry = () => {
+    handleSave(onSave, caseId);
     onClose();
   };
 
@@ -104,7 +85,7 @@ export const TimeEntryModal: React.FC<TimeEntryModalProps> = ({ isOpen, onClose,
         </FormSection>
 
         <div className="pt-2">
-          <Button variant="primary" className="w-full" onClick={handleSave}>
+          <Button variant="primary" className="w-full" onClick={onSaveEntry}>
             Save Time Entry
           </Button>
         </div>

@@ -1,33 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Activity, Shield, Link, Database, Network } from 'lucide-react';
-import { ApiService } from '../services/apiService';
-import { AuditLogEntry } from '../types';
-import { AdminAuditLog } from './admin/AdminAuditLog';
-import { AdminPlatformManager } from './admin/AdminPlatformManager';
-import { AdminHierarchy } from './admin/AdminHierarchy';
 import { PageHeader } from './common/PageHeader';
 import { Card } from './common/Card';
 import { Button } from './common/Button';
 import { SidebarNavigation } from './common/SidebarNavigation';
+import { useAdminPanel } from '../hooks/useAdminPanel';
 
 export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('hierarchy');
-  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
-
-  const navigationItems = [
-    { id: 'hierarchy', label: 'Hierarchy & Access', icon: Network },
-    { id: 'logs', label: 'Audit Logs', icon: Activity },
-    { id: 'security', label: 'Security & Roles', icon: Shield },
-    { id: 'integrations', label: 'Integrations', icon: Link },
-    { id: 'data', label: 'Platform Data', icon: Database }
-  ];
-
-  useEffect(() => {
-    if (activeTab === 'logs') {
-      ApiService.getAuditLogs().then(setLogs).catch(console.error);
-    }
-  }, [activeTab]);
+  const { logs } = useAdminPanel(activeTab);
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">

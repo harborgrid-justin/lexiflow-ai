@@ -1,10 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PageHeader } from './common/PageHeader';
 import { Button } from './common/Button';
 import { TabNavigation, TabItem } from './common/TabNavigation';
-import { DiscoveryRequest } from '../types';
-import { ApiService } from '../services/apiService';
 import { 
   MessageCircle, Plus, Scale, Shield, Users, Lock, Clock
 } from 'lucide-react';
@@ -16,13 +14,14 @@ import { LegalHolds } from './discovery/LegalHolds';
 import { DiscoveryDocumentViewer } from './discovery/DiscoveryDocumentViewer';
 import { DiscoveryResponse } from './discovery/DiscoveryResponse';
 import { DiscoveryProduction } from './discovery/DiscoveryProduction';
+import { useDiscoveryPlatform } from '../hooks/useDiscoveryPlatform';
 
 type DiscoveryView = 'dashboard' | 'requests' | 'privilege' | 'holds' | 'plan' | 'doc_viewer' | 'response' | 'production';
 
 export const DiscoveryPlatform: React.FC = () => {
   const [view, setView] = useState<DiscoveryView>('dashboard');
   const [contextId, setContextId] = useState<string | null>(null); // To store ID of doc or request being viewed/edited
-  const [requests, setRequests] = useState<DiscoveryRequest[]>([]);
+  const { requests } = useDiscoveryPlatform();
   const primaryTabs: TabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Scale },
     { id: 'requests', label: 'Requests & Responses', icon: MessageCircle },
@@ -30,19 +29,6 @@ export const DiscoveryPlatform: React.FC = () => {
     { id: 'holds', label: 'Legal Holds', icon: Lock },
     { id: 'plan', label: 'Discovery Plan (26(f))', icon: Users },
   ];
-
-  useEffect(() => {
-    const fetchDiscovery = async () => {
-        try {
-            const data = await ApiService.getDiscovery();
-            setRequests(data || []);
-        } catch (e) {
-            console.error("Failed to fetch discovery", e);
-            setRequests([]);
-        }
-    };
-    fetchDiscovery();
-  }, []);
 
   const handleNavigate = (targetView: DiscoveryView, id?: string) => {
     if (id) setContextId(id);

@@ -1,46 +1,25 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Client } from '../types';
-import { ApiService } from '../services/apiService';
 import { UserPlus, PieChart, Lock } from 'lucide-react';
 import { ClientIntakeModal } from './ClientIntakeModal';
 import { ClientPortalModal } from './ClientPortalModal';
 import { PageHeader, Button, Card, Avatar, Badge, EmptyState } from './common';
+import { useClientCRM } from '../hooks/useClientCRM';
 
 export const ClientCRM: React.FC = () => {
   const [showIntake, setShowIntake] = useState(false);
   const [selectedClientPortal, setSelectedClientPortal] = useState<Client | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients, handleAddClient } = useClientCRM();
 
-  useEffect(() => {
-    const fetchClients = async () => {
-        try {
-            const data = await ApiService.getClients();
-            setClients(data || []);
-        } catch (e) {
-            console.error("Failed to fetch clients", e);
-            setClients([]);
-        }
-    };
-    fetchClients();
-  }, []);
-
-  const handleAddClient = (clientName: string) => {
-      const newClient: Client = {
-          id: `cli-${Date.now()}`,
-          name: clientName,
-          industry: 'General',
-          status: 'Prospect',
-          totalBilled: 0,
-          matters: []
-      };
-      setClients([...clients, newClient]);
-      setShowIntake(false);
+  const handleAddClientWithModal = (clientName: string) => {
+    handleAddClient(clientName);
+    setShowIntake(false);
   };
 
   return (
     <div className="space-y-6 relative animate-fade-in">
-      {showIntake && <ClientIntakeModal onClose={() => setShowIntake(false)} onSave={handleAddClient}/>}
+      {showIntake && <ClientIntakeModal onClose={() => setShowIntake(false)} onSave={handleAddClientWithModal}/>}
       
       {selectedClientPortal && (
         <ClientPortalModal client={selectedClientPortal} onClose={() => setSelectedClientPortal(null)} />

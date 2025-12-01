@@ -1,46 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase } from 'lucide-react';
-import { ApiService } from '../services/apiService';
-import { Client } from '../types';
 import { PageHeader, Button, Card, Avatar, Badge } from './common';
 import { StatCard } from './common/Stats';
+import { useBillingDashboard } from '../hooks/useBillingDashboard';
 
 interface BillingDashboardProps {
   navigateTo?: (view: string) => void;
 }
 
 export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }) => {
-  const [wipData, setWipData] = useState<any[]>([]);
-  const [realizationData, setRealizationData] = useState<any[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const [stats, c] = await Promise.all([
-                ApiService.getBillingStats(),
-                ApiService.getClients()
-            ]);
-            if (stats && stats.wip) {
-              setWipData(stats.wip.map((w: any) => ({ month: w.month, wip: w.amount })));
-            }
-            if (stats && stats.realization) {
-              setRealizationData(stats.realization);
-            }
-            setClients(c || []);
-        } catch (e) {
-            console.error("Failed to fetch billing data", e);
-            setWipData([]);
-            setRealizationData([]);
-            setClients([]);
-        }
-    };
-    fetchData();
-  }, []);
-
-  const totalWip = wipData.reduce((acc, curr) => acc + curr.wip, 0);
+  const { wipData, realizationData, clients, totalWip } = useBillingDashboard();
 
   return (
     <div className="space-y-6 animate-fade-in">

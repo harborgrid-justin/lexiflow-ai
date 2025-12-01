@@ -1,14 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { ApiService } from '../services/apiService';
-import { Briefcase, Clock, FileText, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { StatCard } from './common/Stats';
 import { Card } from './common/Card';
 import { Button } from './common/Button';
 import { StatusCard } from './common/StatusCard';
-import { useWorkflowEngine } from '../hooks/useWorkflowEngine';
+import { useDashboard } from '../hooks/useDashboard';
 
 interface DashboardProps {
   onSelectCase: (caseId: string) => void;
@@ -16,44 +15,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
   const CHART_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#f59e0b'];
-  const [stats, setStats] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [_currentUserId] = useState('1'); // Replace with actual current user ID
-  const { checkSLABreaches } = useWorkflowEngine();
-  const [slaBreaches, setSlaBreaches] = useState({ warnings: 0, breaches: 0 });
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-        try {
-            const data = await ApiService.getDashboard();
-            if (!data) return;
-            // Map icon strings back to components
-            const mappedStats = (data.stats || []).map((s: any) => ({
-                ...s,
-                icon: s.icon === 'Briefcase' ? Briefcase : s.icon === 'FileText' ? FileText : s.icon === 'Clock' ? Clock : AlertTriangle
-            }));
-            setStats(mappedStats);
-            setChartData(data.chartData || []);
-            setAlerts(data.alerts || []);
-            
-            // Load SLA breach data
-            const breachData = await checkSLABreaches();
-            if (breachData) {
-              setSlaBreaches({
-                warnings: breachData.warnings?.length || 0,
-                breaches: breachData.breaches?.length || 0
-              });
-            }
-        } catch (e) {
-            console.error("Failed to fetch dashboard", e);
-            setStats([]);
-            setChartData([]);
-            setAlerts([]);
-        }
-    };
-    fetchDashboard();
-  }, [checkSLABreaches]);
+  const { stats, chartData, alerts, slaBreaches } = useDashboard();
 
   return (
     <div className="space-y-6 animate-fade-in">

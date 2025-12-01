@@ -1,44 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Book, FileText, Lightbulb, MessageCircle } from 'lucide-react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
 import { Card } from './common/Card';
 import { Badge } from './common/Badge';
-import { ApiService } from '../services/apiService';
-import { KnowledgeItem } from '../types';
+import { useKnowledgeBase } from '../hooks/useKnowledgeBase';
 import { ensureTagsArray } from '../utils/type-transformers';
 
 export const KnowledgeBase: React.FC = () => {
   const [tab, setTab] = useState<'wiki'|'precedents'|'qa'>('wiki');
-  const [items, setItems] = useState<KnowledgeItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const categoryMap: Record<string, string> = {
-            'wiki': 'Playbook',
-            'precedents': 'Precedent',
-            'qa': 'Q&A'
-        };
-        const data = await ApiService.getKnowledgeBase(categoryMap[tab]);
-        setItems(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [tab]);
-
-  const filteredItems = items.filter(i =>
-    (i.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (i.summary || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { items, loading, searchTerm, setSearchTerm, filteredItems } = useKnowledgeBase(tab);
 
   return (
     <div className="space-y-6 animate-fade-in">

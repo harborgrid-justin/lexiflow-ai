@@ -1,33 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PageHeader } from './common/PageHeader';
 import { Tabs } from './common/Tabs';
-import { ApiService } from '../services/apiService';
 import { JudgeAnalytics } from './analytics/JudgeAnalytics';
 import { CounselAnalytics } from './analytics/CounselAnalytics';
 import { CasePrediction } from './analytics/CasePrediction';
-import { JudgeProfile, OpposingCounselProfile } from '../types';
+import { useAnalyticsDashboard } from '../hooks/useAnalyticsDashboard';
 
 export const AnalyticsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('judge');
-  const [judgeData, setJudgeData] = useState<{profile: JudgeProfile, stats: any[]} | null>(null);
-  const [counselData, setCounselData] = useState<{profile: OpposingCounselProfile, outcomes: any[]} | null>(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const [j, c] = await Promise.all([
-                ApiService.getJudgeAnalytics(),
-                ApiService.getCounselAnalytics()
-            ]);
-            setJudgeData(j);
-            setCounselData(c);
-        } catch (e) {
-            console.error("Failed to fetch analytics", e);
-        }
-    };
-    fetchData();
-  }, []);
+  const { judgeData, counselData } = useAnalyticsDashboard();
 
   if (!judgeData || !counselData) return <div className="p-8 text-center text-slate-500">Loading analytics...</div>;
 

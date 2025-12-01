@@ -4,6 +4,10 @@ import { LegalDocument, User } from '../../types';
 import { FileText, Cpu, Sparkles, Bot, Plus, Wand2, Eye, ExternalLink, Scale } from 'lucide-react';
 import { DocumentAssembly } from '../DocumentAssembly';
 import { ensureTagsArray } from '../../utils/type-transformers';
+import { Button } from '../common/Button';
+import { Input } from '../common/Inputs';
+import { Card } from '../common/Card';
+import { Badge } from '../common/Badge';
 
 interface CaseDocumentsProps {
   documents: LegalDocument[];
@@ -47,23 +51,23 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
         />
       )}
       
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
+      <Card className="flex flex-col md:flex-row justify-between items-center gap-6 shrink-0">
         <div className="flex gap-2 w-full md:w-auto">
-          <input placeholder="Search documents..." className="px-4 py-2 border rounded-md text-sm w-full md:w-64" />
+          <Input placeholder="Search documents..." className="w-full md:w-64" />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <button onClick={() => setShowWizard(true)} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">
-            <Wand2 className="h-4 w-4 mr-2" /> Assemble Doc
-          </button>
-          <button onClick={handleUpload} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" /> Upload
-          </button>
+          <Button onClick={() => setShowWizard(true)} variant="primary" icon={Wand2} className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700">
+            Assemble Doc
+          </Button>
+          <Button onClick={handleUpload} variant="primary" icon={Plus} className="flex-1 md:flex-none">
+            Upload
+          </Button>
         </div>
-      </div>
+      </Card>
 
       <div className="grid gap-4 flex-1 overflow-y-auto content-start pr-2">
         {documents.map((doc) => (
-          <div key={doc.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 animate-fade-in-up">
+          <Card key={doc.id} className="animate-fade-in-up">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-start space-x-4">
                 <div className="bg-red-50 p-3 rounded-lg"><FileText className="h-6 w-6 text-red-600" /></div>
@@ -83,9 +87,16 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
                   )}
                 </div>
               </div>
-              <button onClick={() => onAnalyze(doc)} disabled={analyzingId === doc.id} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium border border-indigo-100 flex items-center">
-                {analyzingId === doc.id ? <Cpu className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>} <span className="ml-2">Analyze</span>
-              </button>
+              <Button 
+                onClick={() => onAnalyze(doc)} 
+                disabled={analyzingId === doc.id}
+                variant="ghost"
+                icon={analyzingId === doc.id ? Cpu : Sparkles}
+                size="sm"
+                className="bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100"
+              >
+                Analyze
+              </Button>
             </div>
             
             {doc.content && (
@@ -108,9 +119,9 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
               </div>
             )}
             <div className="flex gap-2 mt-3">
-                {ensureTagsArray(doc.tags).map(t => <span key={t} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs rounded border border-slate-200">{t}</span>)}
+                {ensureTagsArray(doc.tags).map(t => <Badge key={t} variant="secondary" size="sm">{t}</Badge>)}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

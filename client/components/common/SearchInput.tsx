@@ -7,13 +7,17 @@ interface SearchInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
+  error?: string;
 }
 
-export const SearchInput: React.FC<SearchInputProps> = ({ 
-  value, 
-  onChange, 
-  placeholder = 'Search...', 
-  className = '' 
+export const SearchInput: React.FC<SearchInputProps> = ({
+  value,
+  onChange,
+  placeholder = 'Search...',
+  className = '',
+  disabled = false,
+  error
 }) => {
   return (
     <div className="relative">
@@ -23,8 +27,10 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`${INPUT_STYLES.withIcon} ${className}`}
+        disabled={disabled}
+        className={`${INPUT_STYLES.withIcon} ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${className}`}
       />
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 };

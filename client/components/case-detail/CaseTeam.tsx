@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CaseMember, User } from '../../types';
 import { ApiService } from '../../services/apiService';
 import { Plus, X, Shield, Mail } from 'lucide-react';
-import { Button, Modal, Avatar, Badge } from '../common';
+import { Button, Modal, Avatar, Badge, ConfirmationModal } from '../common';
 
 interface CaseTeamProps {
   caseId: string;
@@ -15,6 +15,11 @@ export const CaseTeam: React.FC<CaseTeamProps> = ({ caseId }) => {
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedRole, setSelectedRole] = useState('Associate');
+  const [confirmRemove, setConfirmRemove] = useState<{ isOpen: boolean; userId: string; userName: string }>({
+    isOpen: false,
+    userId: '',
+    userName: ''
+  });
 
   useEffect(() => {
     fetchTeam();
