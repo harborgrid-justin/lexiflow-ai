@@ -5,7 +5,7 @@ import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { Wand2 } from 'lucide-react';
 import { DiscoveryRequest } from '../../types';
-import { GeminiService } from '../../services/geminiService';
+import { OpenAIService } from '../../services/openAIService';
 
 interface DiscoveryResponseModalProps {
   request: DiscoveryRequest | null;
@@ -19,7 +19,7 @@ export const DiscoveryResponseModal: React.FC<DiscoveryResponseModalProps> = ({ 
   const handleGenerateResponse = async () => {
     if (!request) return;
     setIsDrafting(true);
-    const draft = await GeminiService.generateDraft(
+    const draft = await OpenAIService.generateDraft(
       `Draft a legal response to this discovery request pursuant to FRCP 34/33: "${request.title}: ${request.description}". 
       Include standard objections (overly broad, undue burden, vague/ambiguous). 
       Format as a formal legal pleading.`,

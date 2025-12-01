@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TimelineEvent } from '../../types';
-import { FileText, CheckCircle, DollarSign, Flag, Briefcase, Gavel, Calendar } from 'lucide-react';
+import { FileText, CheckCircle, DollarSign, Flag, Briefcase, Gavel, Calendar, ExternalLink, Scale } from 'lucide-react';
 
 interface CaseTimelineProps {
   events: TimelineEvent[];
@@ -17,6 +17,7 @@ export const CaseTimeline: React.FC<CaseTimelineProps> = ({ events, onEventClick
       case 'milestone': return <Flag className="h-3 w-3 text-white" />;
       case 'motion': return <Gavel className="h-3 w-3 text-white" />;
       case 'hearing': return <Calendar className="h-3 w-3 text-white" />;
+      case 'docket': return <Scale className="h-3 w-3 text-white" />;
       default: return <Briefcase className="h-3 w-3 text-white" />;
     }
   };
@@ -29,6 +30,7 @@ export const CaseTimeline: React.FC<CaseTimelineProps> = ({ events, onEventClick
       case 'milestone': return 'bg-purple-600';
       case 'motion': return 'bg-indigo-600';
       case 'hearing': return 'bg-red-500';
+      case 'docket': return 'bg-cyan-600';
       default: return 'bg-slate-400';
     }
   };
@@ -64,6 +66,16 @@ export const CaseTimeline: React.FC<CaseTimelineProps> = ({ events, onEventClick
                   {event.type === 'motion' && (
                     <span className="text-[10px] font-bold text-indigo-600 mt-1 uppercase flex items-center">
                         View Motion Details →
+                    </span>
+                  )}
+                  {event.type === 'docket' && event.docketEntryNumber && (
+                    <span className="text-[10px] font-bold text-cyan-600 mt-1 uppercase flex items-center gap-1">
+                      <Scale className="h-3 w-3" /> Docket Entry #{event.docketEntryNumber}
+                      {event.pacerLink && (
+                        <a href={event.pacerLink} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline ml-1">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
                     </span>
                   )}
                 </div>

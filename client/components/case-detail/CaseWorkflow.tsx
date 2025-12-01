@@ -6,7 +6,7 @@ import {
   ArrowRight, FileText, DollarSign, Scale, Gavel, Layout, ChevronDown, ChevronUp, Box,
   Settings
 } from 'lucide-react';
-import { Button } from '../common/Button';
+import { Button, Badge } from '../common';
 import { UserAvatar } from '../common/UserAvatar';
 import { EnhancedWorkflowPanel } from '../workflow/EnhancedWorkflowPanel';
 
@@ -134,7 +134,9 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
                                 <div>
                                     <h4 className={`font-bold text-lg ${isActive ? 'text-blue-900' : 'text-slate-800'}`}>{stage.title}</h4>
                                     <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <span className={`px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100'}`}>{stage.status}</span>
+                                        <Badge variant={isActive ? 'active' : 'inactive'} size="sm">
+                                            {stage.status}
+                                        </Badge>
                                         <span>• {(stage.tasks || []).length} tasks</span>
                                     </div>
                                 </div>
@@ -169,7 +171,9 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
                                                     {task.title}
                                                 </h5>
                                                 {task.priority === 'High' && task.status !== 'Done' && (
-                                                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-200">HIGH</span>
+                                                    <Badge variant="high" size="sm">
+                                                        HIGH
+                                                    </Badge>
                                                 )}
                                             </div>
                                             {task.description && (

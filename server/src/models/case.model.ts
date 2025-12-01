@@ -94,6 +94,38 @@ export class Case extends Model {
   @Column(DataType.STRING)
   court?: string;
 
+  @ApiProperty({ example: '25-1229', description: 'Docket number' })
+  @Column(DataType.STRING)
+  docket_number?: string;
+
+  @ApiProperty({ example: '1:24-cv-01442-LMB-IDD', description: 'Originating case number' })
+  @Column(DataType.STRING)
+  originating_case_number?: string;
+
+  @ApiProperty({ example: '3422 Bankruptcy Appeals Rule', description: 'Nature of suit' })
+  @Column(DataType.STRING)
+  nature_of_suit?: string;
+
+  @ApiProperty({ example: 'Bankruptcy-District Court', description: 'Case type' })
+  @Column(DataType.STRING)
+  case_type?: string;
+
+  @ApiProperty({ example: '2025-02-26T00:00:00Z', description: 'Date order judgment' })
+  @Column(DataType.DATE)
+  date_order_judgment?: Date;
+
+  @ApiProperty({ example: '2025-03-07T00:00:00Z', description: 'Date NOA filed' })
+  @Column(DataType.DATE)
+  date_noa_filed?: Date;
+
+  @ApiProperty({ example: '2025-03-11T00:00:00Z', description: 'Date received COA' })
+  @Column(DataType.DATE)
+  date_recv_coa?: Date;
+
+  @ApiProperty({ example: 'fee paid', description: 'Fee status' })
+  @Column(DataType.STRING)
+  fee_status?: string;
+
   @ApiProperty({ example: 'Hourly', description: 'Billing model for the case' })
   @Column(DataType.STRING)
   billing_model?: string;
@@ -101,6 +133,14 @@ export class Case extends Model {
   @ApiProperty({ example: 'Hon. Jane Smith', description: 'Presiding judge' })
   @Column(DataType.STRING)
   judge?: string;
+
+  @ApiProperty({ example: 'Leonie M. Brinkema', description: 'Presiding judge name' })
+  @Column(DataType.STRING)
+  presiding_judge?: string;
+
+  @ApiProperty({ example: 'Ivan Darnell Davis', description: 'Ordering judge name' })
+  @Column(DataType.STRING)
+  ordering_judge?: string;
 
   @ApiProperty({ example: 'org-123', description: 'Owner organization ID' })
   @ForeignKey(() => Organization)
@@ -128,4 +168,13 @@ export class Case extends Model {
 
   @HasMany(() => CaseMember, 'case_id')
   caseMembers?: CaseMember[];
+
+  // HasMany relationship for docket entries
+  docketEntries?: any[]; // Will be properly typed when DocketEntry model is imported
+
+  // HasMany relationship for consolidated cases (as lead)
+  consolidatedCases?: any[]; // Will be properly typed when ConsolidatedCase model is imported
+
+  // HasMany relationship for consolidated cases (as member)
+  memberOfCases?: any[]; // Will be properly typed when ConsolidatedCase model is imported
 }

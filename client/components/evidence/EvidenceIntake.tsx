@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Card } from '../common/Card';
+import { Card, Badge } from '../common';
 import { Button } from '../common/Button';
 import { ArrowLeft, UploadCloud, CheckCircle, Loader2, Link, ShieldCheck } from 'lucide-react';
 import { DocumentService } from '../../services/documentService';
@@ -112,10 +112,10 @@ export const EvidenceIntake: React.FC<EvidenceIntakeProps> = ({ handleBack, onCo
                                         <Link className="h-3 w-3 inline mr-1"/>
                                         {generatedData.hash?.substring(0, 12)}...
                                     </span>
-                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs border border-green-200 font-medium">
+                                    <Badge variant="success" size="sm">
                                         <ShieldCheck className="h-3 w-3 inline mr-1"/>
                                         Secured
-                                    </span>
+                                    </Badge>
                                 </div>
                             </div>
                         ) : (

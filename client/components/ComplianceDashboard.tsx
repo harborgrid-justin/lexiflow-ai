@@ -3,10 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Lock, CheckCircle } from 'lucide-react';
 import { ApiService } from '../services/apiService';
 import { ConflictCheck, EthicalWall } from '../types';
-import { PageHeader } from './common/PageHeader';
-import { Tabs } from './common/Tabs';
-import { Card } from './common/Card';
-import { Button } from './common/Button';
+import { PageHeader, Tabs, Card, Button, Badge } from './common';
 
 export const ComplianceDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'conflicts' | 'walls' | 'risk'>('conflicts');
@@ -65,7 +62,11 @@ export const ComplianceDashboard: React.FC = () => {
                  <tr key={c.id}>
                    <td className="px-6 py-4 font-medium text-slate-900">{c.entityName}</td>
                    <td className="px-6 py-4 text-slate-500 text-sm">{c.date}</td>
-                   <td className="px-6 py-4"><span className={`px-2 py-1 rounded text-xs font-bold ${c.status === 'Cleared' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{c.status}</span></td>
+                   <td className="px-6 py-4">
+                     <Badge variant={c.status === 'Cleared' ? 'success' : 'error'} size="sm">
+                       {c.status}
+                     </Badge>
+                   </td>
                    <td className="px-6 py-4 text-sm text-slate-500">{c.foundIn.length > 0 ? c.foundIn.join(', ') : 'None'}</td>
                  </tr>
                ))}

@@ -37,3 +37,8 @@ export { ChainOfCustodyEvent } from './chain-of-custody-event.model';
 export { FileChunk } from './file-chunk.model';
 export { Playbook } from './playbook.model';
 export { DocumentVersion } from './document-version.model';
+
+// PACER import models
+export { DocketEntry } from './docket-entry.model';
+export { ConsolidatedCase } from './consolidated-case.model';
+export { Attorney } from './attorney.model';

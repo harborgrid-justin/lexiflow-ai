@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapPin, User, Clock } from 'lucide-react';
+import { MapPin, User, Clock, FileText, ExternalLink } from 'lucide-react';
 import { ApiService } from '../../services/apiService';
 
 interface Hearing {
@@ -10,6 +10,9 @@ interface Hearing {
   time: string;
   location: string;
   judge: string;
+  docketEntryId?: string;
+  docketEntryNumber?: number;
+  pacerLink?: string;
 }
 
 export const CalendarHearings: React.FC = () => {
@@ -60,6 +63,19 @@ export const CalendarHearings: React.FC = () => {
               <User className="h-4 w-4 mr-2 text-slate-400"/>
               {h.judge}
             </div>
+            {h.docketEntryNumber && (
+              <div className="flex items-center justify-between text-sm text-blue-600 bg-blue-50 p-2 rounded border border-blue-100">
+                <div className="flex items-center">
+                  <FileText className="h-4 w-4 mr-2"/>
+                  <span className="font-medium">Docket Entry #{h.docketEntryNumber}</span>
+                </div>
+                {h.pacerLink && (
+                  <a href={h.pacerLink} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline">
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}

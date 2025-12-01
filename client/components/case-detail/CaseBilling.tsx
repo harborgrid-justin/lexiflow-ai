@@ -3,6 +3,7 @@ import React from 'react';
 import { TimeEntry, BillingModel } from '../../types';
 import { Download, Clock, DollarSign } from 'lucide-react';
 import { toNumber } from '../../utils/type-transformers';
+import { Badge } from '../common';
 
 interface CaseBillingProps {
     billingModel: BillingModel;
@@ -58,7 +59,11 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                                     <td className="px-6 py-4 text-sm text-slate-500">{e.description}</td>
                                     <td className="px-6 py-4 text-sm text-slate-900 text-right">{(toNumber(e.duration)/60).toFixed(1)}</td>
                                     <td className="px-6 py-4 text-sm text-slate-900 text-right">${toNumber(e.total).toFixed(2)}</td>
-                                    <td className="px-6 py-4 text-right"><span className={`text-xs px-2 py-1 rounded ${e.status==='Billed'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{e.status}</span></td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Badge variant={e.status === 'Billed' ? 'success' : 'warning'} size="sm">
+                                            {e.status}
+                                        </Badge>
+                                    </td>
                                 </tr>
                             )) : (
                                 <tr>
@@ -75,7 +80,9 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                         <div key={e.id} className="p-4 border-b border-slate-100 last:border-0">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-xs text-slate-500 font-mono">{e.date}</span>
-                                <span className={`text-xs px-2 py-0.5 rounded font-bold ${e.status==='Billed'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>{e.status}</span>
+                                <Badge variant={e.status === 'Billed' ? 'success' : 'warning'} size="sm">
+                                    {e.status}
+                                </Badge>
                             </div>
                             <p className="text-sm text-slate-900 font-medium mb-2">{e.description}</p>
                             <div className="flex justify-between items-center text-sm">

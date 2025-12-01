@@ -4,7 +4,7 @@ import { ApiService } from '../../services/apiService';
 import { EvidenceItem } from '../../types';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Search, Filter, Download } from 'lucide-react';
-import { Button } from '../common/Button';
+import { Button, Badge } from '../common';
 
 export const EvidenceCustodyLog: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,12 +76,12 @@ export const EvidenceCustodyLog: React.FC = () => {
                     <TableCell className="font-mono text-xs text-slate-500">{evt.date}</TableCell>
                     <TableCell className="font-medium text-slate-900">{evt.itemTitle}</TableCell>
                     <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${
-                            evt.action.includes('Collected') ? 'bg-green-100 text-green-700' : 
-                            evt.action.includes('Transfer') ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                        }`}>
+                        <Badge variant={
+                            evt.action.includes('Collected') ? 'success' : 
+                            evt.action.includes('Transfer') ? 'active' : 'inactive'
+                        } size="sm">
                             {evt.action}
-                        </span>
+                        </Badge>
                     </TableCell>
                     <TableCell>{evt.actor}</TableCell>
                     <TableCell className="text-xs text-blue-600 font-mono">{evt.caseId}</TableCell>

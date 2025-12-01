@@ -96,17 +96,17 @@ export const WorkflowConfig: React.FC = () => {
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-semibold text-slate-900">{task.title}</span>
                                 {task.automated && (
-                                  <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded flex items-center font-medium">
+                                  <Badge variant="info" size="sm">
                                     <Zap className="h-3 w-3 mr-1"/> Auto
-                                  </span>
+                                  </Badge>
                                 )}
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                  task.priority === 'High' ? 'bg-red-100 text-red-700' : 
-                                  task.priority === 'Medium' ? 'bg-amber-100 text-amber-700' : 
-                                  'bg-green-100 text-green-700'
-                                }`}>
+                                <Badge variant={
+                                  task.priority === 'High' ? 'high' : 
+                                  task.priority === 'Medium' ? 'warning' : 
+                                  'success'
+                                } size="sm">
                                   {task.priority}
-                                </span>
+                                </Badge>
                               </div>
                               <p className="text-sm text-slate-600">{task.description}</p>
                               <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">

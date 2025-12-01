@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Modal } from './common/Modal';
 import { Button } from './common/Button';
-import { GeminiService } from '../services/geminiService';
+import { OpenAIService } from '../services/openAIService';
 import { ArrowRight } from 'lucide-react';
 import { ParsedDocketPreview } from './docket/ParsedDocketPreview';
 
@@ -21,7 +21,7 @@ export const DocketImportModal: React.FC<DocketImportModalProps> = ({ isOpen, on
   const handleParse = async () => {
     if (!rawText.trim()) return;
     setIsParsing(true);
-    const result = await GeminiService.parseDocket(rawText);
+    const result = await OpenAIService.parseDocket(rawText);
     setParsedData(result);
     setIsParsing(false);
     if (result) setStep(2);

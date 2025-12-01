@@ -5,9 +5,7 @@ import { ApiService } from '../services/apiService';
 import { UserPlus, PieChart, Lock } from 'lucide-react';
 import { ClientIntakeModal } from './ClientIntakeModal';
 import { ClientPortalModal } from './ClientPortalModal';
-import { PageHeader } from './common/PageHeader';
-import { Button } from './common/Button';
-import { Card } from './common/Card';
+import { PageHeader, Button, Card, Avatar, Badge, EmptyState } from './common';
 
 export const ClientCRM: React.FC = () => {
   const [showIntake, setShowIntake] = useState(false);
@@ -60,8 +58,10 @@ export const ClientCRM: React.FC = () => {
         {clients.map(client => (
           <Card key={client.id} className="hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
-              <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center font-bold text-xl text-slate-600">{(client.name || '??').substring(0, 2)}</div>
-              <span className={`px-2 py-1 text-xs font-bold rounded-full ${client.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100'}`}>{client.status}</span>
+              <Avatar name={client.name || 'Unknown Client'} size="lg" color="slate" />
+              <Badge variant={client.status === 'Active' ? 'active' : 'inactive'}>
+                {client.status}
+              </Badge>
             </div>
             <h3 className="font-bold text-lg text-slate-900 mb-1">{client.name}</h3>
             <p className="text-sm text-slate-500 mb-4">{client.industry}</p>
@@ -83,10 +83,11 @@ export const ClientCRM: React.FC = () => {
             </div>
           </Card>
         ))}
-        <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 cursor-pointer transition-colors" onClick={() => setShowIntake(true)}>
-          <UserPlus className="h-12 w-12 mb-2 opacity-50" />
-          <span className="font-medium">Add Prospect</span>
-        </div>
+        <EmptyState
+          icon={UserPlus}
+          title="Add Prospect"
+          onClick={() => setShowIntake(true)}
+        />
       </div>
     </div>
   );

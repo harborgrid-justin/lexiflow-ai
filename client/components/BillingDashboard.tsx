@@ -4,9 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase } from 'lucide-react';
 import { ApiService } from '../services/apiService';
 import { Client } from '../types';
-import { PageHeader } from './common/PageHeader';
-import { Button } from './common/Button';
-import { Card } from './common/Card';
+import { PageHeader, Button, Card, Avatar, Badge } from './common';
 import { StatCard } from './common/Stats';
 
 interface BillingDashboardProps {
@@ -126,7 +124,7 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                     {clients.slice(0, 1).map(client => (
                          <div key={client.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer" onClick={() => navigateTo && navigateTo('crm')}>
                             <div className="flex items-center space-x-3">
-                                <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-xs">{(client.name || '??').substring(0, 2)}</div>
+                                <Avatar name={client.name || 'Unknown Client'} size="sm" color="blue" />
                                 <div>
                                     <p className="font-bold text-sm text-slate-900">{client.name}</p>
                                     <p className="text-xs text-slate-500">{client.industry}</p>
@@ -148,14 +146,16 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
                     {clients.map(client => (
                          <div key={`firm-${client.id}`} className="flex items-center justify-between p-3 border border-slate-200 bg-white rounded-lg hover:border-blue-400 cursor-pointer" onClick={() => navigateTo && navigateTo('crm')}>
                             <div className="flex items-center space-x-3">
-                                <div className="h-8 w-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs">{(client.name || '??').substring(0, 2)}</div>
+                                <Avatar name={client.name || 'Unknown Client'} size="sm" color="slate" />
                                 <div>
                                     <p className="font-medium text-sm text-slate-900">{client.name}</p>
                                     <p className="text-xs text-slate-500 flex items-center"><Briefcase className="h-3 w-3 mr-1"/> {(client.matters || []).length} Matters</p>
                                 </div>
                             </div>
                              <div className="text-right">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${client.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{client.status}</span>
+                                <Badge variant={client.status === 'Active' ? 'active' : 'inactive'} size="sm">
+                                  {client.status}
+                                </Badge>
                             </div>
                          </div>
                     ))}

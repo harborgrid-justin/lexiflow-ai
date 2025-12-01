@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Motion, MotionStatus, MotionType, User } from '../../types';
+import { Motion, MotionStatus, MotionType, User, DocketEntry } from '../../types';
 import { ApiService } from '../../services/apiService';
 import { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
-import { Plus, Gavel, Calendar, Wand2, ArrowRight, RefreshCw, GitGraph, Clock } from 'lucide-react';
+import { Plus, Gavel, Calendar, Wand2, ArrowRight, RefreshCw, GitGraph, Clock, ExternalLink, FileText, Link as LinkIcon } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Inputs';
 import { MotionDetail } from './MotionDetail';
@@ -18,21 +18,26 @@ interface CaseMotionsProps {
 
 export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, currentUser }) => {
   const [motions, setMotions] = useState<Motion[]>([]);
+  const [docketEntries, setDocketEntries] = useState<DocketEntry[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newMotion, setNewMotion] = useState<Partial<Motion>>({ type: 'Dismiss', status: 'Draft' });
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedMotionId, setSelectedMotionId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchMotions = async () => {
+    const fetchData = async () => {
         try {
-            const data = await ApiService.getCaseMotions(caseId);
-            setMotions(data);
+            const [motionsData, docketData] = await Promise.all([
+              ApiService.getCaseMotions(caseId),
+              ApiService.getDocketEntries(caseId)
+            ]);
+            setMotions(motionsData);
+            setDocketEntries(docketData || []);
         } catch (e) {
-            console.error("Failed to fetch motions", e);
+            console.error("Failed to fetch motions and docket entries", e);
         }
     };
-    if (caseId) fetchMotions();
+    if (caseId) fetchData();
   }, [caseId]);
 
   // Auto-calculate deadlines when hearing date changes
@@ -146,11 +151,28 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
             <TableHead className="text-right">Actions</TableHead>
           </TableHeader>
           <TableBody>
-            {motions.map(motion => (
+            {motions.map(motion => {
+              const linkedDocket = motion.docketEntryId ? docketEntries.find(d => d.id === motion.docketEntryId) : null;
+              return (
               <TableRow key={motion.id}>
-                <TableCell className="font-medium text-slate-900 flex items-center">
-                  <Gavel className="h-4 w-4 mr-2 text-slate-400" />
-                  {motion.title}
+                <TableCell className="font-medium text-slate-900">
+                  <div className="flex items-center gap-2">
+                    <Gavel className="h-4 w-4 text-slate-400 shrink-0" />
+                    <div className="flex-1">
+                      <div>{motion.title}</div>
+                      {linkedDocket && (
+                        <div className="flex items-center gap-2 mt-1 text-xs text-blue-600">
+                          <FileText className="h-3 w-3" />
+                          <span>Docket #{linkedDocket.entryNumber}</span>
+                          {linkedDocket.docLink && (
+                            <a href={linkedDocket.docLink} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline">
+                              <ExternalLink className="h-3 w-3 ml-1" />
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{motion.type}</TableCell>
                 <TableCell>
@@ -180,7 +202,8 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            );
+            })}
             {motions.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-slate-400 italic">No active motions.</TableCell>
@@ -255,6 +278,48 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
             value={newMotion.title || ''}
             onChange={(e) => setNewMotion({...newMotion, title: e.target.value})}
           />
+
+          {docketEntries.length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">
+                <LinkIcon className="h-3 w-3 inline mr-1" />
+                Link to PACER Docket Entry (Optional)
+              </label>
+              <select 
+                className="w-full px-3 py-2 border rounded-md text-sm bg-white"
+                value={newMotion.docketEntryId || ''}
+                onChange={(e) => {
+                  const entryId = e.target.value;
+                  const entry = docketEntries.find(d => d.id === entryId);
+                  setNewMotion({
+                    ...newMotion, 
+                    docketEntryId: entryId || undefined,
+                    pacerDocLink: entry?.docLink
+                  });
+                }}
+              >
+                <option value="">No Link</option>
+                {docketEntries
+                  .filter(d => d.documentType?.toLowerCase().includes('motion') || d.text.toLowerCase().includes('motion'))
+                  .map(entry => (
+                    <option key={entry.id} value={entry.id}>
+                      Entry #{entry.entryNumber} - {entry.dateFiled} - {entry.text.substring(0, 60)}...
+                    </option>
+                  ))}
+              </select>
+              {newMotion.pacerDocLink && (
+                <a 
+                  href={newMotion.pacerDocLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View in PACER
+                </a>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Hearing Date (Optional)</label>

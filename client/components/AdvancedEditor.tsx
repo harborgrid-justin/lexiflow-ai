@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Wand2, RotateCcw } from 'lucide-react';
-import { GeminiService } from '../services/geminiService';
+import { OpenAIService } from '../services/openAIService';
 import { EditorToolbar } from './common/EditorToolbar';
 
 interface AdvancedEditorProps {
@@ -60,7 +60,7 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, 
     setIsAiLoading(true);
     
     const selectedText = selectionRange.toString();
-    const refinedText = await GeminiService.generateDraft(`Rewrite this legal text: "${selectedText}". Instruction: ${aiPrompt}`, 'Text Fragment');
+    const refinedText = await OpenAIService.generateDraft(`Rewrite this legal text: "${selectedText}". Instruction: ${aiPrompt}`, 'Text Fragment');
     
     selectionRange.deleteContents();
     const newNode = document.createTextNode(refinedText);

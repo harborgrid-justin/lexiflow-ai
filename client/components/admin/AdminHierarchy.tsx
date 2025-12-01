@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { ApiService } from '../../services/apiService';
 import { Organization, Group, User as UserType } from '../../types';
-import { Button } from '../common/Button';
+import { Button, Badge } from '../common';
 import { UserAvatar } from '../common/UserAvatar';
 
 export const AdminHierarchy: React.FC = () => {
@@ -73,13 +73,14 @@ export const AdminHierarchy: React.FC = () => {
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg shrink-0 ${org.type === 'LawFirm' ? 'bg-slate-900 text-white' : org.type === 'Corporate' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                    <div className={`p-2 rounded-lg shrink-0 ${org.type === 'LawFirm' ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200'}`}>
                       {org.type === 'LawFirm' ? <Shield className="h-5 w-5"/> : org.type === 'Corporate' ? <Building2 className="h-5 w-5"/> : <Globe className="h-5 w-5"/>}
                     </div>
                     <div>
                       <h4 className="font-bold text-sm text-slate-900">{org.name}</h4>
-                      <p className="text-xs text-slate-500 truncate max-w-[150px]">{org.domain}</p>
-                    </div>
+                      <Badge variant={org.type === 'Corporate' ? 'active' : 'inactive'} size="sm" className="mt-1">
+                        {org.type}
+                      </Badge>
                   </div>
                   {selectedOrgId === org.id && <ChevronRight className="h-4 w-4 text-blue-600 hidden md:block"/>}
                 </div>

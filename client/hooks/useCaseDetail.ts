@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion } from '../types';
-import { GeminiService } from '../services/geminiService';
+import { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion, DocketEntry } from '../types';
+import { OpenAIService } from '../services/openAIService';
 import { ApiService, ApiError } from '../services/apiService';
 
 export const useCaseDetail = (caseData: Case) => {
@@ -11,6 +11,7 @@ export const useCaseDetail = (caseData: Case) => {
   const [parties, setParties] = useState<Party[]>(caseData.parties || []);
   const [billingEntries, setBillingEntries] = useState<TimeEntry[]>([]);
   const [motions, setMotions] = useState<Motion[]>([]);
+  const [docketEntries, setDocketEntries] = useState<DocketEntry[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,17 +28,19 @@ export const useCaseDetail = (caseData: Case) => {
       setLoading(true);
       setError(null);
 
-      const [docs, wf, bill, mots] = await Promise.all([
+      const [docs, wf, bill, mots, dockets] = await Promise.all([
         ApiService.documents.getAll(caseData.id),
         ApiService.workflow.stages.getAll(caseData.id),
         ApiService.billing.timeEntries.getAll(caseData.id),
-        ApiService.motions.getAll(caseData.id)
+        ApiService.motions.getAll(caseData.id),
+        ApiService.getDocketEntries(caseData.id)
       ]);
 
       setDocuments(docs);
       setStages(wf);
       setBillingEntries(bill);
       setMotions(mots);
+      setDocketEntries(dockets || []);
     } catch (err) {
       console.error('Failed to fetch case details:', err);
 
@@ -88,13 +91,27 @@ export const useCaseDetail = (caseData: Case) => {
         }
     });
 
+    // Docket Entries
+    (docketEntries || []).forEach(d => {
+        events.push({ 
+          id: `docket-${d.id}`, 
+          date: d.dateFiled, 
+          title: d.text.length > 80 ? d.text.substring(0, 80) + '...' : d.text, 
+          type: 'docket', 
+          description: d.documentType || 'Court Filing',
+          relatedId: d.id,
+          docketEntryNumber: d.entryNumber,
+          pacerLink: d.docLink
+        });
+    });
+
     return events.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [caseData, documents, stages, billingEntries, motions]);
+  }, [caseData, documents, stages, billingEntries, motions, docketEntries]);
 
   const handleAnalyze = async (doc: LegalDocument) => {
     setAnalyzingId(doc.id);
     try {
-      const result = await GeminiService.analyzeDocument(doc.content);
+      const result = await OpenAIService.analyzeDocument(doc.content);
       await ApiService.documents.update(doc.id, { summary: result.summary, riskScore: result.riskScore });
       setDocuments(docs => docs.map(d => d.id === doc.id ? { ...d, summary: result.summary, riskScore: result.riskScore } : d));
     } catch (err) {
@@ -113,7 +130,7 @@ export const useCaseDetail = (caseData: Case) => {
   const handleDraft = async () => {
     if(!draftPrompt.trim()) return;
     setIsDrafting(true);
-    const text = await GeminiService.generateDraft(`${draftPrompt}\n\nCase: ${caseData.title}\nClient: ${caseData.client}`, 'Motion/Clause');
+    const text = await OpenAIService.generateDraft(`${draftPrompt}\n\nCase: ${caseData.title}\nClient: ${caseData.client}`, 'Motion/Clause');
     setDraftResult(text);
     setIsDrafting(false);
   };
@@ -137,7 +154,7 @@ export const useCaseDetail = (caseData: Case) => {
 
   const handleGenerateWorkflow = async () => {
     setGeneratingWorkflow(true);
-    const suggestedStages = await GeminiService.generateWorkflow(caseData.description);
+    const suggestedStages = await OpenAIService.generateWorkflow(caseData.description);
     const newStages: WorkflowStage[] = suggestedStages.map((s, idx) => ({
       id: `gen-stage-${idx}`, title: s.title, status: idx === 0 ? 'Active' : 'Pending',
       tasks: s.tasks.map((t, tIdx) => ({ id: `gen-task-${idx}-${tIdx}`, title: t, status: 'Pending', assignee: 'Unassigned', dueDate: '2024-05-01', priority: 'Medium' }))

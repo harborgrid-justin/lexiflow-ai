@@ -16,6 +16,7 @@ import { CaseMessages } from './case-detail/CaseMessages';
 import { CaseParties } from './case-detail/CaseParties';
 import { CaseMotions } from './case-detail/CaseMotions';
 import { CaseTeam } from './case-detail/CaseTeam';
+import { CaseDocketEntries } from './case-detail/CaseDocketEntries';
 import { useCaseDetail } from '../hooks/useCaseDetail';
 import { WorkflowQuickActions } from './workflow/WorkflowQuickActions';
 import { Button } from './common/Button';
@@ -26,7 +27,7 @@ interface CaseDetailProps {
   currentUser?: User;
 }
 
-const TABS = ['Overview', 'Team', 'Motions', 'Parties', 'Documents', 'Evidence', 'Discovery', 'Messages', 'Workflow', 'Drafting', 'Contract Review', 'Billing'];
+const TABS = ['Overview', 'Team', 'Motions', 'Parties', 'Docket', 'Documents', 'Evidence', 'Discovery', 'Messages', 'Workflow', 'Drafting', 'Contract Review', 'Billing'];
 
 export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, currentUser }) => {
   const {
@@ -80,7 +81,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader 
         title={caseData.title}
         subtitle={
@@ -136,6 +137,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
                 {activeTab === 'Team' && <CaseTeam caseId={caseData.id} />}
                 {activeTab === 'Motions' && <CaseMotions caseId={caseData.id} caseTitle={caseData.title} currentUser={currentUser} />}
                 {activeTab === 'Parties' && <CaseParties parties={parties} onUpdate={setParties} />}
+                {activeTab === 'Docket' && <CaseDocketEntries caseId={caseData.id} />}
                 {activeTab === 'Documents' && <CaseDocuments documents={documents} analyzingId={analyzingId} onAnalyze={handleAnalyze} onDocumentCreated={(d) => { createDocument(d); setActiveTab('Documents'); }} currentUser={currentUser} />}
                 {activeTab === 'Evidence' && <CaseEvidence caseId={caseData.id} currentUser={currentUser} />}
                 {activeTab === 'Discovery' && <CaseDiscovery caseId={caseData.id} />}

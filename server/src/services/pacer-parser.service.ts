@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
+import type { ResponseFormatJSONSchema } from 'openai/resources';
 import { Case } from '../models/case.model';
 import { Party } from '../models/party.model';
 import { Motion } from '../models/motion.model';
@@ -73,6 +74,124 @@ export interface ParsedPacerData {
   deadlines?: PacerDeadline[];
 }
 
+// Maximum input size in characters (~8000 tokens)
+const MAX_DOCKET_INPUT_CHARS = 32000;
+
+// Structured Output Schema for guaranteed valid JSON
+const PacerDocketSchema: ResponseFormatJSONSchema = {
+  type: 'json_schema',
+  json_schema: {
+    name: 'pacer_docket',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        caseInfo: {
+          type: 'object',
+          properties: {
+            docketNumber: { type: ['string', 'null'] },
+            originatingCaseNumber: { type: ['string', 'null'] },
+            title: { type: ['string', 'null'] },
+            court: { type: ['string', 'null'] },
+            jurisdiction: { type: ['string', 'null'] },
+            natureOfSuit: { type: ['string', 'null'] },
+            caseType: { type: ['string', 'null'] },
+            filingDate: { type: ['string', 'null'] },
+            dateOrderJudgment: { type: ['string', 'null'] },
+            dateNOAFiled: { type: ['string', 'null'] },
+            dateRecvCOA: { type: ['string', 'null'] },
+            feeStatus: { type: ['string', 'null'] },
+            presidingJudge: { type: ['string', 'null'] },
+            orderingJudge: { type: ['string', 'null'] },
+            status: { type: ['string', 'null'] }
+          },
+          required: ['docketNumber', 'originatingCaseNumber', 'title', 'court', 'jurisdiction', 'natureOfSuit', 'caseType', 'filingDate', 'dateOrderJudgment', 'dateNOAFiled', 'dateRecvCOA', 'feeStatus', 'presidingJudge', 'orderingJudge', 'status'],
+          additionalProperties: false
+        },
+        parties: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              role: { type: ['string', 'null'] },
+              type: { type: ['string', 'null'] },
+              contact: { type: ['string', 'null'] },
+              counsel: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: ['string', 'null'] },
+                    firm: { type: ['string', 'null'] },
+                    phone: { type: ['string', 'null'] },
+                    email: { type: ['string', 'null'] },
+                    status: { type: ['string', 'null'] },
+                    address: { type: ['string', 'null'] }
+                  },
+                  required: ['name', 'firm', 'phone', 'email', 'status', 'address'],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ['name', 'role', 'type', 'contact', 'counsel'],
+            additionalProperties: false
+          }
+        },
+        docketEntries: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              entryNumber: { type: 'integer' },
+              date: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'] },
+              pages: { type: ['integer', 'null'] },
+              fileSize: { type: ['string', 'null'] },
+              documentId: { type: ['string', 'null'] }
+            },
+            required: ['entryNumber', 'date', 'description', 'pages', 'fileSize', 'documentId'],
+            additionalProperties: false
+          }
+        },
+        consolidatedCases: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              caseNumber: { type: ['string', 'null'] },
+              relationship: { type: ['string', 'null'] },
+              startDate: { type: ['string', 'null'] },
+              endDate: { type: ['string', 'null'] }
+            },
+            required: ['caseNumber', 'relationship', 'startDate', 'endDate'],
+            additionalProperties: false
+          }
+        },
+        priorCases: {
+          type: 'array',
+          items: { type: 'string' }
+        },
+        deadlines: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              date: { type: ['string', 'null'] },
+              title: { type: ['string', 'null'] },
+              type: { type: ['string', 'null'] }
+            },
+            required: ['date', 'title', 'type'],
+            additionalProperties: false
+          }
+        }
+      },
+      required: ['caseInfo', 'parties', 'docketEntries', 'consolidatedCases', 'priorCases', 'deadlines'],
+      additionalProperties: false
+    }
+  }
+};
+
 @Injectable()
 export class PacerParserService {
   private readonly logger = new Logger(PacerParserService.name);
@@ -82,81 +201,40 @@ export class PacerParserService {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.openai = new OpenAI({
       apiKey,
-      timeout: 30000, // 30 second timeout
-      maxRetries: 2, // Retry up to 2 times on transient failures
+      timeout: 30000,
+      maxRetries: 2,
     });
   }
 
   /**
-   * Parse raw PACER docket text using OpenAI
+   * Truncate input to prevent token explosion
+   */
+  private truncateInput(text: string, maxChars: number): string {
+    if (text.length <= maxChars) return text;
+    this.logger.warn(`Truncating docket text from ${text.length} to ${maxChars} characters`);
+    return text.substring(0, maxChars) + '\n[...truncated]';
+  }
+
+  /**
+   * Parse raw PACER docket text using OpenAI with Structured Outputs
    */
   async parsePacerText(docketText: string): Promise<ParsedPacerData> {
-    const prompt = `Parse the following PACER court docket text into structured JSON. Extract ALL available information:
-
-REQUIRED FIELDS:
-- caseInfo: {
-    docketNumber: string (e.g., "25-1229"),
-    originatingCaseNumber: string (e.g., "1:24-cv-01442-LMB-IDD"),
-    title: string (full case title),
-    court: string (full court name),
-    jurisdiction: string,
-    natureOfSuit: string,
-    caseType: string,
-    filingDate: string (ISO format YYYY-MM-DD),
-    dateOrderJudgment: string (ISO),
-    dateNOAFiled: string (ISO),
-    dateRecvCOA: string (ISO),
-    feeStatus: string,
-    presidingJudge: string (full name with title),
-    orderingJudge: string,
-    status: string (Active/Termed/etc)
-  }
-- parties: array of {
-    name: string,
-    role: string (e.g., "Debtor - Appellant", "Creditor - Appellee"),
-    type: string ("Individual" or "Corporation"),
-    contact: string (email or phone),
-    counsel: array of {
-      name: string,
-      firm: string,
-      phone: string,
-      email: string,
-      status: string (e.g., "[COR NTC Retained]", "[NTC Pro Se]"),
-      address: string
-    }
-  }
-- docketEntries: array of {
-    entryNumber: number,
-    date: string (MM/DD/YYYY format),
-    description: string,
-    pages: number,
-    fileSize: string,
-    documentId: string (if available)
-  }
-- consolidatedCases: array of {
-    caseNumber: string,
-    relationship: string (Lead/Member),
-    startDate: string,
-    endDate: string
-  }
-- priorCases: array of case numbers
-- deadlines: array of {
-    date: string (ISO format),
-    title: string,
-    type: string (e.g., "Brief Due", "Response Due")
-  }
-
-PACER Docket Text:
-${docketText}
-
-Return ONLY valid JSON with all fields. Use null for missing data. Ensure dates are properly formatted.`;
+    // Truncate input to prevent massive token usage
+    const truncatedText = this.truncateInput(docketText, MAX_DOCKET_INPUT_CHARS);
+    
+    // Concise system message - schema defines the structure
+    const systemMessage = 'Parse the PACER docket text. Extract case information, parties with counsel, docket entries, consolidated cases, prior cases, and deadlines. Use null for missing fields. Format dates as ISO (YYYY-MM-DD).';
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: truncatedText }
+      ],
+      response_format: PacerDocketSchema,
       max_tokens: 4096,
-      temperature: 0.3, // Lower temperature for more consistent JSON output
+      temperature: 0.2,
+      n: 1,
     });
 
     const parsedText = response.choices[0]?.message?.content || '{}';

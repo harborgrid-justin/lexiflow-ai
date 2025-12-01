@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Wand2, Save } from 'lucide-react';
 import { Button } from '../common/Button';
 import { DiscoveryRequest } from '../../types';
-import { GeminiService } from '../../services/geminiService';
+import { OpenAIService } from '../../services/openAIService';
 import { Badge } from '../common/Badge';
 
 interface DiscoveryResponseProps {
@@ -27,7 +27,7 @@ export const DiscoveryResponse: React.FC<DiscoveryResponseProps> = ({ request, o
   const handleGenerateResponse = async () => {
     if (!request) return;
     setIsDrafting(true);
-    const draft = await GeminiService.generateDraft(
+    const draft = await OpenAIService.generateDraft(
       `Draft a legal response to this discovery request pursuant to FRCP 34/33: "${request.title}: ${request.description}". 
       Include standard objections (overly broad, undue burden, vague/ambiguous). 
       Format as a formal legal pleading.`,

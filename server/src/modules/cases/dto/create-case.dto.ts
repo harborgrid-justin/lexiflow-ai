@@ -50,6 +50,46 @@ export class CreateCaseDto {
   @IsString()
   court?: string;
 
+  @ApiPropertyOptional({ example: '25-1229', description: 'Docket number' })
+  @IsOptional()
+  @IsString()
+  docket_number?: string;
+
+  @ApiPropertyOptional({ example: '1:24-cv-01442-LMB-IDD', description: 'Originating case number' })
+  @IsOptional()
+  @IsString()
+  originating_case_number?: string;
+
+  @ApiPropertyOptional({ example: '3422 Bankruptcy Appeals Rule', description: 'Nature of suit' })
+  @IsOptional()
+  @IsString()
+  nature_of_suit?: string;
+
+  @ApiPropertyOptional({ example: 'Bankruptcy-District Court', description: 'Case type' })
+  @IsOptional()
+  @IsString()
+  case_type?: string;
+
+  @ApiPropertyOptional({ example: '2025-02-26T00:00:00Z', description: 'Date order judgment' })
+  @IsOptional()
+  @IsDateString()
+  date_order_judgment?: string;
+
+  @ApiPropertyOptional({ example: '2025-03-07T00:00:00Z', description: 'Date NOA filed' })
+  @IsOptional()
+  @IsDateString()
+  date_noa_filed?: string;
+
+  @ApiPropertyOptional({ example: '2025-03-11T00:00:00Z', description: 'Date received COA' })
+  @IsOptional()
+  @IsDateString()
+  date_recv_coa?: string;
+
+  @ApiPropertyOptional({ example: 'fee paid', description: 'Fee status' })
+  @IsOptional()
+  @IsString()
+  fee_status?: string;
+
   @ApiPropertyOptional({ example: 'Hourly', description: 'Billing model for the case' })
   @IsOptional()
   @IsString()
@@ -59,6 +99,16 @@ export class CreateCaseDto {
   @IsOptional()
   @IsString()
   judge?: string;
+
+  @ApiPropertyOptional({ example: 'Leonie M. Brinkema', description: 'Presiding judge name' })
+  @IsOptional()
+  @IsString()
+  presiding_judge?: string;
+
+  @ApiPropertyOptional({ example: 'Ivan Darnell Davis', description: 'Ordering judge name' })
+  @IsOptional()
+  @IsString()
+  ordering_judge?: string;
 
   @ApiPropertyOptional({ example: 'org-123', description: 'Owner organization ID' })
   @IsOptional()

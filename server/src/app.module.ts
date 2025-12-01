@@ -62,6 +62,9 @@ import {
   FileChunk,
   Playbook,
   DocumentVersion,
+  DocketEntry,
+  ConsolidatedCase,
+  Attorney,
 } from './models';
 
 // Import all modules
@@ -99,6 +102,9 @@ import { DocumentVersionsModule } from './modules/document-versions/document-ver
 import { PlaybooksModule } from './modules/playbooks/playbooks.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
+import { DocketEntriesModule } from './modules/docket-entries/docket-entries.module';
+import { ConsolidatedCasesModule } from './modules/consolidated-cases/consolidated-cases.module';
+import { AttorneysModule } from './modules/attorneys/attorneys.module';
 
 @Module({
   imports: [
@@ -161,6 +167,9 @@ import { HealthModule } from './modules/health/health.module';
         FileChunk,
         Playbook,
         DocumentVersion,
+        DocketEntry,
+        ConsolidatedCase,
+        Attorney,
       ],
       autoLoadModels: false, // Disable auto-loading models
       synchronize: true, // Temporarily enable sync to create tables
@@ -210,6 +219,9 @@ import { HealthModule } from './modules/health/health.module';
     DocumentVersionsModule,
     PlaybooksModule,
     HealthModule,
+    DocketEntriesModule,
+    ConsolidatedCasesModule,
+    AttorneysModule,
   ],
 })
 export class AppModule {}

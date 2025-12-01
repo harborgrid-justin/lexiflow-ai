@@ -209,7 +209,7 @@ const AppContent: React.FC = () => {
     switch (activeView) {
       case 'dashboard': return <Dashboard onSelectCase={handleSelectCaseById} />;
       case 'cases': return <CaseList onSelectCase={setSelectedCase} currentUser={user} navigateTo={setActiveView} />;
-      case 'pacer-import': return <PacerImportPage onBack={() => setActiveView('cases')} currentUser={user} />;
+      case 'pacer-import': return <PacerImportPage onBack={() => setActiveView('cases')} onImportComplete={handleSelectCaseById} />;
       case 'messages': return <SecureMessenger currentUserId={user.id} />;
       case 'discovery': return <DiscoveryPlatform />;
       case 'evidence': return <EvidenceVault onNavigateToCase={handleSelectCaseById} currentUser={user} />;

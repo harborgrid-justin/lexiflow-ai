@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Clock, Wand2, DollarSign } from 'lucide-react';
-import { GeminiService } from '../services/geminiService';
+import { OpenAIService } from '../services/openAIService';
 import { Modal } from './common/Modal';
 import { Button } from './common/Button';
 import { Input, TextArea } from './common/Inputs';
@@ -21,7 +21,7 @@ export const TimeEntryModal: React.FC<TimeEntryModalProps> = ({ isOpen, onClose,
   const handleRefine = async () => {
     if (!desc) return;
     setIsRefining(true);
-    const polished = await GeminiService.refineTimeEntry(desc);
+    const polished = await OpenAIService.refineTimeEntry(desc);
     setDesc(polished);
     setIsRefining(false);
   };

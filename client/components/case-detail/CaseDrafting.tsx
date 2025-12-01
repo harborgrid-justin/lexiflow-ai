@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Cpu, Book, AlertTriangle, Check, Wand2, Search, History } from 'lucide-react';
-import { GeminiService } from '../../services/geminiService';
+import { OpenAIService } from '../../services/openAIService';
 import { Clause } from '../../types';
 import { AdvancedEditor } from '../AdvancedEditor';
 import { ApiService } from '../../services/apiService';
@@ -72,7 +72,7 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
     setLoading(true);
     setActiveMode('review');
     const plainText = content.replace(/<[^>]*>?/gm, '');
-    const res = await GeminiService.reviewContract(plainText);
+    const res = await OpenAIService.reviewContract(plainText);
     setReviewResult(res);
     setLoading(false);
   };

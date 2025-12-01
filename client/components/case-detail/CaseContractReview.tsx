@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ShieldAlert, Upload, FileText, Cpu, AlertTriangle } from 'lucide-react';
-import { GeminiService } from '../../services/geminiService';
+import { OpenAIService } from '../../services/openAIService';
 
 export const CaseContractReview: React.FC = () => {
   const [text, setText] = useState('');
@@ -11,7 +11,7 @@ export const CaseContractReview: React.FC = () => {
   const handleReview = async () => {
     if (!text.trim()) return;
     setLoading(true);
-    const analysis = await GeminiService.reviewContract(text);
+    const analysis = await OpenAIService.reviewContract(text);
     setResult(analysis);
     setLoading(false);
   };

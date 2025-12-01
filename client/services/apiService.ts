@@ -70,6 +70,39 @@ export const ApiService = {
   parties: partiesService,
   userProfiles: userProfilesService,
 
+  // PACER Import Services
+  getDocketEntries: async (caseId: string) => {
+    return fetchJson(`/docket-entries?case_id=${caseId}`);
+  },
+
+  getConsolidatedCases: async (caseId: string) => {
+    return fetchJson(`/consolidated-cases?case_id=${caseId}`);
+  },
+
+  getAttorneys: async (partyId: string) => {
+    return fetchJson(`/attorneys?party_id=${partyId}`);
+  },
+
+  createDocketEntry: async (data: any) => {
+    return postJson('/docket-entries', data);
+  },
+
+  createConsolidatedCase: async (data: any) => {
+    return postJson('/consolidated-cases', data);
+  },
+
+  createAttorney: async (data: any) => {
+    return postJson('/attorneys', data);
+  },
+
+  updateAttorney: async (id: string, data: any) => {
+    return putJson(`/attorneys/${id}`, data);
+  },
+
+  deleteAttorney: async (id: string) => {
+    return deleteJson(`/attorneys/${id}`);
+  },
+
   // Utility Methods
   setAuthToken: (token: string, remember: boolean = true) => {
     if (remember) {

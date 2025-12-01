@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { UploadCloud, CheckCircle, Loader2, Link, ShieldCheck } from 'lucide-react';
 import { DocumentService } from '../../services/documentService';
-import { Button } from './Button';
+import { Button, Badge } from './index';
 
 interface FileUploadZoneProps {
   file: File | null;
@@ -41,10 +41,10 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                             <Link className="h-3 w-3 inline mr-1"/>
                             {generatedHash.substring(0, 12)}...
                         </span>
-                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs border border-green-200 font-medium">
+                        <Badge variant="success" size="sm">
                             <ShieldCheck className="h-3 w-3 inline mr-1"/>
                             Secured
-                        </span>
+                        </Badge>
                     </div>
                 )}
             </div>

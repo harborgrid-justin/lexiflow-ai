@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, FileText, ChevronRight, Check, Save } from 'lucide-react';
-import { GeminiService } from '../services/geminiService';
+import { OpenAIService } from '../services/openAIService';
 import { LegalDocument } from '../types';
 
 interface DocumentAssemblyProps {
@@ -20,7 +20,7 @@ export const DocumentAssembly: React.FC<DocumentAssemblyProps> = ({ onClose, cas
   const generate = async () => {
     setLoading(true);
     const context = `Template: ${template}. Case: ${caseTitle}. Recipient: ${formData.recipient}. Point: ${formData.mainPoint}.`;
-    const text = await GeminiService.generateDraft(context, 'Document');
+    const text = await OpenAIService.generateDraft(context, 'Document');
     setResult(text);
     setLoading(false);
     setStep(3);

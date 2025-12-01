@@ -2,6 +2,7 @@
 import React from 'react';
 import { LayoutDashboard, Briefcase, FileText, Search, ShieldCheck, Scale, X, Calendar, ChevronDown, Book, DollarSign, Users, BarChart3, Settings, FileQuestion, Fingerprint, MessageSquare, Globe, GitGraph, ScrollText, Zap } from 'lucide-react';
 import { User as UserType } from '../types';
+import { Avatar } from './common';
 
 interface SidebarProps {
   activeView: string; setActiveView: (view: string) => void; isOpen: boolean; onClose: () => void;
@@ -54,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isO
       </nav>
       <div className="p-4 border-t border-slate-800 bg-slate-900">
         <button onClick={onSwitchUser} className="w-full flex items-center p-2 rounded hover:bg-slate-800 border border-slate-700">
-          <div className="h-8 w-8 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">{currentUser?.name?.charAt(0) || '?'}</div>
+          <Avatar name={currentUser?.name || 'Unknown'} size="sm" color="blue" />
           <div className="ml-3 text-left flex-1 min-w-0"><p className="text-sm font-medium truncate">{currentUser?.name || 'Unknown'}</p><p className="text-xs text-slate-400 truncate">{currentUser?.role || 'No role'}</p></div>
           <ChevronDown className="h-4 w-4 text-slate-500" />
         </button>

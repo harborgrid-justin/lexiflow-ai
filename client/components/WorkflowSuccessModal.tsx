@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, CheckCircle, ListChecks, Layers, ArrowRight, Clock } from 'lucide-react';
+import { Badge } from './common';
 
 interface WorkflowStage {
   id: string;
@@ -108,7 +109,7 @@ export function WorkflowSuccessModal({
                         <div className={`
                           w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
                           ${stage.status === 'in-progress' 
-                            ? 'bg-blue-100 text-blue-700' 
+                            ? 'bg-blue-500 text-white' 
                             : 'bg-slate-200 text-slate-600'}
                         `}>
                           {stage.order}
@@ -118,14 +119,9 @@ export function WorkflowSuccessModal({
                           <p className="text-sm text-slate-600 mt-0.5">{stage.description}</p>
                         </div>
                       </div>
-                      <span className={`
-                        text-xs px-2 py-1 rounded-full font-medium
-                        ${stage.status === 'in-progress' 
-                          ? 'bg-blue-100 text-blue-700' 
-                          : 'bg-slate-200 text-slate-600'}
-                      `}>
+                      <Badge variant={stage.status === 'in-progress' ? 'active' : 'inactive'} size="sm">
                         {stage.status === 'in-progress' ? 'Active' : 'Pending'}
-                      </span>
+                      </Badge>
                     </div>
                     
                     {/* Stage Tasks Preview */}

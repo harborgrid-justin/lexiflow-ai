@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { LegalDocument, User } from '../../types';
-import { FileText, Cpu, Sparkles, Bot, Plus, Wand2, Eye } from 'lucide-react';
+import { FileText, Cpu, Sparkles, Bot, Plus, Wand2, Eye, ExternalLink, Scale } from 'lucide-react';
 import { DocumentAssembly } from '../DocumentAssembly';
 import { ensureTagsArray } from '../../utils/type-transformers';
 
@@ -70,6 +70,17 @@ export const CaseDocuments: React.FC<CaseDocumentsProps> = ({ documents, analyzi
                 <div>
                   <h4 className="font-semibold text-slate-900">{doc.title}</h4>
                   <div className="text-xs text-slate-500 mt-1">{doc.type} • {doc.uploadDate} • v{(doc.versions || []).length}</div>
+                  {doc.docketEntryId && (
+                    <div className="flex items-center gap-1 mt-1 text-xs text-cyan-600">
+                      <Scale className="h-3 w-3" />
+                      <span>Linked to Docket Entry</span>
+                      {doc.pacerDocLink && (
+                        <a href={doc.pacerDocLink} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline ml-1">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <button onClick={() => onAnalyze(doc)} disabled={analyzingId === doc.id} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium border border-indigo-100 flex items-center">

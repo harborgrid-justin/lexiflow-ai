@@ -59,9 +59,9 @@ export class Party extends Model {
   @Column({ type: DataType.STRING, allowNull: false })
   type: string;
 
-  @ApiProperty({ example: 'Smith & Associates', description: 'Counsel representing this party' })
-  @Column(DataType.STRING)
-  counsel?: string;
+  @ApiProperty({ example: [{ name: 'Smith & Associates', firm: 'Law Firm LLC' }], description: 'Counsel representing this party' })
+  @Column(DataType.JSON)
+  counsel?: any;
 
   @ApiProperty({ example: 'case-123', description: 'Associated case ID' })
   @ForeignKey(() => Case)
@@ -86,4 +86,7 @@ export class Party extends Model {
 
   @BelongsTo(() => Organization, 'linked_org_id')
   linkedOrganization?: Organization;
+
+  // HasMany relationship for attorneys representing this party
+  attorneys?: any[]; // Will be properly typed when Attorney model is imported
 }

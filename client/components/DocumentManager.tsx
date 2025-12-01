@@ -1,12 +1,9 @@
 
 import React, { useState } from 'react';
-import { Search, Plus, Share2, Split, Wand2, RefreshCw, X } from 'lucide-react';
+import { Plus, Share2, Split, Wand2, RefreshCw, X } from 'lucide-react';
 import { UserRole, LegalDocument } from '../types';
 import { DocumentVersions } from './DocumentVersions';
-import { PageHeader } from './common/PageHeader';
-import { Button } from './common/Button';
-import { Modal } from './common/Modal';
-import { Card } from './common/Card';
+import { PageHeader, Button, Modal, Card, SearchInput } from './common';
 import { StatCard } from './common/Stats';
 import { useDocumentManager } from '../hooks/useDocumentManager';
 import { DocumentTable } from './document/DocumentTable';
@@ -125,10 +122,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
           <Card className="flex-1 flex flex-col overflow-hidden p-0">
              {/* Toolbar */}
              <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search content & tags..." className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                </div>
+                <SearchInput
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  placeholder="Search content & tags..."
+                  className="w-64"
+                />
                 {/* Feature 3: Bulk Actions */}
                 <div className="flex gap-2">
                     {selectedDocs.length > 0 && (

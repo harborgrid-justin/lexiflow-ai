@@ -122,17 +122,78 @@ export interface CaseMember {
   updatedAt?: string;
 }
 
+export interface Attorney {
+  id: string;
+  partyId: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  generation?: string;
+  suffix?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
+  personalPhone?: string;
+  businessPhone?: string;
+  fax?: string;
+  firm?: string;
+  address1?: string;
+  address2?: string;
+  address3?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  office?: string;
+  unit?: string;
+  room?: string;
+  terminationDate?: string;
+  noticeInfo?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Party {
   id: string;
   name: string;
   role: string;
   contact: string;
   type: 'Individual' | 'Corporation' | 'Government' | string;
-  counsel?: string;
+  counsel?: any; // Can be string (legacy) or Attorney[] (new)
+  attorneys?: Attorney[]; // Array of attorney objects
   // Backend relation fields
   caseId?: string;
   // Link party to an organization record if they are a client/entity in the system
   linkedOrgId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DocketEntry {
+  id: string;
+  caseId: string;
+  entryNumber: number;
+  dateFiled: string;
+  text: string;
+  docLink?: string;
+  pages?: number;
+  fileSize?: string;
+  documentType?: string;
+  cmecfId?: string;
+  clerkInitials?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ConsolidatedCase {
+  id: string;
+  leadCaseId?: string;
+  memberCaseId?: string;
+  leadCaseNumber: string;
+  memberCaseNumber: string;
+  associationType: string;
+  dateStart: string;
+  dateEnd?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -197,6 +258,17 @@ export interface Case {
   parties?: Party[];
   billingModel?: BillingModel | string;
   judge?: string;
+  // PACER-specific fields
+  docketNumber?: string;
+  originatingCaseNumber?: string;
+  natureOfSuit?: string;
+  caseType?: string;
+  dateOrderJudgment?: string;
+  dateNoaFiled?: string;
+  dateRecvCoa?: string;
+  feeStatus?: string;
+  presidingJudge?: string;
+  orderingJudge?: string;
   // Hierarchy Links
   ownerOrgId?: string;
   assignedGroupIds?: string[];
@@ -206,6 +278,9 @@ export interface Case {
   // Hydrated relations
   organization?: Organization;
   caseMembers?: CaseMember[];
+  docketEntries?: DocketEntry[];
+  consolidatedCases?: ConsolidatedCase[];
+  memberOfCases?: ConsolidatedCase[];
 }
 
 export interface DocumentVersion {
@@ -257,6 +332,9 @@ export interface LegalDocument {
   ownerOrgId?: string;
   createdAt?: string;
   updatedAt?: string;
+  // PACER Integration
+  docketEntryId?: string; // Link to PACER docket entry
+  pacerDocLink?: string; // Direct PACER document link
   // Hydrated relations
   case?: Case;
   creator?: User;
@@ -295,9 +373,11 @@ export interface ResearchSession {
 
 export interface TimelineEvent {
   id: string; date: string; title: string;
-  type: 'document' | 'task' | 'billing' | 'milestone' | 'system' | 'motion' | 'hearing';
+  type: 'document' | 'task' | 'billing' | 'milestone' | 'system' | 'motion' | 'hearing' | 'docket';
   description?: string; user?: string;
   relatedId?: string;
+  docketEntryNumber?: number; // For docket entries
+  pacerLink?: string; // Link to PACER document
 }
 
 // --- NEW ENTERPRISE TYPES ---
@@ -356,6 +436,8 @@ export interface Motion {
   oppositionDueDate?: string;
   replyDueDate?: string;
   createdBy?: string;
+  docketEntryId?: string; // Link to PACER docket entry
+  pacerDocLink?: string; // Direct link to PACER document
 }
 
 // --- DISCOVERY & EVIDENCE ---

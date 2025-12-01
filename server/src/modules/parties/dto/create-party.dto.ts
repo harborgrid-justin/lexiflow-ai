@@ -22,10 +22,9 @@ export class CreatePartyDto {
   @IsNotEmpty()
   type: string;
 
-  @ApiProperty({ example: 'Smith & Associates', description: 'Counsel representing this party', required: false })
-  @IsString()
+  @ApiProperty({ example: [{ name: 'Smith & Associates', firm: 'Law Firm LLC' }], description: 'Counsel representing this party', required: false })
   @IsOptional()
-  counsel?: string;
+  counsel?: any;
 
   @ApiProperty({ example: 'case-123', description: 'Associated case ID' })
   @IsUUID()

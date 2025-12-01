@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Clause } from '../types';
 import { History, ArrowLeftRight, X } from 'lucide-react';
+import { Badge } from './common';
 
 interface ClauseHistoryModalProps {
   clause: Clause;
@@ -55,9 +56,9 @@ export const ClauseHistoryModal: React.FC<ClauseHistoryModalProps> = ({ clause, 
                 <div key={v.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold mr-2 ${idx === 0 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                      <Badge variant={idx === 0 ? 'active' : 'inactive'} size="sm" className="mr-2">
                         v{v.version}
-                      </span>
+                      </Badge>
                       <span className="text-xs text-slate-500">Edited by {v.author} on {v.date}</span>
                     </div>
                   </div>

@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CaseMember, User } from '../../types';
 import { ApiService } from '../../services/apiService';
 import { Plus, X, Shield, Mail } from 'lucide-react';
-import { Button } from '../common/Button';
-import { Modal } from '../common/Modal';
+import { Button, Modal, Avatar, Badge } from '../common';
 
 interface CaseTeamProps {
   caseId: string;
@@ -83,20 +82,22 @@ export const CaseTeam: React.FC<CaseTeamProps> = ({ caseId }) => {
         {team.map(member => (
             <div key={member.userId} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-start justify-between group">
                 <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 font-bold overflow-hidden">
-                        {member.user?.avatar ? <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover"/> : member.user?.name?.charAt(0) || '?'}
-                    </div>
+                    <Avatar name={member.user?.name || 'Unknown'} size="md" color="slate" />
                     <div>
                         <h4 className="font-bold text-slate-900 text-sm">{member.user?.name}</h4>
                         <p className="text-xs text-slate-500 flex items-center mt-0.5"><Mail className="h-3 w-3 mr-1"/> {member.user?.email}</p>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-2 ${
-                            member.role === 'Lead' ? 'bg-purple-100 text-purple-700' :
-                            member.role === 'Associate' ? 'bg-blue-100 text-blue-700' :
-                            'bg-slate-100 text-slate-600'
-                        }`}>
+                        <Badge 
+                          variant={
+                            member.role === 'Lead' ? 'info' :
+                            member.role === 'Associate' ? 'active' :
+                            'inactive'
+                          } 
+                          size="sm" 
+                          className="mt-2"
+                        >
                             {member.role === 'Lead' && <Shield className="h-3 w-3 mr-1"/>}
                             {member.role}
-                        </span>
+                        </Badge>
                     </div>
                 </div>
                 <button onClick={() => handleRemoveMember(member.userId)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">

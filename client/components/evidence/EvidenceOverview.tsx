@@ -4,7 +4,7 @@ import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { EvidenceTypeIcon } from '../common/EvidenceTypeIcon';
 import { EvidenceItem } from '../../types';
-import { GeminiService } from '../../services/geminiService';
+import { OpenAIService } from '../../services/openAIService';
 import { User, Activity, MapPin, Link, Sparkles } from 'lucide-react';
 import { Button } from '../common/Button';
 import { ensureTagsArray } from '../../utils/type-transformers';
@@ -19,7 +19,7 @@ export const EvidenceOverview: React.FC<EvidenceOverviewProps> = ({ selectedItem
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
-    const result = await GeminiService.analyzeDocument(selectedItem.description);
+    const result = await OpenAIService.analyzeDocument(selectedItem.description);
     setAiSummary(result.summary);
     setIsAnalyzing(false);
   };
