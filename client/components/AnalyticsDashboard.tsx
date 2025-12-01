@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { PageHeader } from './common/PageHeader';
-import { Tabs } from './common/Tabs';
+import { PageHeader, Tabs } from './common';
 import { JudgeAnalytics } from './analytics/JudgeAnalytics';
 import { CounselAnalytics } from './analytics/CounselAnalytics';
 import { CasePrediction } from './analytics/CasePrediction';

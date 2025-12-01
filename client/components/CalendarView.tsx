@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { PageHeader } from './common/PageHeader';
-import { TabNavigation, TabItem } from './common/TabNavigation';
+import { PageHeader, TabNavigation } from './common';
 import { CalendarMaster } from './calendar/CalendarMaster';
 import { CalendarDeadlines } from './calendar/CalendarDeadlines';
 import { CalendarTeam } from './calendar/CalendarTeam';

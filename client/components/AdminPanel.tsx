@@ -1,10 +1,7 @@
 
 import React, { useState } from 'react';
 import { Activity, Shield, Link, Database, Network } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
-import { Card } from './common/Card';
-import { Button } from './common/Button';
-import { SidebarNavigation } from './common/SidebarNavigation';
+import { PageHeader, Card, Button, SidebarNavigation } from './common';
 import { useAdminPanel } from '../hooks/useAdminPanel';
 
 export const AdminPanel: React.FC = () => {

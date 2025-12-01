@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PageHeader } from './common/PageHeader';
+import { PageHeader } from './common';
 import { ResearchSearchForm } from './research/ResearchSearchForm';
 import { ResearchResults } from './research/ResearchResults';
 import { ResearchHistoryList } from './research/ResearchHistoryList';

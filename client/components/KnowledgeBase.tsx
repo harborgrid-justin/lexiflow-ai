@@ -1,10 +1,7 @@
 
 import React, { useState } from 'react';
 import { Search, Book, FileText, Lightbulb, MessageCircle } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
-import { Tabs } from './common/Tabs';
-import { Card } from './common/Card';
-import { Badge } from './common/Badge';
+import { PageHeader, Tabs, Card, Badge } from './common';
 import { useKnowledgeBase } from '../hooks/useKnowledgeBase';
 import { ensureTagsArray } from '../utils/type-transformers';
 

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Case, TimelineEvent, User } from '../types';
 import { ArrowLeft, MapPin, DollarSign } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
+import { PageHeader } from './common';
 import { CaseOverview } from './case-detail/CaseOverview';
 import { CaseDocuments } from './case-detail/CaseDocuments';
 import { CaseWorkflow } from './case-detail/CaseWorkflow';

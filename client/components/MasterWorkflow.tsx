@@ -1,10 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Briefcase, Play, Layers, RefreshCw, BarChart3, Bell } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
-import { Tabs } from './common/Tabs';
-import { Button } from './common/Button';
-import { StatCard } from './common/Stats';
+import { PageHeader, Tabs, Button, StatCard } from './common';
 import { ApiService } from '../services/apiService';
 import { Case } from '../types';
 import { CaseWorkflowList } from './workflow/CaseWorkflowList';

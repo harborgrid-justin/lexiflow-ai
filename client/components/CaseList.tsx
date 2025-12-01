@@ -5,9 +5,7 @@ import {
   Plus, Briefcase, UserPlus, ShieldAlert, Users, Calendar, CheckSquare,
   DollarSign, Gavel, Mic2, FileCheck, Archive, FileInput
 } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
-import { Button } from './common/Button';
-import { Modal } from './common/Modal';
+import { PageHeader, Button, Modal } from './common';
 import { useCaseList } from '../hooks/useCaseList';
 import { CaseListActive } from './case-list/CaseListActive';
 import { CaseListIntake } from './case-list/CaseListIntake';

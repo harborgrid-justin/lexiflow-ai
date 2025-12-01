@@ -2,8 +2,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase } from 'lucide-react';
-import { PageHeader, Button, Card, Avatar, Badge } from './common';
-import { StatCard } from './common/Stats';
+import { PageHeader, Button, Card, Avatar, Badge, StatCard } from './common';
 import { useBillingDashboard } from '../hooks/useBillingDashboard';
 
 interface BillingDashboardProps {

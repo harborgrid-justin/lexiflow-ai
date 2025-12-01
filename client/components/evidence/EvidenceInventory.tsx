@@ -3,6 +3,7 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { StatCard } from '../common/Stats';
+import { Input } from '../common/Inputs';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Plus, Box, Activity, FileText, Fingerprint, Filter } from 'lucide-react';
 import { EvidenceItem } from '../../types';
@@ -61,42 +62,32 @@ export const EvidenceInventory: React.FC<EvidenceInventoryProps> = ({
         <Card className="bg-slate-50 border-blue-100">
             <div className="flex justify-between items-center mb-4">
                 <h4 className="font-bold text-slate-700">Advanced Filtering</h4>
-                <button onClick={clearFilters} className="text-xs text-blue-600 hover:underline">Clear All</button>
+                <Button variant="ghost" size="sm" onClick={clearFilters}>Clear All</Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                {/* 1. Search */}
-                <input className="p-2 border rounded text-sm" placeholder="Search Title/Desc" value={filters.search} onChange={e => handleFilterChange('search', e.target.value)} />
-                {/* 2. Type */}
-                <select className="p-2 border rounded text-sm" value={filters.type} onChange={e => handleFilterChange('type', e.target.value)}>
+                <Input placeholder="Search Title/Desc" value={filters.search} onChange={e => handleFilterChange('search', e.target.value)} />
+                <select className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm" value={filters.type} onChange={e => handleFilterChange('type', e.target.value)}>
                     <option value="">All Types</option>
                     <option value="Physical">Physical</option>
                     <option value="Digital">Digital</option>
                     <option value="Document">Document</option>
                     <option value="Forensic">Forensic</option>
                 </select>
-                {/* 3. Admissibility */}
-                <select className="p-2 border rounded text-sm" value={filters.admissibility} onChange={e => handleFilterChange('admissibility', e.target.value)}>
+                <select className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm" value={filters.admissibility} onChange={e => handleFilterChange('admissibility', e.target.value)}>
                     <option value="">Any Admissibility</option>
                     <option value="Admissible">Admissible</option>
                     <option value="Challenged">Challenged</option>
                     <option value="Pending">Pending</option>
                 </select>
-                {/* 4. Case ID */}
-                <input className="p-2 border rounded text-sm" placeholder="Case ID" value={filters.caseId} onChange={e => handleFilterChange('caseId', e.target.value)} />
-                {/* 5. Custodian */}
-                <input className="p-2 border rounded text-sm" placeholder="Custodian" value={filters.custodian} onChange={e => handleFilterChange('custodian', e.target.value)} />
+                <Input placeholder="Case ID" value={filters.caseId} onChange={e => handleFilterChange('caseId', e.target.value)} />
+                <Input placeholder="Custodian" value={filters.custodian} onChange={e => handleFilterChange('custodian', e.target.value)} />
                 
-                {/* 6. Date From */}
-                <input type="date" className="p-2 border rounded text-sm" placeholder="Collected From" value={filters.dateFrom} onChange={e => handleFilterChange('dateFrom', e.target.value)} />
-                {/* 7. Date To */}
-                <input type="date" className="p-2 border rounded text-sm" placeholder="Collected To" value={filters.dateTo} onChange={e => handleFilterChange('dateTo', e.target.value)} />
+                <Input type="date" placeholder="Collected From" value={filters.dateFrom} onChange={e => handleFilterChange('dateFrom', e.target.value)} />
+                <Input type="date" placeholder="Collected To" value={filters.dateTo} onChange={e => handleFilterChange('dateTo', e.target.value)} />
                 
-                {/* 8. Location */}
-                <input className="p-2 border rounded text-sm" placeholder="Storage Location" value={filters.location} onChange={e => handleFilterChange('location', e.target.value)} />
-                {/* 9. Tags */}
-                <input className="p-2 border rounded text-sm" placeholder="Filter by Tag" value={filters.tags} onChange={e => handleFilterChange('tags', e.target.value)} />
-                {/* 10. Collected By */}
-                <input className="p-2 border rounded text-sm" placeholder="Collected By" value={filters.collectedBy} onChange={e => handleFilterChange('collectedBy', e.target.value)} />
+                <Input placeholder="Storage Location" value={filters.location} onChange={e => handleFilterChange('location', e.target.value)} />
+                <Input placeholder="Filter by Tag" value={filters.tags} onChange={e => handleFilterChange('tags', e.target.value)} />
+                <Input placeholder="Collected By" value={filters.collectedBy} onChange={e => handleFilterChange('collectedBy', e.target.value)} />
             </div>
             <div className="mt-4 flex items-center">
                  {/* 11. Blockchain (Bonus filter) */}

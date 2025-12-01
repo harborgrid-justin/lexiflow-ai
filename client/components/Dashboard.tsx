@@ -2,11 +2,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from './common/PageHeader';
-import { StatCard } from './common/Stats';
-import { Card } from './common/Card';
-import { Button } from './common/Button';
-import { StatusCard } from './common/StatusCard';
+import { PageHeader, StatCard, Card, Button, StatusCard } from './common';
 import { useDashboard } from '../hooks/useDashboard';
 
 interface DashboardProps {

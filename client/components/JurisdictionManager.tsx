@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { PageHeader } from './common/PageHeader';
-import { TabNavigation, TabItem } from './common/TabNavigation';
+import { PageHeader, TabNavigation } from './common';
 import { Landmark, Map, Gavel, Globe, ScrollText, Scale, Building2 } from 'lucide-react';
 import { JurisdictionFederal } from './jurisdiction/JurisdictionFederal';
 import { JurisdictionState } from './jurisdiction/JurisdictionState';

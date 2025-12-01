@@ -12,6 +12,7 @@ export { ConfirmationModal } from './ConfirmationModal';
 export { ContentSection } from './ContentSection';
 export { DataListItem } from './DataListItem';
 export { EmptyState } from './EmptyState';
+export { ErrorBoundary } from './ErrorBoundary';
 export { ExpandableSection } from './ExpandableSection';
 export { FilterBar } from './FilterBar';
 export { FormFieldGroup } from './FormFieldGroup';
@@ -26,6 +27,7 @@ export { PillNavigation } from './PillNavigation';
 export { SearchInput } from './SearchInput';
 export { StatusIndicator, StatusBadge } from './StatusIndicator';
 export { StatusCard } from './StatusCard';
+export { StatCard } from './Stats';
 export { StepHeader } from './StepHeader';
 export { Table } from './Table';
 export { Tabs } from './Tabs';
@@ -33,3 +35,4 @@ export { TabNavigation } from './TabNavigation';
 
 // Re-export types for convenience
 export type { PillTab } from './PillNavigation';
+export type { TabItem } from './TabNavigation';

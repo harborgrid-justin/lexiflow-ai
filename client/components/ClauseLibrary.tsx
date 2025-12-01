@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Clause } from '../types';
 import { Search, BarChart2, ShieldAlert, FileText, History } from 'lucide-react';
 import { ClauseHistoryModal } from './ClauseHistoryModal';
-import { PageHeader } from './common/PageHeader';
-import { Card } from './common/Card';
+import { PageHeader, Card } from './common';
 import { useClauseLibrary } from '../hooks/useClauseLibrary';
 
 export const ClauseLibrary: React.FC = () => {

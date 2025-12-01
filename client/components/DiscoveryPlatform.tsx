@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
-import { PageHeader } from './common/PageHeader';
-import { Button } from './common/Button';
-import { TabNavigation, TabItem } from './common/TabNavigation';
+import { PageHeader, Button, TabNavigation } from './common';
 import { 
   MessageCircle, Plus, Scale, Shield, Users, Lock, Clock
 } from 'lucide-react';
