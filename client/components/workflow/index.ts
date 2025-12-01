@@ -9,6 +9,8 @@ export { NotificationCenter } from './NotificationCenter';
 export { AuditTrailViewer } from './AuditTrailViewer';
 export { WorkflowAnalyticsDashboard } from './WorkflowAnalyticsDashboard';
 export { EnhancedWorkflowPanel } from './EnhancedWorkflowPanel';
+export { WorkflowQuickActions } from './WorkflowQuickActions';
+export { TaskWorkflowBadges } from './TaskWorkflowBadges';
 
 // Legacy components
 export { CaseWorkflowList } from './CaseWorkflowList';

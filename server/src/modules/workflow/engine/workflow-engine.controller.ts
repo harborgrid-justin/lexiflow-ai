@@ -14,7 +14,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { WorkflowOrchestratorService } from './workflow-orchestrator.service';
 
 @ApiTags('Workflow Engine')
-@Controller('workflow-engine')
+@Controller('workflow/engine')
 export class WorkflowEngineController {
   constructor(private orchestrator: WorkflowOrchestratorService) {}
 
@@ -75,6 +75,17 @@ export class WorkflowEngineController {
   @ApiOperation({ summary: 'Create an SLA rule' })
   createSLARule(@Body() rule: any) {
     return this.orchestrator.getSLAService().setRule(rule);
+  }
+
+  @Get('sla/breaches')
+  @ApiOperation({ summary: 'Get all SLA breaches' })
+  async getSLABreaches(@Query('caseId') caseId?: string) {
+    // Return empty breach report for now - will be populated as tasks are created
+    return { 
+      warnings: [], 
+      breaches: [], 
+      total: 0 
+    };
   }
 
   // ==================== APPROVALS ====================

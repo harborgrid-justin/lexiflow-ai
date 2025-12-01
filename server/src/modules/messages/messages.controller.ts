@@ -83,4 +83,87 @@ export class MessagesController {
   ): Promise<Message> {
     return this.messagesService.updateMessage(id, updateData);
   }
+
+  // ==================== REAL-TIME ENDPOINTS ====================
+
+  @Post('users/:userId/online')
+  @ApiOperation({ summary: 'Set user online status' })
+  @ApiResponse({ status: 200, description: 'User status set to online' })
+  async setUserOnline(@Param('userId') userId: string): Promise<{ success: boolean }> {
+    await this.messagesService.setUserOnline(userId);
+    return { success: true };
+  }
+
+  @Post('users/:userId/offline')
+  @ApiOperation({ summary: 'Set user offline status' })
+  @ApiResponse({ status: 200, description: 'User status set to offline' })
+  async setUserOffline(@Param('userId') userId: string): Promise<{ success: boolean }> {
+    await this.messagesService.setUserOffline(userId);
+    return { success: true };
+  }
+
+  @Get('users/online')
+  @ApiOperation({ summary: 'Get list of online users' })
+  @ApiResponse({ status: 200, description: 'Online users retrieved successfully' })
+  async getOnlineUsers(): Promise<{ users: string[] }> {
+    const users = await this.messagesService.getOnlineUsers();
+    return { users };
+  }
+
+  @Get('users/:userId/online-status')
+  @ApiOperation({ summary: 'Check if user is online' })
+  @ApiResponse({ status: 200, description: 'User online status retrieved' })
+  async isUserOnline(@Param('userId') userId: string): Promise<{ online: boolean }> {
+    const online = await this.messagesService.isUserOnline(userId);
+    return { online };
+  }
+
+  @Post('conversations/:id/typing')
+  @ApiOperation({ summary: 'Set typing indicator' })
+  @ApiResponse({ status: 200, description: 'Typing indicator set' })
+  async setTyping(
+    @Param('id') conversationId: string,
+    @Body() body: { userId: string; isTyping: boolean },
+  ): Promise<{ success: boolean }> {
+    await this.messagesService.setTyping(conversationId, body.userId, body.isTyping);
+    return { success: true };
+  }
+
+  @Get('conversations/:id/typing')
+  @ApiOperation({ summary: 'Get users typing in conversation' })
+  @ApiResponse({ status: 200, description: 'Typing users retrieved' })
+  async getTypingUsers(@Param('id') conversationId: string): Promise<{ users: string[] }> {
+    const users = await this.messagesService.getTypingUsers(conversationId);
+    return { users };
+  }
+
+  @Post('messages/:id/read')
+  @ApiOperation({ summary: 'Mark message as read' })
+  @ApiResponse({ status: 200, description: 'Message marked as read' })
+  async markMessageAsRead(
+    @Param('id') messageId: string,
+    @Body() body: { userId: string },
+  ): Promise<{ success: boolean }> {
+    await this.messagesService.markMessageAsRead(messageId, body.userId);
+    return { success: true };
+  }
+
+  @Get('users/:userId/unread-count')
+  @ApiOperation({ summary: 'Get unread message count for user' })
+  @ApiResponse({ status: 200, description: 'Unread count retrieved' })
+  async getUnreadCount(@Param('userId') userId: string): Promise<{ count: number }> {
+    const count = await this.messagesService.getUnreadCount(userId);
+    return { count };
+  }
+
+  @Post('conversations/:id/system-message')
+  @ApiOperation({ summary: 'Send system message to conversation' })
+  @ApiResponse({ status: 200, description: 'System message sent' })
+  async sendSystemMessage(
+    @Param('id') conversationId: string,
+    @Body() body: { content: string },
+  ): Promise<{ success: boolean }> {
+    await this.messagesService.sendSystemMessage(conversationId, body.content);
+    return { success: true };
+  }
 }

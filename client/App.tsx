@@ -268,7 +268,7 @@ const AppContent: React.FC = () => {
           </div>
         </header>
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 md:p-8 relative">
-          <div className="max-w-7xl mx-auto h-full">
+          <div className="w-full h-full">
             {renderContent()}
           </div>
         </main>

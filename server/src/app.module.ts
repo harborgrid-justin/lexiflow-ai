@@ -97,6 +97,7 @@ import { JudgeProfileModule } from './modules/judge-profile/judge-profile.module
 import { OpposingCounselModule } from './modules/opposing-counsel/opposing-counsel.module';
 import { DocumentVersionsModule } from './modules/document-versions/document-versions.module';
 import { PlaybooksModule } from './modules/playbooks/playbooks.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -105,6 +106,9 @@ import { PlaybooksModule } from './modules/playbooks/playbooks.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+
+    // Redis (must be before other modules that depend on it)
+    RedisModule,
 
     // Database
     SequelizeModule.forRoot({

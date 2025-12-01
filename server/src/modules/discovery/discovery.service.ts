@@ -17,13 +17,13 @@ export class DiscoveryService {
     const whereClause = caseId ? { case_id: caseId } : {};
     return this.discoveryRequestModel.findAll({
       where: whereClause,
-      include: ['case', 'requested_by', 'organization'],
+      include: ['case', 'creator'],
     });
   }
 
   async findOne(id: string): Promise<DiscoveryRequest> {
     const discoveryRequest = await this.discoveryRequestModel.findByPk(id, {
-      include: ['case', 'requested_by', 'organization'],
+      include: ['case', 'creator'],
     });
 
     if (!discoveryRequest) {

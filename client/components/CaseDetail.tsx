@@ -16,6 +16,7 @@ import { CaseParties } from './case-detail/CaseParties';
 import { CaseMotions } from './case-detail/CaseMotions';
 import { CaseTeam } from './case-detail/CaseTeam';
 import { useCaseDetail } from '../hooks/useCaseDetail';
+import { WorkflowQuickActions } from './workflow/WorkflowQuickActions';
 
 interface CaseDetailProps {
   caseData: Case;
@@ -49,6 +50,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
     createDocument
   } = useCaseDetail(caseData);
 
+  const [teamMembers, setTeamMembers] = React.useState<Array<{ id: string; name: string; role: string }>>([
+    { id: '1', name: 'John Smith', role: 'Senior Partner' },
+    { id: '2', name: 'Jane Doe', role: 'Associate' },
+    { id: '3', name: 'Bob Johnson', role: 'Paralegal' }
+  ]);
+
   const handleTimelineClick = (event: TimelineEvent) => {
       switch(event.type) {
           case 'motion':
@@ -73,7 +80,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
   return (
     <div className="h-full flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-4 md:mb-6 space-y-3 md:space-y-0">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 flex-1">
             <button onClick={onBack} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"><ArrowLeft className="h-5 w-5" /></button>
             <div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900 line-clamp-1">{caseData.title}</h1>
@@ -94,6 +101,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
                 </span>
             </div>
             </div>
+        </div>
+        <div className="flex-shrink-0">
+          <WorkflowQuickActions 
+            userId={currentUser?.id || '1'}
+            caseId={caseData.id}
+            compact
+          />
         </div>
       </div>
 
@@ -123,7 +137,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
                 {activeTab === 'Discovery' && <CaseDiscovery caseId={caseData.id} />}
                 {activeTab === 'Messages' && <CaseMessages caseData={caseData} />}
                 {activeTab === 'Drafting' && <CaseDrafting caseId={caseData.id} caseTitle={caseData.title} draftPrompt={draftPrompt} setDraftPrompt={setDraftPrompt} draftResult={draftResult} isDrafting={isDrafting} onDraft={handleDraft} />}
-                {activeTab === 'Workflow' && <CaseWorkflow stages={stages} generatingWorkflow={generatingWorkflow} onGenerateWorkflow={handleGenerateWorkflow} onNavigateToModule={(module) => setActiveTab(module)} onToggleTask={toggleTask} />}
+                {activeTab === 'Workflow' && <CaseWorkflow stages={stages} caseId={caseData.id} currentUserId={currentUser?.id || '1'} users={teamMembers} generatingWorkflow={generatingWorkflow} onGenerateWorkflow={handleGenerateWorkflow} onNavigateToModule={(module) => setActiveTab(module)} onToggleTask={toggleTask} />}
                 {activeTab === 'Contract Review' && <CaseContractReview />}
                 {activeTab === 'Billing' && <CaseBilling billingModel={caseData.billingModel || 'Hourly'} value={caseData.value} entries={billingEntries} />}
             </div>
