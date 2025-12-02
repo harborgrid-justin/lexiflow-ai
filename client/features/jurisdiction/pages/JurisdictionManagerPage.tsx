@@ -13,25 +13,25 @@ import type { JurisdictionView } from '../api/jurisdiction.types';
 
 // Lazy load sub-components
 const JurisdictionFederal = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionFederal').then(m => ({ default: m.JurisdictionFederal }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionFederal }))
 );
 const JurisdictionState = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionState').then(m => ({ default: m.JurisdictionState }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionState }))
 );
 const JurisdictionRegulatory = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionRegulatory').then(m => ({ default: m.JurisdictionRegulatory }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionRegulatory }))
 );
 const JurisdictionInternational = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionInternational').then(m => ({ default: m.JurisdictionInternational }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionInternational }))
 );
 const JurisdictionArbitration = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionArbitration').then(m => ({ default: m.JurisdictionArbitration }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionArbitration }))
 );
 const JurisdictionLocalRules = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionLocalRules').then(m => ({ default: m.JurisdictionLocalRules }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionLocalRules }))
 );
 const JurisdictionGeoMap = React.lazy(() =>
-  import('@/components/jurisdiction/JurisdictionGeoMap').then(m => ({ default: m.JurisdictionGeoMap }))
+  import('@/components/jurisdiction').then(m => ({ default: m.JurisdictionGeoMap }))
 );
 
 interface JurisdictionManagerPageProps {

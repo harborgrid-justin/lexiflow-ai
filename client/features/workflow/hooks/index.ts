@@ -7,6 +7,6 @@
  * @module features/workflow/hooks
  */
 
-// Re-export from archive location (complex hooks, need careful migration)
-export { useWorkflowEngine } from '@//.archive/hooks/useWorkflowEngine';
-export { useWorkflowAnalytics } from '@//.archive/hooks/useWorkflowAnalytics';
+// Re-export from hooks location
+export { useWorkflowEngine } from '../../../hooks/useWorkflowEngine';
+export { useWorkflowAnalytics } from '../../../hooks/useWorkflowAnalytics';

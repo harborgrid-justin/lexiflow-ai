@@ -41,6 +41,8 @@ export { TabNavigation } from './TabNavigation';
 export { TokenRefreshButton } from './TokenRefreshButton';
 export { UserAvatar } from './UserAvatar';
 
-// Re-export types for convenience
-export type { PillTab } from './PillNavigation';
-export type { TabItem } from './TabNavigation';
+export { CaseInfoPreview } from './CaseInfoPreview';
+export { PartiesPreview } from './PartiesPreview';
+export { DocketEntriesPreview } from './DocketEntriesPreview';
+export { ConsolidatedCasesPreview } from './ConsolidatedCasesPreview';
+export { DataMappingSection } from './DataMappingSection';

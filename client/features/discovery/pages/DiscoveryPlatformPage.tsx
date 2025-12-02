@@ -26,25 +26,25 @@ import type { DiscoveryView } from '../api/discovery.types';
 
 // Lazy load heavy components
 const DiscoveryDashboard = lazy(() =>
-  import('@/components/discovery/DiscoveryDashboard').then(m => ({ default: m.DiscoveryDashboard }))
+  import('@/components/discovery').then(m => ({ default: m.DiscoveryDashboard }))
 );
 const DiscoveryRequests = lazy(() =>
-  import('@/components/discovery/DiscoveryRequests').then(m => ({ default: m.DiscoveryRequests }))
+  import('@/components/discovery').then(m => ({ default: m.DiscoveryRequests }))
 );
 const PrivilegeLog = lazy(() =>
-  import('@/components/discovery/PrivilegeLog').then(m => ({ default: m.PrivilegeLog }))
+  import('@/components/discovery').then(m => ({ default: m.PrivilegeLog }))
 );
 const LegalHolds = lazy(() =>
-  import('@/components/discovery/LegalHolds').then(m => ({ default: m.LegalHolds }))
+  import('@/components/discovery').then(m => ({ default: m.LegalHolds }))
 );
 const DiscoveryDocumentViewer = lazy(() =>
-  import('@/components/discovery/DiscoveryDocumentViewer').then(m => ({ default: m.DiscoveryDocumentViewer }))
+  import('@/components/discovery').then(m => ({ default: m.DiscoveryDocumentViewer }))
 );
 const DiscoveryResponse = lazy(() =>
-  import('@/components/discovery/DiscoveryResponse').then(m => ({ default: m.DiscoveryResponse }))
+  import('@/components/discovery').then(m => ({ default: m.DiscoveryResponse }))
 );
 const DiscoveryProduction = lazy(() =>
-  import('@/components/discovery/DiscoveryProduction').then(m => ({ default: m.DiscoveryProduction }))
+  import('@/components/discovery').then(m => ({ default: m.DiscoveryProduction }))
 );
 
 const LoadingFallback = () => (

@@ -35,14 +35,14 @@ import {
 } from '../../enzyme';
 
 // Lazy load heavy sub-components for better performance
-const TaskDependencyManager = React.lazy(() => import('./TaskDependencyManager').then(m => ({ default: m.TaskDependencyManager })));
-const SLAMonitor = React.lazy(() => import('./SLAMonitor').then(m => ({ default: m.SLAMonitor })));
-const ApprovalWorkflow = React.lazy(() => import('./ApprovalWorkflow').then(m => ({ default: m.ApprovalWorkflow })));
-const TimeTrackingPanel = React.lazy(() => import('./TimeTrackingPanel').then(m => ({ default: m.TimeTrackingPanel })));
-const ParallelTasksManager = React.lazy(() => import('./ParallelTasksManager').then(m => ({ default: m.ParallelTasksManager })));
-const TaskReassignmentPanel = React.lazy(() => import('./TaskReassignmentPanel').then(m => ({ default: m.TaskReassignmentPanel })));
-const NotificationCenter = React.lazy(() => import('./NotificationCenter').then(m => ({ default: m.NotificationCenter })));
-const AuditTrailViewer = React.lazy(() => import('./AuditTrailViewer').then(m => ({ default: m.AuditTrailViewer })));
+const TaskDependencyManager = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.TaskDependencyManager })));
+const SLAMonitor = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.SLAMonitor })));
+const ApprovalWorkflow = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.ApprovalWorkflow })));
+const TimeTrackingPanel = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.TimeTrackingPanel })));
+const ParallelTasksManager = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.ParallelTasksManager })));
+const TaskReassignmentPanel = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.TaskReassignmentPanel })));
+const NotificationCenter = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.NotificationCenter })));
+const AuditTrailViewer = React.lazy(() => import('../../features/workflow/components').then(m => ({ default: m.AuditTrailViewer })));
 
 // Loading fallback for tab content
 const TabLoadingFallback = () => (

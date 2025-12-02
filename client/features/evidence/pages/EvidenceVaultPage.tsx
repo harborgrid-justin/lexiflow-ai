@@ -23,19 +23,19 @@ import { useEvidenceVault, ViewMode } from '../hooks/useEvidenceVault';
 
 // Lazy load sub-components
 const EvidenceInventory = React.lazy(() => 
-  import('@/components/evidence/EvidenceInventory').then(m => ({ default: m.EvidenceInventory }))
+  import('@/components/evidence').then(m => ({ default: m.EvidenceInventory }))
 );
 const EvidenceDetail = React.lazy(() => 
-  import('@/components/evidence/EvidenceDetail').then(m => ({ default: m.EvidenceDetail }))
+  import('@/components/evidence').then(m => ({ default: m.EvidenceDetail }))
 );
 const EvidenceIntake = React.lazy(() => 
-  import('@/components/evidence/EvidenceIntake').then(m => ({ default: m.EvidenceIntake }))
+  import('@/components/evidence').then(m => ({ default: m.EvidenceIntake }))
 );
 const EvidenceDashboard = React.lazy(() => 
-  import('@/components/evidence/EvidenceDashboard').then(m => ({ default: m.EvidenceDashboard }))
+  import('@/components/evidence').then(m => ({ default: m.EvidenceDashboard }))
 );
 const EvidenceCustodyLog = React.lazy(() => 
-  import('@/components/evidence/EvidenceCustodyLog').then(m => ({ default: m.EvidenceCustodyLog }))
+  import('@/components/evidence').then(m => ({ default: m.EvidenceCustodyLog }))
 );
 
 interface EvidenceVaultPageProps {

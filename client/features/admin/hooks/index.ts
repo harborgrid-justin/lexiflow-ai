@@ -9,5 +9,5 @@
 // New SOA hooks
 export { useAdminPanel, type AdminTab } from './useAdminPanel';
 
-// Re-export legacy for backward compatibility  
-export { useUserProfile } from '@/.archive/hooks/useUserProfile';
+// Re-export legacy for backward compatibility
+export { useUserProfile } from '../../../hooks/useUserProfile';

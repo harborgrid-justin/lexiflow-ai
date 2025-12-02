@@ -11,13 +11,13 @@
  */
 
 import { useEffect, useRef, RefObject } from 'react';
-import { safeFocus, safeScrollIntoView } from '../utils/dom-safety';
+import { safeFocus, safeScrollIntoView } from '@/utils/dom-safety';
 import {
   useLatestCallback,
   useIsMounted,
   useEventListener,
   useSafeState
-} from '../enzyme';
+} from '@/enzyme';
 
 /**
  * Safely focus an element on mount

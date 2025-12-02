@@ -17,14 +17,3 @@ export * from './pages';
 
 // Store
 export * from './store';
-
-// Re-export components from legacy location
-export {
-  DiscoveryDashboard,
-  DiscoveryRequests,
-  PrivilegeLog,
-  LegalHolds,
-  DiscoveryDocumentViewer,
-  DiscoveryResponse,
-  DiscoveryProduction
-} from '@/components/discovery';

@@ -5,9 +5,7 @@
  */
 
 // API & Types
-export * from './api/communication.types';
-export * from './api/messages.api';
-export * from './api/notifications.api';
+export * from './api';
 
 // Store
 export * from './store/communication.store';

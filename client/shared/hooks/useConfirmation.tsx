@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ConfirmationModal } from '../components/common/ConfirmationModal';
+import { ConfirmationModal } from '@/components/common/ConfirmationModal';
 
 export const useConfirmation = () => {
   const [isOpen, setIsOpen] = useState(false);

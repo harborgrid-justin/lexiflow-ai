@@ -4,6 +4,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+@reference "tailwindcss";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -204,11 +206,15 @@
 
 @layer base {
   * {
-    @apply border-border;
+    /* Removed border-border as it was causing CSS compilation error */
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
@@ -224,54 +230,94 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted;
+    background-color: hsl(var(--muted));
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-lg;
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: var(--radius-lg);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    background-color: hsl(var(--muted-foreground) / 0.5);
   }
 
   /* Selection color */
   ::selection {
-    @apply bg-primary/20 text-primary-foreground;
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary-foreground));
   }
 
   /* Focus visible */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 4px hsl(var(--background));
   }
 
   /* Headings */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    font-weight: var(--font-semibold);
+    letter-spacing: var(--tracking-tight);
   }
 
   h1 {
-    @apply text-4xl lg:text-5xl;
+    font-size: var(--text-4xl);
+  }
+
+  @media (min-width: 1024px) {
+    h1 {
+      font-size: var(--text-5xl);
+    }
   }
 
   h2 {
-    @apply text-3xl lg:text-4xl;
+    font-size: var(--text-3xl);
+  }
+
+  @media (min-width: 1024px) {
+    h2 {
+      font-size: var(--text-4xl);
+    }
   }
 
   h3 {
-    @apply text-2xl lg:text-3xl;
+    font-size: var(--text-2xl);
+  }
+
+  @media (min-width: 1024px) {
+    h3 {
+      font-size: var(--text-3xl);
+    }
   }
 
   h4 {
-    @apply text-xl lg:text-2xl;
+    font-size: var(--text-xl);
+  }
+
+  @media (min-width: 1024px) {
+    h4 {
+      font-size: var(--text-2xl);
+    }
   }
 
   h5 {
-    @apply text-lg lg:text-xl;
+    font-size: var(--text-lg);
+  }
+
+  @media (min-width: 1024px) {
+    h5 {
+      font-size: var(--text-xl);
+    }
   }
 
   h6 {
-    @apply text-base lg:text-lg;
+    font-size: var(--text-base);
+  }
+
+  @media (min-width: 1024px) {
+    h6 {
+      font-size: var(--text-lg);
+    }
   }
 }
 
@@ -279,11 +325,15 @@
 @layer utilities {
   /* Glass morphism effect */
   .glass {
-    @apply bg-background/80 backdrop-blur-xl border border-border/50;
+    background-color: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--border) / 0.5);
   }
 
   .glass-dark {
-    @apply bg-background/60 backdrop-blur-xl border border-border/30;
+    background-color: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--border) / 0.3);
   }
 
   /* Gradient backgrounds */
@@ -305,31 +355,52 @@
 
   /* Text gradients */
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   /* Premium card effect */
   .card-premium {
-    @apply bg-card rounded-lg border border-border shadow-lg hover:shadow-xl transition-shadow;
+    background-color: hsl(var(--card));
+    border-radius: var(--radius-lg);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-lg);
+    transition: box-shadow var(--transition-base);
+  }
+
+  .card-premium:hover {
+    box-shadow: var(--shadow-xl);
   }
 
   /* Animated underline */
   .animated-underline {
-    @apply relative;
+    position: relative;
   }
 
   .animated-underline::after {
-    @apply absolute bottom-0 left-0 h-0.5 w-0 bg-primary transition-all duration-300;
     content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background-color: hsl(var(--primary));
+    transition: all 300ms;
   }
 
   .animated-underline:hover::after {
-    @apply w-full;
+    width: 100%;
   }
 
   /* Focus ring */
-  .focus-ring {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  .focus-ring:focus {
+    outline: none;
+  }
+
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px hsl(var(--ring));
   }
 
   /* Truncate text utilities */

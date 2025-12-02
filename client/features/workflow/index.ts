@@ -36,8 +36,5 @@ export type {
 // Store
 export { useWorkflowStore } from './store/workflow.store';
 
-// Components
-export * from './components';
-
 // Pages
 export { WorkflowPage } from './pages/WorkflowPage';

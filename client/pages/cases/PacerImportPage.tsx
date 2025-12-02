@@ -5,13 +5,13 @@ import { WorkflowSuccessModal } from '../../components/WorkflowSuccessModal';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button } from '../../components/common/Button';
 import { StepHeader } from '../../components/common/StepHeader';
-import { FileUploadZone } from '../../components/shared/FileUploadZone';
+import { FileUploadZone } from '../../components/common/FileUploadZone';
 import { ErrorAlert, SuccessAlert as SuccessMessage } from '../../components/common/Alert';
-import { DataMappingSection } from '../../components/shared/DataMappingSection';
-import { CaseInfoPreview } from '../../components/shared/CaseInfoPreview';
-import { PartiesPreview } from '../../components/shared/PartiesPreview';
-import { DocketEntriesPreview } from '../../components/shared/DocketEntriesPreview';
-import { ConsolidatedCasesPreview } from '../../components/shared/ConsolidatedCasesPreview';
+import { DataMappingSection } from '../../components/common/DataMappingSection';
+import { CaseInfoPreview } from '../../components/common/CaseInfoPreview';
+import { PartiesPreview } from '../../components/common/PartiesPreview';
+import { DocketEntriesPreview } from '../../components/common/DocketEntriesPreview';
+import { ConsolidatedCasesPreview } from '../../components/common/ConsolidatedCasesPreview';
 
 interface PacerImportPageProps {
   onBack: () => void;
