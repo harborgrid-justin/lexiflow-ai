@@ -1,277 +1,161 @@
-# Database Setup and Migration Guide
+# Database Management
 
-This directory contains all the necessary files to set up and manage the LexiFlow AI Legal Management System database.
+This directory contains database migrations, seeders, and scripts for the LexiFlow AI platform.
 
 ## 📁 Directory Structure
 
 ```
 database/
-├── migrations/           # Database schema migrations
-│   ├── 000_enable_extensions.sql
-│   ├── 001_initial_schema.sql
-│   └── 002_create_indexes.sql
-├── seeders/             # Sample data seeders
-│   └── 003_sample_data.sql
-├── scripts/             # Setup and utility scripts
-│   ├── setup_database.sh     # Linux/macOS setup script
-│   └── setup_database.ps1    # Windows PowerShell setup script
-└── README.md           # This file
+├── migrations/          # SQL migration files (numbered)
+├── scripts/            # Database management scripts
+│   ├── sync.ts         # Full database sync with Sequelize
+│   ├── migrate.ts      # Run SQL migrations
+│   └── seed.ts         # Seed database with sample data
+├── init/               # Docker initialization scripts
+└── README.md
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-1. **PostgreSQL 14+** installed and running
-2. **pgvector extension** available (install with: `CREATE EXTENSION vector;`)
-3. **Superuser access** to PostgreSQL for initial setup
+- PostgreSQL 14+ with pgvector extension
+- Node.js 18+ with TypeScript
+- Environment variables configured in `server/.env`
 
-### Windows Setup
-
-```powershell
-# Navigate to the scripts directory
-cd backend/src/database/scripts
-
-# Run the PowerShell setup script
-./setup_database.ps1
-
-# Or with custom parameters
-./setup_database.ps1 -DBName "my_lexiflow" -DBUser "my_user" -DBPassword "my_password"
-
-# Skip sample data
-./setup_database.ps1 -SkipSampleData
-```
-
-### Linux/macOS Setup
+### NPM Scripts
 
 ```bash
-# Navigate to the scripts directory
-cd backend/src/database/scripts
+# Sync database schema (drops and recreates all tables)
+npm run db:sync
 
-# Make script executable
-chmod +x setup_database.sh
+# Run migrations (incremental schema updates)
+npm run db:migrate
 
-# Run the setup script
-./setup_database.sh
+# Seed database with sample data
+npm run db:seed
 ```
 
-## 📊 Database Schema Overview
+## 📝 Database Scripts
 
-### Core Tables (22 total)
-
-| Table Name | Purpose | Dependencies |
-|------------|---------|--------------|
-| `organizations` | Law firms, corporations, government entities | None |
-| `users` | Attorneys, paralegals, staff | organizations |
-| `cases` | Legal matters and cases | organizations |
-| `documents` | Case documents and files | cases, users |
-| `evidence` | Evidence management | cases, users |
-| `conversations` | Secure messaging | cases, users |
-| `messages` | Individual messages | conversations, users |
-| `workflow_stages` | Case workflow management | cases |
-| `workflow_tasks` | Individual workflow tasks | workflow_stages, users |
-| `motions` | Legal motions and filings | cases, users |
-| `time_entries` | Billing and time tracking | cases, users |
-| `discovery_requests` | Discovery management | cases, users |
-| `clients` | Client information | organizations |
-| `analytics` | Case analytics and insights | cases, users |
-| `compliance_records` | Compliance tracking | cases, users |
-| `knowledge_articles` | Knowledge management | users |
-| `jurisdictions` | Legal jurisdictions | organizations |
-| `calendar_events` | Calendar and scheduling | cases, users |
-| `tasks` | Task management | cases, users |
-| `clauses` | Clause library | users |
-
-### AI-Powered Tables
-
-| Table Name | Purpose | Vector Support |
-|------------|---------|----------------|
-| `document_embeddings` | Document vector embeddings | ✅ pgvector |
-| `legal_citations` | Legal citation extraction | No |
-| `document_analysis` | AI document analysis | No |
-| `search_queries` | Search query analytics | ✅ pgvector |
-
-## 🔧 Manual Setup Steps
-
-If you prefer manual setup or need to troubleshoot:
-
-### 1. Enable Extensions
-
-```sql
--- Run in PostgreSQL as superuser
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "vector";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "fuzzystrmatch";
-CREATE EXTENSION IF NOT EXISTS "unaccent";
-CREATE EXTENSION IF NOT EXISTS "btree_gin";
-```
-
-### 2. Create Database Schema
+### sync.ts
+Full database synchronization using Sequelize models. **Warning:** Drops all existing tables.
 
 ```bash
-psql -h localhost -U lexiflow_user -d lexiflow_ai -f migrations/001_initial_schema.sql
+npm run db:sync
 ```
 
-### 3. Create Indexes
+### migrate.ts
+Runs numbered SQL migrations from the `migrations/` directory in order.
 
 ```bash
-psql -h localhost -U lexiflow_user -d lexiflow_ai -f migrations/002_create_indexes.sql
+npm run db:migrate
 ```
 
-### 4. Insert Sample Data (Optional)
+### seed.ts
+Seeds the database with comprehensive sample data including users, cases, documents, and more.
 
 ```bash
-psql -h localhost -U lexiflow_user -d lexiflow_ai -f seeders/003_sample_data.sql
+npm run db:seed
+```
+
+## 📊 Database Schema
+
+### Core Tables
+
+**Organizations & Users**
+- `organizations` - Law firms and legal entities
+- `users` - Attorneys, paralegals, staff
+- `user_profiles` - Extended user information
+
+**Cases & Workflow**
+- `cases` - Legal matters and case management
+- `case_members` - Case team assignments
+- `parties` - Case parties and representation
+- `workflow_stages` - Case workflow stages
+- `workflow_tasks` - Task assignments
+
+**Documents & Evidence**
+- `documents` - Document repository
+- `document_versions` - Version control
+- `evidence` - Evidence management
+- `file_chunks` - Document chunking
+- `chain_of_custody_events` - Evidence tracking
+
+**Legal Operations**
+- `motions` - Legal motions and filings
+- `docket_entries` - Court docket tracking
+- `discovery_requests` - Discovery management
+- `time_entries` - Billing and time tracking
+
+**AI & Search**
+- `document_embeddings` - Vector embeddings (pgvector)
+- `document_analysis` - AI analysis results
+- `legal_citations` - Citation extraction
+- `search_queries` - Search analytics
+
+**Communication & Collaboration**
+- `conversations` - Secure messaging
+- `messages` - Message storage
+- `calendar_events` - Scheduling
+- `tasks` - Task management
+
+**Additional Features**
+- `clients` - Client information
+- `attorneys` - Attorney profiles
+- `clauses` - Clause library
+- `compliance_records` - Compliance tracking
+- `analytics` - Case analytics
+- `audit_log_entries` - Audit trail
+
+## 🔄 Migration Management
+
+Migrations are numbered SQL files in `migrations/` directory:
+
+- `000_*` - Extensions and prerequisites
+- `001_*` - Initial schema
+- `002_*` - Indexes and constraints
+- `003+` - Incremental schema changes
+
+The migrate script runs all migrations in order and tracks which have been applied.
+
+## 🔒 Environment Variables
+
+Required in `server/.env`:
+
+```env
+DATABASE_URL=postgresql://user:password@host:5432/database
+JWT_SECRET=your-secret-key
+NODE_ENV=development
 ```
 
 ## 📈 Performance Features
 
-### Vector Similarity Search
-- **Document embeddings** using OpenAI ada-002 (1536 dimensions)
-- **IVFFlat indexes** for efficient similarity queries
-- **Cosine similarity** search for document retrieval
-
-### Full-Text Search
-- **Trigram indexes** on text fields for fuzzy matching
-- **GIN indexes** on JSONB fields for metadata search
-- **Composite indexes** for common query patterns
-
-### Query Optimization
-- **150+ indexes** covering all common access patterns
-- **Foreign key indexes** for join optimization
-- **Date-based indexes** for time-series queries
-- **Status/type indexes** for filtering
-
-## 🔒 Security Features
-
-### Data Protection
-- **Encrypted passwords** using bcrypt
-- **Row-level security** ready (organizations)
-- **Audit trails** with created_at/updated_at timestamps
-- **Soft deletes** via status fields
-
-### Access Control
-- **Organization-based isolation** via owner_org_id
-- **User role management** (admin, attorney, paralegal)
-- **Document classification** levels
-
-## 📋 Sample Data Overview
-
-The seed file includes:
-
-- **3 Organizations**: Law firm, in-house legal, government
-- **5 Users**: Partners, associates, paralegals with different roles
-- **3 Clients**: Corporate, individual, startup clients
-- **3 Cases**: Contract dispute, estate planning, corporate matter
-- **3 Documents**: Contracts, motions, trust agreements
-- **2 Evidence items**: Email communications, signed contracts
-- **Workflow stages and tasks** for litigation management
-- **Time entries** for billing
-- **Calendar events** for scheduling
-- **Knowledge articles** and clause library
-- **Jurisdictional rules** for Texas, New York, California
-
-## 🧪 Testing the Setup
-
-### Verify Extensions
-
-```sql
-SELECT extname, extversion 
-FROM pg_extension 
-WHERE extname IN ('uuid-ossp', 'vector', 'pg_trgm');
-```
-
-### Check Table Counts
-
-```sql
-SELECT schemaname, tablename 
-FROM pg_tables 
-WHERE schemaname = 'public' 
-ORDER BY tablename;
-```
-
-### Test Vector Search
-
-```sql
-SELECT count(*) 
-FROM document_embeddings 
-WHERE embedding IS NOT NULL;
-```
-
-### Verify Relationships
-
-```sql
-SELECT 
-    c.title as case_title,
-    d.title as document_title,
-    u.name as created_by
-FROM cases c
-JOIN documents d ON c.id = d.case_id
-JOIN users u ON d.created_by = u.id;
-```
-
-## 🔄 Migration Management
-
-### Adding New Migrations
-
-1. Create new migration file: `004_your_migration_name.sql`
-2. Follow naming convention: `[number]_[description].sql`
-3. Include rollback instructions in comments
-4. Test on development environment first
-
-### Best Practices
-
-- **Always backup** before running migrations
-- **Test migrations** on sample data
-- **Document changes** in migration comments
-- **Use transactions** for atomic operations
-- **Verify indexes** after schema changes
+- **Vector similarity search** using pgvector (1536 dimensions)
+- **IVFFlat indexes** for efficient vector queries
+- **Full-text search** with trigram indexes
+- **GIN indexes** on JSONB metadata fields
+- **150+ optimized indexes** for common queries
 
 ## 🐛 Troubleshooting
 
-### Common Issues
-
-1. **Extension not found**: Install pgvector extension
-2. **Permission denied**: Run as database superuser
-3. **Connection refused**: Check PostgreSQL service status
-4. **Out of disk space**: Monitor database size during setup
-
-### Useful Commands
-
 ```bash
-# Check PostgreSQL service status
-systemctl status postgresql   # Linux
-Get-Service postgresql*        # Windows PowerShell
-
 # Test database connection
-psql -h localhost -U lexiflow_user -d lexiflow_ai -c "SELECT version();"
+psql $DATABASE_URL -c "SELECT version();"
 
-# View database size
-psql -c "SELECT pg_size_pretty(pg_database_size('lexiflow_ai'));"
+# Check migrations have run
+psql $DATABASE_URL -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
 
-# Check active connections
-psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname='lexiflow_ai';"
+# Verify pgvector extension
+psql $DATABASE_URL -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
 ```
 
-## 📚 Additional Resources
+## 📚 Resources
 
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [pgvector Extension](https://github.com/pgvector/pgvector)
-- [NestJS Database Integration](https://docs.nestjs.com/techniques/database)
-- [Sequelize ORM Documentation](https://sequelize.org/docs/v6/)
-
-## 🤝 Contributing
-
-When adding new tables or modifying existing ones:
-
-1. Update the migration files
-2. Add appropriate indexes in `002_create_indexes.sql`
-3. Include sample data in `003_sample_data.sql`
-4. Update this README with new table information
-5. Test the complete setup script
+- [Sequelize ORM](https://sequelize.org/docs/v6/)
 
 ---
 
-**Need Help?** Check the troubleshooting section or review the setup logs for detailed error information.
+For Docker deployment, see `/docker-compose.yml` which handles initialization automatically.

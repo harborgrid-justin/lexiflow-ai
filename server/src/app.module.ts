@@ -120,12 +120,14 @@ import { AttorneysModule } from './modules/attorneys/attorneys.module';
     // Database
     SequelizeModule.forRoot({
       dialect: 'postgres',
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
-      },
+      dialectOptions: process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('neon.tech')
+        ? {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false,
+            },
+          }
+        : {},
       uri: process.env.DATABASE_URL,
       models: [
         Organization,

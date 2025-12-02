@@ -188,18 +188,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create workflow_tasks table (referenced in migrations but no model exists)
-CREATE TABLE IF NOT EXISTS workflow_tasks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
-    status VARCHAR(100) DEFAULT 'pending',
-    due_date TIMESTAMP,
-    completed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
+-- Note: workflow_tasks table is created in migration 001
+-- This migration only adds indexes for it (see end of file)
 
 -- Create docket_entries table
 CREATE TABLE IF NOT EXISTS docket_entries (
@@ -291,7 +281,7 @@ CREATE INDEX IF NOT EXISTS idx_user_groups_user_group_unique ON user_groups(user
 -- Create indexes for user_profiles
 CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id_unique ON user_profiles(user_id);
 
--- Create indexes for workflow_tasks
-CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assigned_to ON workflow_tasks(assigned_to);
+-- Create indexes for workflow_tasks (use assignee_id from migration 001)
+CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assignee_id ON workflow_tasks(assignee_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_tasks_status ON workflow_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_workflow_tasks_due_date ON workflow_tasks(due_date);

@@ -11,6 +11,13 @@ build
 .next
 out
 
+# Data directories and development files
+data
+data/postgres
+data/backend
+.development
+**/.development
+
 # Environment files (security)
 .env
 .env.local

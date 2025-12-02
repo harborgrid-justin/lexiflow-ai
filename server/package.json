@@ -16,12 +16,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:sync": "ts-node src/database/scripts/sequelize-sync.ts",
-    "db:seed": "node src/database/scripts/sync-database.js --seed-only",
-    "db:seed:comprehensive": "ts-node src/database/run-comprehensive-seed.ts",
-    "db:seed:evidence": "ts-node src/database/seed-evidence.ts",
-    "db:migrate": "ts-node src/database/run-migration.ts --all",
-    "db:seed:all": "ts-node src/database/seed-comprehensive.ts"
+    "db:sync": "ts-node src/database/scripts/sync.ts",
+    "db:migrate": "ts-node src/database/scripts/migrate.ts",
+    "db:seed": "ts-node src/database/scripts/seed.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.0.1",

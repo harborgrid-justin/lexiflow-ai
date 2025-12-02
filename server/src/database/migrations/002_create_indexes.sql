@@ -15,7 +15,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 -- Workflow and task management indexes
 CREATE INDEX IF NOT EXISTS idx_workflow_stages_case_id ON workflow_stages(case_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_tasks_stage_id ON workflow_tasks(stage_id);
-CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assigned_to ON workflow_tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assignee_id ON workflow_tasks(assignee_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_tasks_created_by ON workflow_tasks(created_by);
 CREATE INDEX IF NOT EXISTS idx_motions_case_id ON motions(case_id);
 CREATE INDEX IF NOT EXISTS idx_motions_filed_by ON motions(filed_by);
@@ -24,19 +24,18 @@ CREATE INDEX IF NOT EXISTS idx_motions_filed_by ON motions(filed_by);
 CREATE INDEX IF NOT EXISTS idx_time_entries_case_id ON time_entries(case_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_date ON time_entries(date);
-CREATE INDEX IF NOT EXISTS idx_time_entries_work_date ON time_entries(work_date);
-CREATE INDEX IF NOT EXISTS idx_time_entries_entry_type ON time_entries(entry_type);
-CREATE INDEX IF NOT EXISTS idx_time_entries_status ON time_entries(status);
+CREATE INDEX IF NOT EXISTS idx_time_entries_billable ON time_entries(billable);
+CREATE INDEX IF NOT EXISTS idx_time_entries_billed ON time_entries(billed);
 
 -- Discovery and legal process indexes
 CREATE INDEX IF NOT EXISTS idx_discovery_requests_case_id ON discovery_requests(case_id);
-CREATE INDEX IF NOT EXISTS idx_discovery_requests_created_by ON discovery_requests(created_by);
+CREATE INDEX IF NOT EXISTS idx_discovery_requests_requested_by ON discovery_requests(requested_by);
 
 -- Analytics and compliance indexes
 CREATE INDEX IF NOT EXISTS idx_analytics_case_id ON analytics(case_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_created_by ON analytics(created_by);
 CREATE INDEX IF NOT EXISTS idx_compliance_records_case_id ON compliance_records(case_id);
-CREATE INDEX IF NOT EXISTS idx_compliance_records_officer_id ON compliance_records(officer_id);
+CREATE INDEX IF NOT EXISTS idx_compliance_records_auditor_id ON compliance_records(auditor_id);
 
 -- Knowledge management indexes
 CREATE INDEX IF NOT EXISTS idx_knowledge_articles_author_id ON knowledge_articles(author_id);
@@ -79,12 +78,12 @@ CREATE INDEX IF NOT EXISTS idx_workflow_stages_status ON workflow_stages(status)
 CREATE INDEX IF NOT EXISTS idx_workflow_tasks_status ON workflow_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_motions_type ON motions(type);
 CREATE INDEX IF NOT EXISTS idx_motions_status ON motions(status);
-CREATE INDEX IF NOT EXISTS idx_discovery_requests_type ON discovery_requests(request_type);
+CREATE INDEX IF NOT EXISTS idx_discovery_requests_type ON discovery_requests(type);
 CREATE INDEX IF NOT EXISTS idx_discovery_requests_status ON discovery_requests(status);
 CREATE INDEX IF NOT EXISTS idx_clients_type ON clients(type);
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
 CREATE INDEX IF NOT EXISTS idx_analytics_metric_type ON analytics(metric_type);
-CREATE INDEX IF NOT EXISTS idx_compliance_records_compliance_type ON compliance_records(type);
+CREATE INDEX IF NOT EXISTS idx_compliance_records_compliance_type ON compliance_records(compliance_type);
 CREATE INDEX IF NOT EXISTS idx_compliance_records_status ON compliance_records(status);
 CREATE INDEX IF NOT EXISTS idx_knowledge_articles_type ON knowledge_articles(type);
 CREATE INDEX IF NOT EXISTS idx_knowledge_articles_status ON knowledge_articles(status);
@@ -113,7 +112,7 @@ CREATE INDEX IF NOT EXISTS idx_discovery_requests_due_date ON discovery_requests
 CREATE INDEX IF NOT EXISTS idx_calendar_events_start_time ON calendar_events(start_time);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_end_time ON calendar_events(end_time);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
-CREATE INDEX IF NOT EXISTS idx_compliance_records_audit_date ON compliance_records(check_date);
+CREATE INDEX IF NOT EXISTS idx_compliance_records_audit_date ON compliance_records(audit_date);
 
 -- Full-text search indexes using pg_trgm
 CREATE INDEX IF NOT EXISTS idx_cases_title_trgm ON cases USING gin(title gin_trgm_ops);
@@ -137,7 +136,7 @@ CREATE INDEX IF NOT EXISTS idx_evidence_case_type ON evidence(case_id, type);
 CREATE INDEX IF NOT EXISTS idx_time_entries_case_date ON time_entries(case_id, date);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user_date ON time_entries(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_workflow_tasks_stage_status ON workflow_tasks(stage_id, status);
-CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assigned_to_status ON workflow_tasks(assigned_to, status);
+CREATE INDEX IF NOT EXISTS idx_workflow_tasks_assignee_status ON workflow_tasks(assignee_id, status);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_start_type ON calendar_events(start_time, type);
 CREATE INDEX IF NOT EXISTS idx_tasks_assignee_status ON tasks(assignee_id, status);
 CREATE INDEX IF NOT EXISTS idx_tasks_case_status ON tasks(case_id, status);

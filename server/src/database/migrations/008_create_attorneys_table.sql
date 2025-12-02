@@ -1,9 +1,10 @@
 -- Migration: Create attorneys table
 -- Description: Creates table to store attorney information for parties
+-- Note: Foreign key to parties table will be added in migration 012 after parties table is created
 
 CREATE TABLE IF NOT EXISTS attorneys (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    party_id UUID NOT NULL REFERENCES parties(id) ON DELETE CASCADE,
+    party_id UUID,  -- FK constraint added in later migration
     first_name VARCHAR(255),
     middle_name VARCHAR(255),
     last_name VARCHAR(255),

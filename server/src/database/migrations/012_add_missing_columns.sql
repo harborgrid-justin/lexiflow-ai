@@ -17,3 +17,19 @@ ALTER TABLE case_members ADD COLUMN IF NOT EXISTS owner_org_id UUID REFERENCES o
 
 -- Add index for owner_org_id in case_members
 CREATE INDEX IF NOT EXISTS idx_case_members_owner_org_id ON case_members(owner_org_id);
+
+-- Add foreign key constraint to attorneys.party_id (deferred from migration 008)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'attorneys_party_id_fkey'
+    ) THEN
+        ALTER TABLE attorneys
+        ADD CONSTRAINT attorneys_party_id_fkey
+        FOREIGN KEY (party_id)
+        REFERENCES parties(id)
+        ON DELETE CASCADE;
+    END IF;
+END $$;
