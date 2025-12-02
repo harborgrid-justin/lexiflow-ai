@@ -1,9 +1,26 @@
+/**
+ * ApprovalWorkflow Component
+ *
+ * ENZYME MIGRATION:
+ * - Added useLatestCallback for async handlers to prevent stale closures
+ * - Added useTrackEvent for analytics tracking of approval actions
+ * - Added useIsMounted for safe async state updates
+ * - Tracks: chain creation, approve/reject actions, comment additions, step navigation
+ *
+ * @migrated Agent 29, Wave 4
+ */
+
 import React, { useState, useEffect } from 'react';
 import { UserCheck, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import type { ApprovalChain, ApprovalStep } from '../../types/workflow-engine';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  useIsMounted
+} from '../../enzyme';
 
 interface ApprovalWorkflowProps {
   taskId: string;
@@ -27,46 +44,118 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
     loading
   } = useWorkflowEngine();
 
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
   const [approvalChain, setApprovalChain] = useState<ApprovalChain | null>(null);
   const [selectedApprovers, setSelectedApprovers] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [comments, setComments] = useState('');
 
-  useEffect(() => {
-    const loadApprovalChain = async () => {
-      const chain = await getApprovalChain(taskId);
-      if (chain) {
-        setApprovalChain(chain);
-      }
-    };
-    loadApprovalChain();
-  }, [getApprovalChain, taskId]);
+  const loadApprovalChain = useLatestCallback(async () => {
+    trackEvent('approval_chain_load_started', {
+      taskId,
+      source: 'approval_workflow'
+    });
 
-  const loadApprovalChain = async () => {
     const chain = await getApprovalChain(taskId);
+
+    if (!isMounted()) return;
+
     if (chain) {
       setApprovalChain(chain);
+      trackEvent('approval_chain_loaded', {
+        taskId,
+        chainId: chain.id,
+        status: chain.status,
+        currentStep: chain.currentStep,
+        totalSteps: chain.steps.length
+      });
+    } else {
+      trackEvent('approval_chain_not_found', {
+        taskId
+      });
     }
-  };
+  });
 
-  const handleCreateChain = async () => {
+  useEffect(() => {
+    loadApprovalChain();
+  }, [loadApprovalChain]);
+
+  const handleCreateChain = useLatestCallback(async () => {
     if (selectedApprovers.length > 0) {
-      await createApprovalChain(taskId, selectedApprovers);
-      await loadApprovalChain();
-      setIsCreating(false);
-      setSelectedApprovers([]);
-      onUpdate?.();
-    }
-  };
+      trackEvent('approval_chain_create_started', {
+        taskId,
+        approversCount: selectedApprovers.length,
+        approvers: selectedApprovers
+      });
 
-  const handleApprove = async (action: 'approve' | 'reject') => {
-    if (approvalChain) {
-      await processApproval(taskId, currentUserId, action, comments);
-      await loadApprovalChain();
-      setComments('');
-      onUpdate?.();
+      try {
+        await createApprovalChain(taskId, selectedApprovers);
+
+        if (!isMounted()) return;
+
+        await loadApprovalChain();
+        setIsCreating(false);
+        setSelectedApprovers([]);
+        onUpdate?.();
+
+        trackEvent('approval_chain_created', {
+          taskId,
+          approversCount: selectedApprovers.length
+        });
+      } catch (error) {
+        if (!isMounted()) return;
+
+        trackEvent('approval_chain_create_failed', {
+          taskId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          approversCount: selectedApprovers.length
+        });
+      }
     }
-  };
+  });
+
+  const handleApprove = useLatestCallback(async (action: 'approve' | 'reject') => {
+    if (approvalChain) {
+      trackEvent('approval_action_started', {
+        taskId,
+        chainId: approvalChain.id,
+        action,
+        currentUserId,
+        currentStep: approvalChain.currentStep,
+        hasComments: comments.length > 0,
+        commentsLength: comments.length
+      });
+
+      try {
+        await processApproval(taskId, currentUserId, action, comments);
+
+        if (!isMounted()) return;
+
+        await loadApprovalChain();
+        setComments('');
+        onUpdate?.();
+
+        trackEvent('approval_action_completed', {
+          taskId,
+          chainId: approvalChain.id,
+          action,
+          currentUserId,
+          hadComments: comments.length > 0
+        });
+      } catch (error) {
+        if (!isMounted()) return;
+
+        trackEvent('approval_action_failed', {
+          taskId,
+          chainId: approvalChain.id,
+          action,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+  });
 
   const getStepIcon = (step: ApprovalStep) => {
     switch (step.status) {
@@ -94,7 +183,13 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setIsCreating(true)}
+              onClick={() => {
+                trackEvent('approval_chain_creation_initiated', {
+                  taskId,
+                  usersCount: users.length
+                });
+                setIsCreating(true);
+              }}
             >
               Create Approval Chain
             </Button>
@@ -168,7 +263,29 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                   </label>
                   <textarea
                     value={comments}
-                    onChange={(e) => setComments(e.target.value)}
+                    onChange={(e) => {
+                      const newComments = e.target.value;
+                      setComments(newComments);
+
+                      // Track when user adds first comment
+                      if (comments.length === 0 && newComments.length > 0) {
+                        trackEvent('approval_comment_started', {
+                          taskId,
+                          chainId: approvalChain?.id,
+                          currentStep: approvalChain?.currentStep
+                        });
+                      }
+                    }}
+                    onBlur={() => {
+                      if (comments.length > 0) {
+                        trackEvent('approval_comment_added', {
+                          taskId,
+                          chainId: approvalChain?.id,
+                          commentsLength: comments.length,
+                          currentStep: approvalChain?.currentStep
+                        });
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
                     rows={3}
                     placeholder="Add your comments..."
@@ -214,6 +331,17 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                     key={user.id}
                     className="flex items-center gap-2 p-2 rounded hover:bg-slate-50 cursor-pointer"
                     onClick={() => {
+                      const isSelected = selectedApprovers.includes(user.id);
+                      trackEvent('approval_approver_toggled', {
+                        taskId,
+                        userId: user.id,
+                        userName: user.name,
+                        userRole: user.role,
+                        action: isSelected ? 'removed' : 'added',
+                        currentApproversCount: selectedApprovers.length,
+                        newPosition: isSelected ? null : selectedApprovers.length + 1
+                      });
+
                       setSelectedApprovers(prev =>
                         prev.includes(user.id)
                           ? prev.filter(id => id !== user.id)
@@ -246,6 +374,10 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                 variant="secondary"
                 size="sm"
                 onClick={() => {
+                  trackEvent('approval_chain_creation_cancelled', {
+                    taskId,
+                    approversSelected: selectedApprovers.length
+                  });
                   setIsCreating(false);
                   setSelectedApprovers([]);
                 }}

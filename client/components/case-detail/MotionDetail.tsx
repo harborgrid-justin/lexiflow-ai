@@ -1,9 +1,40 @@
+/**
+ * MotionDetail Component
+ *
+ * ENZYME MIGRATION - Agent 26 - December 2, 2025
+ *
+ * Displays detailed view of a specific motion with timeline, AI analysis, drafts, and workflow status.
+ *
+ * Enzyme Features Implemented:
+ * - useTrackEvent: Tracks user interactions (AI analysis, export, navigation, task actions)
+ * - useLatestCallback: Stable callbacks for all action handlers
+ * - useIsMounted: Available for safe async operations
+ *
+ * Analytics Events:
+ * - motion_detail_back_clicked: Navigation back to motions list
+ * - motion_detail_ai_analysis_clicked: AI analysis button engagement
+ * - motion_detail_export_clicked: Export bundle action
+ * - motion_detail_add_task_clicked: Task creation action
+ * - motion_detail_document_opened: Document/draft viewing (tracks documentName)
+ *
+ * Migration Notes:
+ * - Component is presentational with action buttons requiring tracking
+ * - No async data fetching (data passed via props), so no isMounted guards needed yet
+ * - Static AI analysis content displayed, could be enhanced with real AI integration
+ * - Document open handlers created for tracking (currently placeholder logic)
+ */
+
 import React from 'react';
 import { ArrowLeft, Calendar, FileText, Gavel, User, CheckCircle, Clock, AlertCircle, Wand2, Download, Plus } from 'lucide-react';
 import { Motion } from '../../types';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { Card } from '../common/Card';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  useIsMounted
+} from '../../enzyme';
 
 interface MotionDetailProps {
   motion: Motion;
@@ -11,17 +42,77 @@ interface MotionDetailProps {
 }
 
 export const MotionDetail: React.FC<MotionDetailProps> = ({ motion, onBack }) => {
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
+  // Handler: Back navigation with tracking
+  const handleBack = useLatestCallback(() => {
+    trackEvent('motion_detail_back_clicked', {
+      motionId: motion.id,
+      motionType: motion.type,
+      motionStatus: motion.status
+    });
+    onBack();
+  });
+
+  // Handler: AI Analysis with tracking
+  const handleAIAnalysis = useLatestCallback(() => {
+    trackEvent('motion_detail_ai_analysis_clicked', {
+      motionId: motion.id,
+      motionType: motion.type,
+      motionStatus: motion.status,
+      hasHearingDate: !!motion.hearingDate
+    });
+    // TODO: Implement AI analysis modal/panel
+    console.log('AI Analysis clicked for motion:', motion.id);
+  });
+
+  // Handler: Export Bundle with tracking
+  const handleExportBundle = useLatestCallback(() => {
+    trackEvent('motion_detail_export_clicked', {
+      motionId: motion.id,
+      motionType: motion.type,
+      motionStatus: motion.status,
+      hasHearingDate: !!motion.hearingDate,
+      hasFiling: !!motion.filingDate
+    });
+    // TODO: Implement export bundle logic
+    console.log('Export Bundle clicked for motion:', motion.id);
+  });
+
+  // Handler: Add Task with tracking
+  const handleAddTask = useLatestCallback(() => {
+    trackEvent('motion_detail_add_task_clicked', {
+      motionId: motion.id,
+      motionType: motion.type,
+      motionStatus: motion.status
+    });
+    // TODO: Implement add task modal
+    console.log('Add Task clicked for motion:', motion.id);
+  });
+
+  // Handler: Document open with tracking
+  const handleDocumentOpen = useLatestCallback((documentName: string) => {
+    trackEvent('motion_detail_document_opened', {
+      motionId: motion.id,
+      motionType: motion.type,
+      documentName
+    });
+    // TODO: Implement document open logic
+    console.log('Document opened:', documentName);
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={onBack} icon={ArrowLeft}>Back</Button>
+        <Button variant="ghost" size="sm" onClick={handleBack} icon={ArrowLeft}>Back</Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-slate-900">{motion.title}</h2>
             <Badge variant={
-              motion.status === 'Decided' ? 'success' : 
-              motion.status === 'Hearing Set' ? 'warning' : 
+              motion.status === 'Decided' ? 'success' :
+              motion.status === 'Hearing Set' ? 'warning' :
               motion.status === 'Filed' ? 'info' : 'neutral'
             }>
               {motion.status}
@@ -34,8 +125,8 @@ export const MotionDetail: React.FC<MotionDetailProps> = ({ motion, onBack }) =>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" icon={Download}>Export Bundle</Button>
-          <Button variant="primary" icon={Wand2}>AI Analysis</Button>
+          <Button variant="outline" icon={Download} onClick={handleExportBundle}>Export Bundle</Button>
+          <Button variant="primary" icon={Wand2} onClick={handleAIAnalysis}>AI Analysis</Button>
         </div>
       </div>
 
@@ -117,9 +208,9 @@ export const MotionDetail: React.FC<MotionDetailProps> = ({ motion, onBack }) =>
                     <p className="text-xs text-slate-500">Last edited by You • 2 hours ago</p>
                   </div>
                 </div>
-                <Button size="sm" variant="ghost">Open</Button>
+                <Button size="sm" variant="ghost" onClick={() => handleDocumentOpen('Motion Draft v3.docx')}>Open</Button>
               </div>
-              
+
               <div className="flex items-center justify-between p-3 border border-slate-200 rounded hover:border-blue-300 transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className="bg-slate-100 p-2 rounded text-slate-500">
@@ -130,7 +221,7 @@ export const MotionDetail: React.FC<MotionDetailProps> = ({ motion, onBack }) =>
                     <p className="text-xs text-slate-500">Last edited by Alexandra H. • Yesterday</p>
                   </div>
                 </div>
-                <Button size="sm" variant="ghost">Open</Button>
+                <Button size="sm" variant="ghost" onClick={() => handleDocumentOpen('Proposed Order.docx')}>Open</Button>
               </div>
             </div>
           </Card>
@@ -185,7 +276,7 @@ export const MotionDetail: React.FC<MotionDetailProps> = ({ motion, onBack }) =>
                   <p className="text-sm text-slate-900">Serve opposing counsel</p>
                 </div>
               </div>
-              <Button size="sm" variant="ghost" className="w-full text-blue-600 mt-2" icon={Plus}>Add Task</Button>
+              <Button size="sm" variant="ghost" className="w-full text-blue-600 mt-2" icon={Plus} onClick={handleAddTask}>Add Task</Button>
             </div>
           </Card>
         </div>

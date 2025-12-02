@@ -1,9 +1,38 @@
+/**
+ * Evidence Vault Hook - ENZYME MIGRATION ENHANCED
+ *
+ * This hook manages the Evidence Vault feature with full Enzyme integration.
+ *
+ * ENZYME FEATURES:
+ * - useLatestCallback: Stable callback references for event handlers
+ * - useIsMounted: Safe async state updates after component unmounts
+ * - useOptimisticUpdate: Instant UI feedback for create/update operations
+ * - useErrorToast: User-friendly error notifications
+ * - useSafeState: Memory-leak-safe state management
+ * - TanStack Query: Advanced caching and query invalidation
+ *
+ * PATTERNS:
+ * 1. Optimistic UI updates for evidence creation and custody updates
+ * 2. Automatic rollback on mutation failures
+ * 3. Toast notifications for errors instead of alert()
+ * 4. Safe state updates with isMounted guards
+ * 5. Query cache management with proper invalidation
+ *
+ * @see /client/enzyme/ENZYME_COMPLETE_GUIDE.md
+ */
+
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiService, ApiError } from '../services/apiService';
 import { EvidenceItem, ChainOfCustodyEvent } from '../types';
 import { ensureTagsArray } from '../utils/type-transformers';
-import { useLatestCallback, useIsMounted } from '../enzyme';
+import {
+  useLatestCallback,
+  useIsMounted,
+  useOptimisticUpdate,
+  useErrorToast,
+  useSafeState
+} from '../enzyme';
 
 export type ViewMode = 'dashboard' | 'inventory' | 'custody' | 'intake' | 'detail';
 export type DetailTab = 'overview' | 'custody' | 'admissibility' | 'forensics';
@@ -23,13 +52,14 @@ export interface EvidenceFilters {
 }
 
 export const useEvidenceVault = () => {
-  const [view, setView] = useState<ViewMode>('dashboard');
-  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
-  const [selectedItem, setSelectedItem] = useState<EvidenceItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  
+  // Safe state management to prevent memory leaks
+  const [view, setView] = useSafeState<ViewMode>('dashboard');
+  const [activeTab, setActiveTab] = useSafeState<DetailTab>('overview');
+  const [selectedItem, setSelectedItem] = useSafeState<EvidenceItem | null>(null);
+
   const queryClient = useQueryClient();
   const isMounted = useIsMounted();
+  const showErrorToast = useErrorToast();
 
   // Fetch evidence with TanStack Query - automatic caching
   const { data: evidenceItems = [], isLoading: loading, refetch } = useQuery({
@@ -39,7 +69,7 @@ export const useEvidenceVault = () => {
     retry: 2
   });
 
-  const [filters, setFilters] = useState<EvidenceFilters>({
+  const [filters, setFilters] = useSafeState<EvidenceFilters>({
     search: '',
     type: '',
     admissibility: '',
@@ -53,39 +83,103 @@ export const useEvidenceVault = () => {
     hasBlockchain: false
   });
 
-  // Create evidence mutation
-  const createMutation = useMutation({
-    mutationFn: (newItem: EvidenceItem) => ApiService.evidence.create(newItem),
+  // Create evidence mutation with optimistic updates
+  const createOptimistic = useOptimisticUpdate<EvidenceItem, EvidenceItem>({
+    mutationFn: async (newItem: EvidenceItem) => {
+      return ApiService.evidence.create(newItem);
+    },
+    onMutate: (newItem) => {
+      // Optimistically add the new item to the cache
+      const previousData = queryClient.getQueryData<EvidenceItem[]>(['evidence']);
+
+      // Optimistically update the UI by adding the new item
+      queryClient.setQueryData<EvidenceItem[]>(['evidence'], (old = []) => {
+        return [...old, { ...newItem, id: `temp-${Date.now()}` }];
+      });
+
+      return { previousData };
+    },
     onSuccess: (createdItem) => {
+      // Replace temp item with real item from server
       queryClient.invalidateQueries({ queryKey: ['evidence'] });
       if (isMounted()) {
         setView('inventory');
       }
     },
-    onError: (err: any) => {
+    onError: (err: any, newItem, context) => {
       console.error('Failed to create evidence item:', err);
-      if (isMounted()) {
-        const message = err instanceof ApiError ? err.statusText : 'Failed to log item';
-        setError(`Failed to log item: ${message}`);
+
+      // Rollback optimistic update on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['evidence'], context.previousData);
       }
+
+      // Show user-friendly error toast
+      const message = err instanceof ApiError ? err.statusText : 'Failed to log item';
+      showErrorToast(`Failed to log item: ${message}`);
     }
   });
 
-  // Update evidence mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<EvidenceItem> }) =>
-      ApiService.evidence.update(id, data),
+  const createMutation = {
+    mutateAsync: createOptimistic.mutateAsync,
+    isPending: createOptimistic.isPending,
+    isError: createOptimistic.isError,
+    error: createOptimistic.error
+  };
+
+  // Update evidence mutation with optimistic updates
+  const updateOptimistic = useOptimisticUpdate<
+    { id: string; data: Partial<EvidenceItem> },
+    EvidenceItem
+  >({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<EvidenceItem> }) => {
+      return ApiService.evidence.update(id, data);
+    },
+    onMutate: ({ id, data }) => {
+      // Store previous data for rollback
+      const previousData = queryClient.getQueryData<EvidenceItem[]>(['evidence']);
+
+      // Optimistically update the cache
+      queryClient.setQueryData<EvidenceItem[]>(['evidence'], (old = []) => {
+        return old.map(item =>
+          item.id === id ? { ...item, ...data } : item
+        );
+      });
+
+      // Also optimistically update selectedItem if it matches
+      if (selectedItem?.id === id) {
+        setSelectedItem({ ...selectedItem, ...data } as EvidenceItem);
+      }
+
+      return { previousData, previousSelectedItem: selectedItem };
+    },
     onSuccess: () => {
+      // Refresh data from server
       queryClient.invalidateQueries({ queryKey: ['evidence'] });
     },
-    onError: (err: any) => {
+    onError: (err: any, variables, context) => {
       console.error('Failed to update evidence:', err);
-      if (isMounted()) {
-        const message = err instanceof ApiError ? err.statusText : 'Failed to update';
-        setError(`Failed to update: ${message}`);
+
+      // Rollback optimistic updates on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['evidence'], context.previousData);
       }
+      if (context?.previousSelectedItem) {
+        setSelectedItem(context.previousSelectedItem);
+      }
+
+      // Show user-friendly error toast
+      const message = err instanceof ApiError ? err.statusText : 'Failed to update';
+      showErrorToast(`Failed to update: ${message}`);
     }
   });
+
+  const updateMutation = {
+    mutateAsync: updateOptimistic.mutateAsync,
+    isPending: updateOptimistic.isPending,
+    isError: updateOptimistic.isError,
+    error: updateOptimistic.error
+  };
 
   const handleItemClick = useLatestCallback((item: EvidenceItem) => {
     setSelectedItem(item);
@@ -100,11 +194,11 @@ export const useEvidenceVault = () => {
 
   const handleIntakeComplete = useLatestCallback(async (newItem: EvidenceItem) => {
     try {
-      setError(null);
       await createMutation.mutateAsync(newItem);
-      alert("Item logged successfully.");
+      // Success feedback handled by optimistic update
+      // UI automatically switches to 'inventory' view in onSuccess
     } catch (err) {
-      alert('Failed to log item.');
+      // Error feedback handled by useErrorToast in mutation
       throw err;
     }
   });
@@ -113,20 +207,17 @@ export const useEvidenceVault = () => {
     if (!selectedItem) return;
 
     try {
-      setError(null);
       const updatedChain = [newEvent, ...(selectedItem.chainOfCustody || [])];
-      const updatedItem = {
-        ...selectedItem,
-        chainOfCustody: updatedChain
-      };
 
       await updateMutation.mutateAsync({
         id: selectedItem.id,
         data: { chainOfCustody: updatedChain }
       });
 
-      setSelectedItem(updatedItem);
+      // Optimistic update automatically handles UI updates
+      // If error occurs, rollback is automatic via useOptimisticUpdate
     } catch (err) {
+      // Error feedback handled by useErrorToast in mutation
       throw err;
     }
   });
@@ -161,11 +252,13 @@ export const useEvidenceVault = () => {
     setFilters,
     filteredItems,
     loading,
-    error,
     handleItemClick,
     handleBack,
     handleIntakeComplete,
     handleCustodyUpdate,
-    refresh: refetch
+    refresh: refetch,
+    // Expose mutation states for loading indicators
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending
   };
 };

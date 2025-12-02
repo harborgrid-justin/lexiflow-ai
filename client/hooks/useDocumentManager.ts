@@ -1,9 +1,41 @@
+/**
+ * ENZYME MIGRATION - Enhanced Document Manager Hook
+ *
+ * Migration Agent: Agent 39 (Wave 5)
+ * Migration Date: 2025-12-02
+ *
+ * Enzyme Features Used:
+ * - useApiRequest: Automatic caching and refetching for documents
+ * - useApiMutation: Type-safe mutations with cache invalidation
+ * - useLatestCallback: Stable callback references with latest closure values
+ * - useIsMounted: Safe state updates after async operations
+ * - useDebouncedValue: Optimized search term filtering (300ms debounce)
+ * - useOptimisticUpdate: Instant UI updates for tag operations with rollback
+ * - useErrorToast: Consistent error messaging across all operations
+ * - useSafeCallback: Error-safe callback execution for UI interactions
+ *
+ * Performance Improvements:
+ * - Debounced search reduces unnecessary re-renders during typing
+ * - Optimistic updates provide instant feedback for tag changes
+ * - Automatic error toast notifications improve UX consistency
+ *
+ * @see /client/enzyme/MIGRATION_PLAN.md for migration strategy
+ */
 
 import { useState, useMemo } from 'react';
 import { LegalDocument, DocumentVersion } from '../types';
 import { ApiService, ApiError } from '../services/apiService';
 import { ensureTagsArray } from '../utils/type-transformers';
-import { useApiRequest, useApiMutation, useLatestCallback, useIsMounted } from '../enzyme';
+import {
+  useApiRequest,
+  useApiMutation,
+  useLatestCallback,
+  useIsMounted,
+  useDebouncedValue,
+  useOptimisticUpdate,
+  useErrorToast,
+  useSafeCallback
+} from '../enzyme';
 import { useQueryClient } from '@tanstack/react-query';
 
 export const useDocumentManager = () => {
@@ -13,9 +45,13 @@ export const useDocumentManager = () => {
   const [selectedDocForHistory, setSelectedDocForHistory] = useState<LegalDocument | null>(null);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const queryClient = useQueryClient();
   const isMounted = useIsMounted();
+  const showErrorToast = useErrorToast();
+
+  // Debounce search term to optimize filtering performance
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
 
   // Fetch documents with Enzyme - automatic caching and refetching
   const { data: documents = [], isLoading: loading, refetch } = useApiRequest<LegalDocument[]>({
@@ -44,7 +80,7 @@ export const useDocumentManager = () => {
         content: version.contentSnapshot || '',
         lastModified: new Date().toISOString().split('T')[0]
       };
-      
+
       await updateDocument({
         endpoint: `/api/v1/documents/${selectedDocForHistory.id}`,
         data: updatedDoc
@@ -55,11 +91,11 @@ export const useDocumentManager = () => {
       console.error('Failed to restore document version:', err);
 
       if (isMounted()) {
-        if (err instanceof ApiError) {
-          setError(`Failed to restore document: ${err.statusText}`);
-        } else {
-          setError('Failed to restore document. Please try again.');
-        }
+        const errorMessage = err instanceof ApiError
+          ? `Failed to restore document: ${err.statusText}`
+          : 'Failed to restore document. Please try again.';
+        setError(errorMessage);
+        showErrorToast(errorMessage);
       }
       throw err;
     }
@@ -77,73 +113,113 @@ export const useDocumentManager = () => {
       }
   });
 
-  const toggleSelection = (id: string) => {
+  // Use useSafeCallback for error-safe UI interactions
+  const toggleSelection = useSafeCallback((id: string) => {
       if (selectedDocs.includes(id)) setSelectedDocs(selectedDocs.filter(d => d !== id));
       else setSelectedDocs([...selectedDocs, id]);
-  };
+  }, [selectedDocs]);
 
-  const addTag = useLatestCallback(async (docId: string, tag: string) => {
-    if (!tag.trim()) return;
-    const doc = documents.find(d => d.id === docId);
-    if (!doc || ensureTagsArray(doc.tags).includes(tag.trim())) return;
+  // Optimistically add a tag with automatic rollback on failure
+  const addTag = useOptimisticUpdate(
+    async (docId: string, tag: string) => {
+      if (!tag.trim()) return;
+      const doc = documents.find(d => d.id === docId);
+      if (!doc || ensureTagsArray(doc.tags).includes(tag.trim())) return;
 
-    try {
-      if (isMounted()) setError(null);
       const updatedTags = [...ensureTagsArray(doc.tags), tag.trim()];
-      
+
       await updateDocument({
         endpoint: `/api/v1/documents/${docId}`,
         data: { tags: updatedTags }
       });
-    } catch (err) {
-      console.error('Failed to add tag:', err);
+    },
+    {
+      onError: (err) => {
+        console.error('Failed to add tag:', err);
+        const errorMessage = err instanceof ApiError
+          ? `Failed to add tag: ${err.statusText}`
+          : 'Failed to add tag. Please try again.';
 
-      if (isMounted()) {
-        if (err instanceof ApiError) {
-          setError(`Failed to add tag: ${err.statusText}`);
-        } else {
-          setError('Failed to add tag. Please try again.');
+        if (isMounted()) {
+          setError(errorMessage);
+          showErrorToast(errorMessage);
         }
+      },
+      onOptimisticUpdate: (docId: string, tag: string) => {
+        // Optimistically update the cache
+        queryClient.setQueryData(['/api/v1/documents'], (oldData: LegalDocument[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(d => {
+            if (d.id === docId) {
+              const updatedTags = [...ensureTagsArray(d.tags), tag.trim()];
+              return { ...d, tags: updatedTags };
+            }
+            return d;
+          });
+        });
+      },
+      onRollback: () => {
+        // Rollback is handled automatically by refetching
+        queryClient.invalidateQueries({ queryKey: ['/api/v1/documents'] });
       }
-      throw err;
     }
-  });
+  );
 
-  const removeTag = useLatestCallback(async (docId: string, tag: string) => {
-    const doc = documents.find(d => d.id === docId);
-    if (!doc) return;
+  // Optimistically remove a tag with automatic rollback on failure
+  const removeTag = useOptimisticUpdate(
+    async (docId: string, tag: string) => {
+      const doc = documents.find(d => d.id === docId);
+      if (!doc) return;
 
-    try {
-      if (isMounted()) setError(null);
       const updatedTags = ensureTagsArray(doc.tags).filter(t => t !== tag);
-      
+
       await updateDocument({
         endpoint: `/api/v1/documents/${docId}`,
         data: { tags: updatedTags }
       });
-    } catch (err) {
-      console.error('Failed to remove tag:', err);
+    },
+    {
+      onError: (err) => {
+        console.error('Failed to remove tag:', err);
+        const errorMessage = err instanceof ApiError
+          ? `Failed to remove tag: ${err.statusText}`
+          : 'Failed to remove tag. Please try again.';
 
-      if (isMounted()) {
-        if (err instanceof ApiError) {
-          setError(`Failed to remove tag: ${err.statusText}`);
-        } else {
-          setError('Failed to remove tag. Please try again.');
+        if (isMounted()) {
+          setError(errorMessage);
+          showErrorToast(errorMessage);
         }
+      },
+      onOptimisticUpdate: (docId: string, tag: string) => {
+        // Optimistically update the cache
+        queryClient.setQueryData(['/api/v1/documents'], (oldData: LegalDocument[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(d => {
+            if (d.id === docId) {
+              const updatedTags = ensureTagsArray(d.tags).filter(t => t !== tag);
+              return { ...d, tags: updatedTags };
+            }
+            return d;
+          });
+        });
+      },
+      onRollback: () => {
+        // Rollback is handled automatically by refetching
+        queryClient.invalidateQueries({ queryKey: ['/api/v1/documents'] });
       }
-      throw err;
     }
-  });
+  );
 
   const allTags = useMemo(() => Array.from(new Set(documents.flatMap(d => ensureTagsArray(d.tags)))), [documents]);
 
+  // Use debounced search term for filtering to optimize performance
   const filtered = useMemo(() => {
     return documents.filter(d => {
-        const matchesSearch = (d.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || ensureTagsArray(d.tags).some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSearch = (d.title || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || ensureTagsArray(d.tags).some(t => t.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
         const matchesModule = activeModuleFilter === 'All' || d.sourceModule === activeModuleFilter;
         return matchesSearch && matchesModule;
     });
-  }, [documents, searchTerm, activeModuleFilter]);
+  }, [documents, debouncedSearchTerm, activeModuleFilter]);
 
   const stats = {
       total: documents.length,

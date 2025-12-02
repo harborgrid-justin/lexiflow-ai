@@ -1,3 +1,17 @@
+/**
+ * ENZYME MIGRATION - Agent 27
+ *
+ * This component has been migrated to use the Enzyme framework for:
+ * - Analytics tracking with useTrackEvent()
+ * - Stable callbacks with useLatestCallback()
+ *
+ * Enzyme Features:
+ * - Event Tracking: discovery_request_row_clicked, discovery_produce_clicked, discovery_draft_clicked
+ * - Stable Callbacks: handleRowClick, handleProduceClick, handleDraftClick
+ *
+ * Migration Date: December 2, 2025
+ * Agent: Agent 27 (Wave 4)
+ */
 
 import React from 'react';
 import { Button } from '../common/Button';
@@ -5,6 +19,10 @@ import { Badge } from '../common/Badge';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { DiscoveryRequest } from '../../types';
 import { Wand2, Upload, Clock } from 'lucide-react';
+import {
+  useLatestCallback,
+  useTrackEvent
+} from '../../enzyme';
 
 interface DiscoveryRequestsProps {
   onNavigate: (view: any, id?: string) => void;
@@ -13,6 +31,7 @@ interface DiscoveryRequestsProps {
 
 export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate, items }) => {
   const requestsToRender = items || [];
+  const trackEvent = useTrackEvent();
 
   const getDaysRemaining = (dueDate: string) => {
     const due = new Date(dueDate);
@@ -20,6 +39,33 @@ export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate
     const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     return diff;
   };
+
+  // Stable callbacks with integrated tracking
+  const handleRowClick = useLatestCallback((requestId: string, requestTitle: string, requestType: string, requestStatus: string) => {
+    trackEvent('discovery_request_row_clicked', {
+      requestId,
+      requestTitle,
+      requestType,
+      requestStatus
+    });
+    onNavigate('response', requestId);
+  });
+
+  const handleProduceClick = useLatestCallback((requestId: string, requestTitle: string) => {
+    trackEvent('discovery_produce_clicked', {
+      requestId,
+      requestTitle
+    });
+    onNavigate('production', requestId);
+  });
+
+  const handleDraftClick = useLatestCallback((requestId: string, requestTitle: string) => {
+    trackEvent('discovery_draft_clicked', {
+      requestId,
+      requestTitle
+    });
+    onNavigate('response', requestId);
+  });
 
   return (
     <div className="animate-fade-in space-y-4">
@@ -38,7 +84,7 @@ export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate
                 {requestsToRender.map((req) => {
                 const daysLeft = getDaysRemaining(req.dueDate);
                 return (
-                <TableRow key={req.id} onClick={() => onNavigate('response', req.id)} className="cursor-pointer group">
+                <TableRow key={req.id} onClick={() => handleRowClick(req.id, req.title, req.type, req.status)} className="cursor-pointer group">
                     <TableCell>
                     <div className="flex flex-col">
                         <span className="font-medium text-slate-900">{req.title}</span>
@@ -65,11 +111,11 @@ export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate
                     <TableCell className="text-right">
                     <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                         {req.type === 'Production' && (
-                            <Button size="sm" variant="outline" icon={Upload} onClick={() => onNavigate('production', req.id)}>
+                            <Button size="sm" variant="outline" icon={Upload} onClick={() => handleProduceClick(req.id, req.title)}>
                             Produce
                             </Button>
                         )}
-                        <Button size="sm" variant="ghost" icon={Wand2} onClick={() => onNavigate('response', req.id)}>
+                        <Button size="sm" variant="ghost" icon={Wand2} onClick={() => handleDraftClick(req.id, req.title)}>
                             Draft
                         </Button>
                     </div>
@@ -85,7 +131,7 @@ export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate
             {requestsToRender.map((req) => {
                 const daysLeft = getDaysRemaining(req.dueDate);
                 return (
-                    <div key={req.id} onClick={() => onNavigate('response', req.id)} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer active:bg-slate-50">
+                    <div key={req.id} onClick={() => handleRowClick(req.id, req.title, req.type, req.status)} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer active:bg-slate-50">
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-xs font-mono text-slate-500">{req.id}</span>
                             <Badge variant={req.status === 'Overdue' ? 'error' : req.status === 'Responded' ? 'success' : 'info'}>
@@ -108,11 +154,11 @@ export const DiscoveryRequests: React.FC<DiscoveryRequestsProps> = ({ onNavigate
 
                         <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                             {req.type === 'Production' && (
-                                <Button size="sm" variant="outline" icon={Upload} onClick={() => onNavigate('production', req.id)} className="w-full">
+                                <Button size="sm" variant="outline" icon={Upload} onClick={() => handleProduceClick(req.id, req.title)} className="w-full">
                                 Produce
                                 </Button>
                             )}
-                            <Button size="sm" variant="ghost" icon={Wand2} onClick={() => onNavigate('response', req.id)} className="w-full">
+                            <Button size="sm" variant="ghost" icon={Wand2} onClick={() => handleDraftClick(req.id, req.title)} className="w-full">
                                 Draft Response
                             </Button>
                         </div>

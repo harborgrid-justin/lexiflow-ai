@@ -1,10 +1,31 @@
 
+/**
+ * ENZYME MIGRATION: Agent 28, Wave 4
+ *
+ * Migrated to use Enzyme framework hooks:
+ * - useLatestCallback: Stable callback references for event handlers
+ * - useTrackEvent: Analytics tracking for user interactions
+ * - useIsMounted: Safe async operations and state updates
+ *
+ * Analytics events tracked:
+ * - custody_modal_opened: When user opens the record event modal
+ * - custody_modal_closed: When user closes the modal
+ * - custody_action_type_changed: When user selects different action type
+ * - custody_verification_toggled: When user toggles digital signature checkbox
+ * - custody_event_saved: When custody event is successfully recorded
+ */
+
 import React, { useState } from 'react';
 import { Button } from '../common/Button';
 import { User, Layers, Plus, PenTool, CheckCircle } from 'lucide-react';
 import { EvidenceItem, ChainOfCustodyEvent } from '../../types';
 import { Modal } from '../common/Modal';
 import { Input, TextArea } from '../common/Inputs';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  useIsMounted
+} from '../../enzyme';
 
 interface EvidenceChainOfCustodyProps {
   selectedItem: EvidenceItem;
@@ -21,12 +42,23 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
   });
   const [isSigning, setIsSigning] = useState(false);
 
-  const handleSave = async () => {
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
+  const handleSave = useLatestCallback(async () => {
     if (!formData.actor || !onCustodyUpdate) return;
 
     setIsSigning(true);
+    trackEvent('custody_event_save_started', {
+      action: formData.action,
+      hasNotes: !!formData.notes,
+      evidenceId: selectedItem.id
+    });
+
     // Simulate digital signature delay
     await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (!isMounted()) return;
 
     const newEvent: ChainOfCustodyEvent = {
       id: `cc-${Date.now()}`,
@@ -40,7 +72,46 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
     setIsSigning(false);
     setIsModalOpen(false);
     setFormData({ action: 'Transfer', actor: '', notes: '', verified: false });
-  };
+
+    trackEvent('custody_event_saved', {
+      action: formData.action,
+      hasNotes: !!formData.notes,
+      evidenceId: selectedItem.id
+    });
+  });
+
+  const handleOpenModal = useLatestCallback(() => {
+    setIsModalOpen(true);
+    trackEvent('custody_modal_opened', {
+      evidenceId: selectedItem.id,
+      evidenceType: selectedItem.type,
+      currentCustodyCount: selectedItem.chainOfCustody?.length || 0
+    });
+  });
+
+  const handleCloseModal = useLatestCallback(() => {
+    setIsModalOpen(false);
+    trackEvent('custody_modal_closed', {
+      evidenceId: selectedItem.id,
+      formCompleted: !!formData.actor && formData.verified
+    });
+  });
+
+  const handleActionTypeChange = useLatestCallback((newAction: string) => {
+    setFormData({...formData, action: newAction});
+    trackEvent('custody_action_type_changed', {
+      evidenceId: selectedItem.id,
+      actionType: newAction
+    });
+  });
+
+  const handleVerificationToggle = useLatestCallback((checked: boolean) => {
+    setFormData({...formData, verified: checked});
+    trackEvent('custody_verification_toggled', {
+      evidenceId: selectedItem.id,
+      verified: checked
+    });
+  });
 
   return (
     <div className="space-y-6">
@@ -49,7 +120,7 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
           <h3 className="text-lg font-bold text-slate-900">Chain of Custody Log</h3>
           <p className="text-sm text-slate-500">Chronological history of evidence handling.</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={() => setIsModalOpen(true)}>Record Event</Button>
+        <Button variant="primary" icon={Plus} onClick={handleOpenModal}>Record Event</Button>
       </div>
 
       <div className="relative border-l-2 border-slate-200 ml-4 space-y-8 py-4">
@@ -82,18 +153,18 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
       </div>
 
       {/* Transfer Modal */}
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
         title="Record Custody Event"
       >
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Action Type</label>
-            <select 
+            <select
               className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white"
               value={formData.action}
-              onChange={(e) => setFormData({...formData, action: e.target.value})}
+              onChange={(e) => handleActionTypeChange(e.target.value)}
             >
               <option value="Transfer">Transfer Custody</option>
               <option value="Check-In">Check-In to Storage</option>
@@ -103,15 +174,15 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
             </select>
           </div>
 
-          <Input 
-            label="Actor / Handler" 
+          <Input
+            label="Actor / Handler"
             placeholder="Name of person taking possession"
             value={formData.actor}
             onChange={(e) => setFormData({...formData, actor: e.target.value})}
           />
 
-          <TextArea 
-            label="Notes & Condition" 
+          <TextArea
+            label="Notes & Condition"
             placeholder="Describe condition of evidence, seals checked, destination..."
             value={formData.notes}
             onChange={(e) => setFormData({...formData, notes: e.target.value})}
@@ -123,11 +194,11 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
               <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.verified ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300'}`}>
                 {formData.verified && <CheckCircle className="h-3.5 w-3.5"/>}
               </div>
-              <input 
-                type="checkbox" 
-                className="hidden" 
+              <input
+                type="checkbox"
+                className="hidden"
                 checked={formData.verified}
-                onChange={(e) => setFormData({...formData, verified: e.target.checked})}
+                onChange={(e) => handleVerificationToggle(e.target.checked)}
               />
               <div>
                 <span className="text-sm font-bold text-slate-900 block">Digitally Sign & Verify</span>
@@ -137,10 +208,10 @@ export const EvidenceChainOfCustody: React.FC<EvidenceChainOfCustodyProps> = ({ 
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-4">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button 
-              variant="primary" 
-              onClick={handleSave} 
+            <Button variant="secondary" onClick={handleCloseModal}>Cancel</Button>
+            <Button
+              variant="primary"
+              onClick={handleSave}
               disabled={!formData.actor || !formData.verified || isSigning}
               icon={isSigning ? undefined : PenTool}
               isLoading={isSigning}

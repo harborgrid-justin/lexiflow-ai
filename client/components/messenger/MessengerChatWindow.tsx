@@ -1,3 +1,16 @@
+/**
+ * MessengerChatWindow Component
+ *
+ * ENZYME MIGRATION: This component has been migrated to use the Enzyme framework
+ * for analytics tracking and stable callbacks.
+ *
+ * Enzyme features implemented:
+ * - useTrackEvent: Tracks chat window events (chat_window_opened, chat_window_closed)
+ * - useLatestCallback: Stable callbacks for back navigation
+ *
+ * @migration-date 2025-12-02
+ * @migrated-by Agent 31
+ */
 
 import React from 'react';
 import { Conversation, Attachment } from '../../types';
@@ -5,6 +18,10 @@ import { Lock, Shield } from 'lucide-react';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
+import {
+  useLatestCallback,
+  useTrackEvent
+} from '../../enzyme';
 
 interface MessengerChatWindowProps {
   activeConversation: Conversation | undefined;
@@ -26,6 +43,32 @@ export const MessengerChatWindow: React.FC<MessengerChatWindowProps> = ({
   inputText, setInputText, pendingAttachments, setPendingAttachments,
   isPrivilegedMode, setIsPrivilegedMode, handleSendMessage, handleFileSelect, formatTime
 }) => {
+  // Analytics tracking
+  const trackEvent = useTrackEvent();
+
+  // Track when chat window opens/closes
+  React.useEffect(() => {
+    if (activeConversation && activeConvId) {
+      trackEvent('messenger_chat_window_opened', {
+        conversationId: activeConvId,
+        conversationName: activeConversation.name,
+        messageCount: activeConversation.messages?.length || 0,
+        hasUnread: activeConversation.unread || 0 > 0
+      });
+    }
+  }, [activeConvId, activeConversation, trackEvent]);
+
+  // Wrap back navigation with tracking
+  const handleBack = useLatestCallback(() => {
+    if (activeConversation && activeConvId) {
+      trackEvent('messenger_chat_window_closed', {
+        conversationId: activeConvId,
+        conversationName: activeConversation.name,
+        messageCount: activeConversation.messages?.length || 0
+      });
+    }
+    setActiveConvId(null);
+  });
 
   if (!activeConversation) {
     return (
@@ -47,18 +90,18 @@ export const MessengerChatWindow: React.FC<MessengerChatWindowProps> = ({
 
   return (
     <div className={`flex-1 flex flex-col bg-slate-50/30 ${!activeConvId ? 'hidden md:flex' : 'flex'}`}>
-      <ChatHeader 
-        conversation={activeConversation} 
-        onBack={() => setActiveConvId(null)} 
-      />
-      
-      <MessageList 
-        conversation={activeConversation} 
-        currentUserId="me" 
-        formatTime={formatTime} 
+      <ChatHeader
+        conversation={activeConversation}
+        onBack={handleBack}
       />
 
-      <ChatInput 
+      <MessageList
+        conversation={activeConversation}
+        currentUserId="me"
+        formatTime={formatTime}
+      />
+
+      <ChatInput
         inputText={inputText}
         setInputText={setInputText}
         pendingAttachments={pendingAttachments}

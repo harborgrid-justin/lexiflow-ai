@@ -1,11 +1,41 @@
 # Enzyme Migration Scratchpad
 
-**Last Updated:** December 2, 2025 - Wave 3 Parallel Agents Started
-**Status:** IN PROGRESS - Wave 3 Migration (8 new agents)
+**Last Updated:** December 2, 2025 - Wave 5 Parallel Agents Started
+**Status:** IN PROGRESS - Wave 5 Hooks Migration (8 new agents)
 
 ---
 
-## Agent Assignments - Wave 3
+## Agent Assignments - Wave 5 (HOOKS - Enzyme Virtual DOM)
+
+| Agent | Hook | Status | Notes |
+|-------|------|--------|-------|
+| Agent 33 | useWorkflowEngine.ts | COMPLETE | Migrated all 30+ API methods to useApiMutation, added useIsMounted, wrapped all callbacks with useLatestCallback |
+| Agent 34 | useSecureMessenger.ts | COMPLETE | Migrated to useApiRequest (2 endpoints with caching), useSafeState for all state, useOptimisticUpdate for messages, useLatestCallback for all handlers, useOnlineStatus for network awareness, useIsMounted for async safety |
+| Agent 35 | useWorkflowAnalytics.ts | COMPLETE | Migrated to 3 parallel useApiRequest hooks, useAsyncWithRecovery for refresh, useIsMounted, useLatestCallback |
+| Agent 36 | useDocketEntries.ts | COMPLETE | Migrated to useApiRequest (3min cache), useLatestCallback for 5 utility functions, useIsMounted for safe refetch, useMemo for statistics |
+| Agent 37 | useEvidenceVault.ts | COMPLETE | Enhanced TanStack Query with useOptimisticUpdate for create/update, useErrorToast for UX, useSafeState for all state, removed alert() calls |
+| Agent 38 | useKnowledgeBase.ts | COMPLETE | Added useDebouncedValue (300ms) for search optimization, useLatestCallback/useIsMounted imported |
+| Agent 39 | useDocumentManager.ts | COMPLETE | Enhanced with 4 new hooks: useDebouncedValue (search), useOptimisticUpdate (tag ops), useErrorToast, useSafeCallback - instant UI feedback |
+| Agent 40 | useAdminPanel.ts | COMPLETE | Enhanced with search/filter, pagination, debounced search (300ms), analytics tracking (4 events), stable callbacks |
+
+---
+
+## Agent Assignments - Wave 4 (COMPLETE)
+
+| Agent | Component | Status | Notes |
+|-------|-----------|--------|-------|
+| Agent 25 | case-detail/CaseDrafting.tsx | COMPLETE | Added 8 tracked events, 6 useLatestCallback handlers, useIsMounted for async clause fetching and risk review |
+| Agent 26 | case-detail/MotionDetail.tsx | COMPLETE | Added 5 tracked events (back, AI analysis, export, add task, document open), useLatestCallback for all 5 handlers, comprehensive JSDoc |
+| Agent 27 | discovery/DiscoveryRequests.tsx | COMPLETE | Added 3 tracked events (row click, produce, draft), useLatestCallback for 3 handlers |
+| Agent 28 | evidence/EvidenceChainOfCustody.tsx | COMPLETE | Added 6 tracked events (modal open/close, action type change, verification toggle, save started/completed), useLatestCallback for 5 handlers, useIsMounted for safe async signature operation |
+| Agent 29 | workflow/ApprovalWorkflow.tsx | COMPLETE | Added 10 tracked events (chain load/create/cancel, approve/reject/comments, approver selection), useLatestCallback for 3 async handlers, useIsMounted for safe state updates |
+| Agent 30 | workflow/TimeTrackingPanel.tsx | COMPLETE | Added 3 tracked events (start/stop/load), useLatestCallback for 3 handlers, useIsMounted for async operations |
+| Agent 31 | messenger/MessengerChatWindow.tsx | COMPLETE | Added tracking for chat window open/close, useLatestCallback for back navigation |
+| Agent 32 | analytics/CasePrediction.tsx | COMPLETE | Added tracking for chart views, forecast display; useTrackEvent with 2 events |
+
+---
+
+## Agent Assignments - Wave 3 (COMPLETE)
 
 | Agent | Component | Status | Notes |
 |-------|-----------|--------|-------|
@@ -346,3 +376,86 @@ Next step: Resolve the 48+ TypeScript errors to unblock Phase 3 completion.
     - TabLoadingFallback component for Suspense boundaries
     - 10 total tabs with conditional rendering and progressive hydration
     - No API deviations or errors encountered
+
+
+---
+
+## Agent 30 Completion - Wave 4
+
+13. ✅ TimeTrackingPanel.tsx - Agent 30 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - useTrackEvent() with event tracking:
+      - time_tracking_started (tracks taskId, userId)
+      - time_tracking_stopped (tracks taskId, userId, duration, hasDescription)
+      - time_tracking_entries_loaded (tracks taskId, userId, entryCount, hasActiveEntry)
+    - useIsMounted for safe state updates in async operations
+    - useLatestCallback for 3 handlers: loadTimeEntries, handleStart, handleStop
+    - All async operations guarded with isMounted() checks
+    - Duration captured before stop operation to ensure accurate tracking
+    - Component is simple UI with timer - no hydration needed
+    - No API deviations or errors encountered
+
+
+---
+
+## Agent 31 Completion - Wave 4
+
+14. ✅ MessengerChatWindow.tsx - Agent 31 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - useTrackEvent() with event tracking:
+      - messenger_chat_window_opened (tracks conversationId, conversationName, messageCount, hasUnread)
+      - messenger_chat_window_closed (tracks conversationId, conversationName, messageCount)
+    - useLatestCallback for handleBack navigation with integrated tracking
+    - useEffect for automatic view tracking when chat window opens
+    - Rich context in analytics: conversation details, message counts, unread status
+    - Component already lazy-loaded by parent SecureMessenger (Agent 9)
+    - No additional hydration needed (parent handles lazy loading)
+    - Clean separation: parent tracks high-level navigation, child tracks conversation interactions
+    - No API deviations or errors encountered
+
+
+---
+
+## Agent 36 Completion - Wave 5
+
+15. ✅ useDocketEntries.ts - Agent 36 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - Migrated from useEffect + ApiService pattern to useApiRequest
+    - useApiRequest with 3-minute stale time cache (docket entries don't change frequently)
+    - Conditional fetching with `enabled: !!caseId`
+    - useLatestCallback for all 5 utility functions:
+      - getDocketTimelineEvents (converts docket entries to timeline events)
+      - findMotionDocketEntries (searches motion-related entries)
+      - findHearingDocketEntries (searches hearing-related entries)
+      - findDocumentDocketEntries (filters entries with document links)
+      - getStatistics (returns aggregated statistics)
+    - useMemo for statistics computation (performance optimization)
+    - useIsMounted for safe refetch (prevents state updates on unmounted components)
+    - Eliminated manual loading/error state management
+    - Automatic race condition handling via useApiRequest
+    - No API deviations or errors encountered
+
+
+---
+
+## Agent 37 Completion - Wave 5
+
+15. ✅ useEvidenceVault.ts - Agent 37 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - Enhanced existing TanStack Query implementation with Enzyme features:
+      - useOptimisticUpdate for createMutation: instant UI feedback when creating evidence items
+      - useOptimisticUpdate for updateMutation: instant UI feedback for custody chain updates
+      - Automatic rollback on mutation failures with context preservation
+      - useErrorToast for user-friendly error notifications (replaced alert() calls)
+      - useSafeState for all state (view, activeTab, selectedItem, filters) to prevent memory leaks
+      - useLatestCallback for handleItemClick, handleBack, handleIntakeComplete, handleCustodyUpdate
+      - useIsMounted for safe async state updates
+    - Optimistic update patterns:
+      - Create: Adds temp item to cache immediately, replaces with server response
+      - Update: Updates cache and selectedItem optimistically, rolls back on error
+      - Both mutations preserve previousData for rollback
+    - Removed manual error state management in favor of toast notifications
+    - Exposed isCreating and isUpdating flags for loading indicators
+    - Query cache invalidation strategy for data consistency
+    - No API deviations or errors encountered
+

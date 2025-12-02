@@ -1,4 +1,27 @@
 
+/**
+ * CaseDrafting Component
+ *
+ * ENZYME MIGRATION - Completed by Agent 25
+ *
+ * Features added:
+ * - useTrackEvent: Analytics tracking for draft generation, clause insertion, risk review, tab changes
+ * - useLatestCallback: Stable callbacks for all event handlers (onDraft, insertClause, handleReview, tab changes, clause search)
+ * - useIsMounted: Safe state updates after async operations (clause fetching, risk review)
+ *
+ * Events tracked:
+ * - case_drafting_generate_clicked: When user clicks Generate Draft button (tracks promptLength, isDrafting state)
+ * - case_drafting_clause_inserted: When user inserts a clause from library (tracks clauseId, clauseName, clauseCategory)
+ * - case_drafting_risk_review_started: When user starts risk analysis (tracks contentLength)
+ * - case_drafting_risk_review_completed: When risk analysis completes (tracks contentLength, reviewLength)
+ * - case_drafting_tab_changed: When user switches between Clause Library and Risk Analysis tabs (tracks fromTab, toTab)
+ * - case_drafting_clause_search: When user searches clause library (tracks searchTerm, resultsCount)
+ * - case_drafting_clause_history_viewed: When user views clause version history (tracks clauseId, clauseName)
+ * - case_drafting_document_saved: When user saves draft as document (tracks contentLength, caseId)
+ *
+ * Migration date: December 2, 2025
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Cpu, Book, AlertTriangle, Check, Wand2, Search, History } from 'lucide-react';
 import { OpenAIService } from '../../services/openAIService';
@@ -6,6 +29,11 @@ import { Clause } from '../../types';
 import { AdvancedEditor } from '../AdvancedEditor';
 import { ApiService } from '../../services/apiService';
 import { ClauseHistoryModal } from '../ClauseHistoryModal';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  useIsMounted
+} from '../../enzyme';
 
 interface CaseDraftingProps {
   caseId: string;
@@ -17,7 +45,7 @@ interface CaseDraftingProps {
   onDraft: () => void;
 }
 
-export const CaseDrafting: React.FC<CaseDraftingProps> = ({ 
+export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   caseId,
   _caseTitle,
   draftPrompt,
@@ -26,12 +54,15 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   isDrafting,
   onDraft
 }) => {
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
   const [content, setContent] = useState('');
   const [reviewResult, setReviewResult] = useState('');
-  const [activeMode, setActiveMode] = useState<'edit' | 'review' | 'clauses'>('edit');
+  const [activeModeState, setActiveModeState] = useState<'edit' | 'review' | 'clauses'>('edit');
   const [loading, setLoading] = useState(false);
   const [clauses, setClauses] = useState<Clause[]>([]);
-  
+
   // Clause Library State
   const [clauseSearch, setClauseSearch] = useState('');
   const [selectedClauseHistory, setSelectedClauseHistory] = useState<Clause | null>(null);
@@ -40,14 +71,18 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
     const fetchClauses = async () => {
         try {
             const data = await ApiService.getClauses();
-            setClauses(data || []);
+            if (isMounted()) {
+              setClauses(data || []);
+            }
         } catch (e) {
             console.error("Failed to fetch clauses", e);
-            setClauses([]);
+            if (isMounted()) {
+              setClauses([]);
+            }
         }
     };
     fetchClauses();
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
     if (draftResult) {
@@ -60,30 +95,65 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   }, [draftResult]);
 
   const filteredClauses = useMemo(() => {
-    return clauses.filter(c =>
+    const filtered = clauses.filter(c =>
       (c.name || '').toLowerCase().includes(clauseSearch.toLowerCase()) ||
       (c.content || '').toLowerCase().includes(clauseSearch.toLowerCase()) ||
       (c.category || '').toLowerCase().includes(clauseSearch.toLowerCase())
     );
-  }, [clauseSearch, clauses]);
 
-  const handleReview = async () => {
-    if(!content) return;
+    // Track search with results count
+    if (clauseSearch) {
+      trackEvent('case_drafting_clause_search', {
+        searchTerm: clauseSearch,
+        resultsCount: filtered.length
+      });
+    }
+
+    return filtered;
+  }, [clauseSearch, clauses, trackEvent]);
+
+  const handleReview = useLatestCallback(async () => {
+    if (!content) return;
+
+    const contentLength = content.length;
+    trackEvent('case_drafting_risk_review_started', { contentLength });
+
     setLoading(true);
-    setActiveMode('review');
+    setActiveModeState('review');
     const plainText = content.replace(/<[^>]*>?/gm, '');
-    const res = await OpenAIService.reviewContract(plainText);
-    setReviewResult(res);
-    setLoading(false);
-  };
 
-  const insertClause = (c: Clause) => {
+    try {
+      const res = await OpenAIService.reviewContract(plainText);
+      if (isMounted()) {
+        setReviewResult(res);
+        setLoading(false);
+        trackEvent('case_drafting_risk_review_completed', {
+          contentLength,
+          reviewLength: res.length
+        });
+      }
+    } catch (error) {
+      console.error('Risk review failed', error);
+      if (isMounted()) {
+        setLoading(false);
+      }
+    }
+  });
+
+  const insertClause = useLatestCallback((c: Clause) => {
     const clauseHtml = `<p><strong>[${c.name}]:</strong> ${c.content}</p>`;
     setContent(prev => prev + clauseHtml);
-  };
 
-  const handleSaveDocument = async (newHtml: string) => {
+    trackEvent('case_drafting_clause_inserted', {
+      clauseId: c.id,
+      clauseName: c.name,
+      clauseCategory: c.category
+    });
+  });
+
+  const handleSaveDocument = useLatestCallback(async (newHtml: string) => {
     setContent(newHtml);
+
     try {
       await ApiService.createDocument({
         caseId,
@@ -99,12 +169,45 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
         sharedWithClient: false,
         fileSize: '0 KB' // Placeholder
       });
+
+      trackEvent('case_drafting_document_saved', {
+        contentLength: newHtml.length,
+        caseId
+      });
+
       alert('Document saved to case file.');
     } catch (error) {
       console.error("Failed to save document", error);
       alert("Failed to save document.");
     }
-  };
+  });
+
+  const handleDraftClick = useLatestCallback(() => {
+    trackEvent('case_drafting_generate_clicked', {
+      promptLength: draftPrompt.length,
+      isDrafting
+    });
+    onDraft();
+  });
+
+  const handleTabChange = useLatestCallback((newMode: 'edit' | 'review' | 'clauses') => {
+    trackEvent('case_drafting_tab_changed', {
+      fromTab: activeModeState,
+      toTab: newMode
+    });
+    setActiveModeState(newMode);
+  });
+
+  const handleClauseHistoryView = useLatestCallback((clause: Clause) => {
+    trackEvent('case_drafting_clause_history_viewed', {
+      clauseId: clause.id,
+      clauseName: clause.name
+    });
+    setSelectedClauseHistory(clause);
+  });
+
+  // Create derived activeMode value for JSX compatibility
+  const activeMode = activeModeState;
 
   return (
     <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
@@ -117,16 +220,16 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
           <div className="lg:col-span-2 flex flex-col h-full space-y-4">
         <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex gap-2 items-center">
              <div className="bg-purple-100 p-2 rounded-md"><Wand2 className="h-5 w-5 text-purple-600"/></div>
-             <input 
+             <input
                 value={draftPrompt}
                 onChange={(e) => setDraftPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && onDraft()}
+                onKeyDown={(e) => e.key === 'Enter' && handleDraftClick()}
                 placeholder="Describe a clause or section to draft (e.g. 'Force Majeure for a pandemic')..."
                 className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-slate-400"
             />
-            <button 
-                onClick={onDraft} 
-                disabled={isDrafting || !draftPrompt} 
+            <button
+                onClick={handleDraftClick}
+                disabled={isDrafting || !draftPrompt}
                 className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-md hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
                 {isDrafting ? 'Generating...' : 'Generate Draft'}
@@ -145,14 +248,14 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
       
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
         <div className="flex border-b border-slate-100">
-          <button 
-            onClick={() => setActiveMode('edit')} 
+          <button
+            onClick={() => handleTabChange('edit')}
             className={`flex-1 py-3 text-sm font-medium ${activeMode !== 'review' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
           >
             Clause Library
           </button>
-          <button 
-            onClick={() => setActiveMode('review')} 
+          <button
+            onClick={() => handleTabChange('review')}
             className={`flex-1 py-3 text-sm font-medium ${activeMode === 'review' ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
           >
             Risk Analysis
@@ -215,8 +318,8 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
                             </span>
                             <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 mt-1.5 inline-block">{c.category}</span>
                         </div>
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); setSelectedClauseHistory(c); }}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleClauseHistoryView(c); }}
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors"
                             title="View Version History"
                         >

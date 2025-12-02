@@ -1,9 +1,42 @@
+/**
+ * TimeTrackingPanel Component
+ *
+ * ENZYME MIGRATION - Agent 30 (Wave 4)
+ * =======================================
+ *
+ * Migration Summary:
+ * - Added useTrackEvent() for analytics tracking
+ * - Added useIsMounted() for safe async state updates
+ * - Wrapped handlers with useLatestCallback() for stable references
+ *
+ * Tracked Events:
+ * - time_tracking_started: When user starts time tracking
+ * - time_tracking_stopped: When user stops time tracking (with duration)
+ * - time_tracking_entries_loaded: When time entries are loaded successfully
+ *
+ * Hooks Used:
+ * - useTrackEvent: Event analytics tracking
+ * - useIsMounted: Safe async state updates
+ * - useLatestCallback: Stable callback references
+ *
+ * Performance:
+ * - useLatestCallback ensures handlers don't cause unnecessary re-renders
+ * - useIsMounted prevents state updates on unmounted components
+ *
+ * @see /workspaces/lexiflow-ai/client/enzyme/MIGRATION_SCRATCHPAD.md
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, Clock } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import type { TaskTimeEntry } from '../../types/workflow-engine';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  useIsMounted
+} from '../../enzyme';
 
 interface TimeTrackingPanelProps {
   taskId: string;
@@ -25,10 +58,35 @@ export const TimeTrackingPanel: React.FC<TimeTrackingPanelProps> = ({
     loading
   } = useWorkflowEngine();
 
+  // Enzyme hooks
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
   const [timeEntries, setTimeEntries] = useState<TaskTimeEntry[]>([]);
   const [isTracking, setIsTracking] = useState(false);
   const [description, setDescription] = useState('');
   const [elapsedTime, setElapsedTime] = useState(0);
+
+  const loadTimeEntries = useLatestCallback(async () => {
+    const entries = await getTimeEntries(taskId);
+    if (entries && isMounted()) {
+      setTimeEntries(entries);
+      const activeEntry = entries.find(e => e.userId === userId && !e.endTime);
+      if (activeEntry) {
+        setIsTracking(true);
+        const startTime = new Date(activeEntry.startTime).getTime();
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }
+
+      // Track successful load
+      trackEvent('time_tracking_entries_loaded', {
+        taskId,
+        userId,
+        entryCount: entries.length,
+        hasActiveEntry: !!activeEntry
+      });
+    }
+  });
 
   useEffect(() => {
     loadTimeEntries();
@@ -45,34 +103,42 @@ export const TimeTrackingPanel: React.FC<TimeTrackingPanelProps> = ({
     return () => clearInterval(interval);
   }, [isTracking]);
 
-  const loadTimeEntries = async () => {
-    const entries = await getTimeEntries(taskId);
-    if (entries) {
-      setTimeEntries(entries);
-      const activeEntry = entries.find(e => e.userId === userId && !e.endTime);
-      if (activeEntry) {
-        setIsTracking(true);
-        const startTime = new Date(activeEntry.startTime).getTime();
-        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
-      }
-    }
-  };
-
-  const handleStart = async () => {
+  const handleStart = useLatestCallback(async () => {
     await startTimeTracking(taskId, userId);
-    setIsTracking(true);
-    setElapsedTime(0);
-    onUpdate?.();
-  };
+    if (isMounted()) {
+      setIsTracking(true);
+      setElapsedTime(0);
 
-  const handleStop = async () => {
+      // Track time tracking start
+      trackEvent('time_tracking_started', {
+        taskId,
+        userId
+      });
+
+      onUpdate?.();
+    }
+  });
+
+  const handleStop = useLatestCallback(async () => {
+    const duration = elapsedTime;
     await stopTimeTracking(taskId, userId, description);
-    setIsTracking(false);
-    setElapsedTime(0);
-    setDescription('');
-    await loadTimeEntries();
-    onUpdate?.();
-  };
+    if (isMounted()) {
+      setIsTracking(false);
+      setElapsedTime(0);
+      setDescription('');
+
+      // Track time tracking stop
+      trackEvent('time_tracking_stopped', {
+        taskId,
+        userId,
+        duration,
+        hasDescription: !!description
+      });
+
+      await loadTimeEntries();
+      onUpdate?.();
+    }
+  });
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
