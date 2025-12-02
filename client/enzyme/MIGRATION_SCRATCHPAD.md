@@ -1,11 +1,37 @@
 # Enzyme Migration Scratchpad
 
-**Last Updated:** December 1, 2025 - All Agents Complete
-**Status:** COMPLETE - BLOCKED BY 48+ TypeScript Errors (see ENZYME_MIGRATION_PROGRESS.md)
+**Last Updated:** December 2, 2025 - Wave 3 Parallel Agents Started
+**Status:** IN PROGRESS - Wave 3 Migration (8 new agents)
 
 ---
 
-## Agent Assignments
+## Agent Assignments - Wave 3
+
+| Agent | Component | Status | Notes |
+|-------|-----------|--------|-------|
+| Agent 17 | case-detail/CaseEvidence.tsx | COMPLETE | Added tracking, useIsMounted, useLatestCallback |
+| Agent 18 | case-detail/CaseMotions.tsx | COMPLETE | Added 5 tracked events, useLatestCallback for 5 handlers, useIsMounted for async fetch |
+| Agent 19 | admin/AdminAuditLog.tsx | COMPLETE | Added tracking for export, LazyHydration for table |
+| Agent 20 | workflow/NotificationCenter.tsx | COMPLETE | Add tracking, useLatestCallback for actions |
+| Agent 21 | document/DocumentTable.tsx | COMPLETE | Added 4 tracked events for row actions, useLatestCallback for 5 handlers |
+| Agent 22 | AdvancedEditor.tsx | COMPLETE | Add tracking for AI edits |
+| Agent 23 | case-detail/CaseWorkflow.tsx | COMPLETE | Add tracking, useLatestCallback |
+| Agent 24 | workflow/SLAMonitor.tsx | COMPLETE | Add tracking, useIsMounted |
+
+## Agent Assignments - Wave 2 (COMPLETE)
+
+| Agent | Component | Status | Notes |
+|-------|-----------|--------|-------|
+| Agent 9 | SecureMessenger.tsx | COMPLETE | Full migration: usePageView, useTrackEvent, useLatestCallback, lazy loading 4 sub-components, HydrationBoundary |
+| Agent 10 | AdminPlatformManager.tsx | COMPLETE | Full migration: usePageView, trackEvent, useLatestCallback, HydrationBoundary, isMounted |
+| Agent 11 | WorkflowAnalyticsDashboard.tsx | COMPLETE | Full migration: usePageView, trackEvent, useLatestCallback, HydrationBoundary |
+| Agent 12 | EnhancedWorkflowPanel.tsx | COMPLETE | Full migration: 8 lazy components, 10 tabs with hydration, 3 tracked events |
+| Agent 13 | case-detail/CaseBilling.tsx | COMPLETE | Add tracking for billing actions |
+| Agent 14 | BillingDashboard.tsx | COMPLETE | Fixed loading bug, added usePageView, HydrationBoundary for charts |
+| Agent 15 | Dashboard.tsx | COMPLETE | Added usePageView, LazyHydration for chart, HydrationBoundary for alerts |
+| Agent 16 | DocumentManager.tsx | COMPLETE | Full migration: usePageView, HydrationBoundary, LazyHydration, useIsMounted |
+
+## Wave 1 Completed Agents
 
 | Agent | Component | Status | Notes |
 |-------|-----------|--------|-------|
@@ -44,8 +70,17 @@ usePageView('component_name');
 ```typescript
 const handleAction = useLatestCallback((param: Type) => {
   // action logic
-  trackEvent({ name: 'action_name', properties: { param } });
+  trackEvent('action_name', { param });
 });
+```
+
+### CORRECT trackEvent API (IMPORTANT!)
+```typescript
+// CORRECT - use string event name + properties object
+trackEvent('event_name', { property1: 'value', property2: 123 });
+
+// WRONG - do NOT use object with name property
+// trackEvent({ name: 'event_name', properties: {...} }); // ❌ INCORRECT
 ```
 
 ### Hydration Pattern
@@ -166,6 +201,20 @@ const handleAction = useLatestCallback((param: Type) => {
     - useIsMounted imported for safe async operations
     - No API deviations or errors encountered
 
+11. ✅ WorkflowAnalyticsDashboard.tsx - Agent 11 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - usePageView('workflow_analytics_dashboard') for page tracking
+    - useTrackEvent() with event tracking:
+      - workflow_analytics_section_toggled (tracks section, expanded state)
+      - workflow_analytics_refreshed (tracks caseId)
+    - HydrationBoundary with priority-based progressive hydration:
+      - HIGH/IMMEDIATE: WorkflowMetricGrid (critical metrics above fold)
+      - NORMAL/VISIBLE: EnterpriseCapabilities, StageProgress, BottleneckInsights
+      - LOW/IDLE: TaskDistribution, SLABreachAlert
+    - useLatestCallback for handlers: toggleSection (with tracking), handleRefresh (with tracking)
+    - No lazy loading needed (sub-components are already lightweight)
+    - No API deviations or errors encountered
+
 ---
 
 ## Notes
@@ -224,3 +273,76 @@ const handleAction = useLatestCallback((param: Type) => {
 ### Migration Status: BLOCKED
 All 8 agent migrations are complete but the codebase cannot build due to TypeScript errors.
 Next step: Resolve the 48+ TypeScript errors to unblock Phase 3 completion.
+
+---
+
+## Agent 15 Completion
+
+12. ✅ Dashboard.tsx - Agent 15 migration complete:
+    - JSDoc header with ENZYME MIGRATION documentation
+    - usePageView('dashboard') for page tracking
+    - useTrackEvent() with events: dashboard_viewed (tracks totalCases), dashboard_case_clicked (tracks caseId)
+    - LazyHydration wrapper for BarChart in "Case Distribution by Phase" card (priority="normal", trigger="visible")
+    - HydrationBoundary wrapper for "Recent Alerts" section (id="dashboard-alerts", priority="normal", trigger="visible")
+    - useLatestCallback for handleCaseSelect handler
+    - Component already had useTrackEvent and useLatestCallback implemented, added missing usePageView and hydration wrappers
+    - No API deviations or errors encountered
+
+12. ✅ DocumentManager.tsx - Agent 16 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - usePageView('document_manager') for page tracking
+    - useTrackEvent() with event tracking:
+      - document_manager_viewed (tracks totalDocs, activeFilter, selectedCount)
+      - document_share_clicked, document_upload_clicked
+      - document_compare_activated, document_bulk_summarize
+      - document_sync_clicked
+    - useIsMounted for safe state updates in useEffect
+    - Fixed useEffect dependencies: added trackEvent, isMounted, stats.total, selectedDocs.length
+    - HydrationBoundary for DocumentFilters (id="document-filters", priority="high", trigger="immediate")
+    - LazyHydration for DocumentTable (priority="normal", trigger="visible")
+    - useLatestCallback for all handlers: handleShare, handleUpload, handleCompare, handleBulkSummarizeWithAnalytics, handleSync
+    - trackEvent API already correct (string-based format)
+    - No API deviations or errors encountered
+
+---
+
+## Agent 10 Completion
+
+13. ✅ AdminPlatformManager.tsx - Agent 10 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - usePageView('admin_platform_manager') for page tracking
+    - useTrackEvent() with event tracking:
+      - admin_category_changed (tracks from/to category)
+      - admin_record_edit (tracks category, recordId)
+      - admin_record_create (tracks category)
+      - admin_record_delete (tracks category, recordId)
+      - admin_record_saved (tracks category, recordId, isNew)
+    - HydrationBoundary with priority-based progressive hydration:
+      - HIGH/IMMEDIATE: EntitySidebar (critical navigation)
+      - HIGH/IMMEDIATE: EntityToolbar (critical actions: search, create)
+      - NORMAL/VISIBLE: Data table/cards (main content area)
+    - useLatestCallback for all handlers:
+      - setActiveCategory (with category change tracking)
+      - handleEdit, handleCreate, handleDelete, handleSave
+    - useIsMounted for safe state updates in async data fetching
+    - Converted setActiveCategory to tracked callback wrapper pattern
+    - No API deviations or errors encountered
+
+12. ✅ EnhancedWorkflowPanel.tsx - Agent 12 migration complete:
+    - JSDoc header with comprehensive ENZYME MIGRATION documentation
+    - usePageView('enhanced_workflow_panel') for page tracking
+    - useTrackEvent() with event tracking:
+      - workflow_panel_tab_changed (tracks tab, previousTab)
+      - workflow_panel_analytics_toggled (tracks section, expanded state)
+      - workflow_panel_refreshed (tracks activeTab)
+    - React.lazy() for ALL 8 heavy sub-components:
+      - TaskDependencyManager, SLAMonitor, ApprovalWorkflow, TimeTrackingPanel
+      - ParallelTasksManager, TaskReassignmentPanel, NotificationCenter, AuditTrailViewer
+    - HydrationBoundary with tab-based progressive hydration strategy:
+      - HIGH/IMMEDIATE: Overview tab (most common view)
+      - HIGH/VISIBLE: Dependencies, SLA, Approvals, Analytics tabs
+      - NORMAL/VISIBLE: Time, Parallel, Reassign, Notifications, Audit tabs
+    - useLatestCallback for 3 handlers: handleTabChange, handleToggleAnalyticsSection, handleRefreshAnalytics
+    - TabLoadingFallback component for Suspense boundaries
+    - 10 total tabs with conditional rendering and progressive hydration
+    - No API deviations or errors encountered

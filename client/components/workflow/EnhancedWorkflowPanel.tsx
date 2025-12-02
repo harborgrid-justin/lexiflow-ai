@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
+/**
+ * EnhancedWorkflowPanel - Master Workflow Engine
+ *
+ * ENZYME MIGRATION:
+ * - Progressive hydration with HydrationBoundary for tab content
+ * - Lazy loading for 8 heavy sub-components (TaskDependencyManager, SLAMonitor, ApprovalWorkflow,
+ *   TimeTrackingPanel, ParallelTasksManager, TaskReassignmentPanel, NotificationCenter, AuditTrailViewer)
+ * - usePageView('enhanced_workflow_panel') for page tracking
+ * - useTrackEvent() for tab change and analytics interactions
+ * - useLatestCallback for stable event handlers
+ *
+ * Tab Content Strategy:
+ * - Overview: Immediate load (most common view)
+ * - Dependencies, SLA, Approvals: High priority lazy load
+ * - Time, Parallel, Reassign, Notifications, Audit: Normal priority lazy load
+ * - Analytics: High priority (data-heavy)
+ */
+
+import React, { useState, Suspense } from 'react';
 import { Layers, Settings, Play, Pause, BarChart3, RefreshCw } from 'lucide-react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { TaskDependencyManager } from './TaskDependencyManager';
-import { SLAMonitor } from './SLAMonitor';
-import { ApprovalWorkflow } from './ApprovalWorkflow';
-import { TimeTrackingPanel } from './TimeTrackingPanel';
-import { ParallelTasksManager } from './ParallelTasksManager';
-import { TaskReassignmentPanel } from './TaskReassignmentPanel';
-import { NotificationCenter } from './NotificationCenter';
-import { AuditTrailViewer } from './AuditTrailViewer';
 import { WorkflowMetricGrid } from './analytics/WorkflowMetricGrid';
 import { TaskDistributionSection } from './analytics/TaskDistributionSection';
 import { SLABreachAlert } from './analytics/SLABreachAlert';
@@ -17,6 +27,29 @@ import { EnterpriseCapabilitiesSection } from './analytics/EnterpriseCapabilitie
 import { StageProgressSection } from './analytics/StageProgressSection';
 import { BottleneckInsights } from './analytics/BottleneckInsights';
 import { useWorkflowAnalytics } from '../../hooks/useWorkflowAnalytics';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  usePageView,
+  HydrationBoundary,
+} from '../../enzyme';
+
+// Lazy load heavy sub-components for better performance
+const TaskDependencyManager = React.lazy(() => import('./TaskDependencyManager').then(m => ({ default: m.TaskDependencyManager })));
+const SLAMonitor = React.lazy(() => import('./SLAMonitor').then(m => ({ default: m.SLAMonitor })));
+const ApprovalWorkflow = React.lazy(() => import('./ApprovalWorkflow').then(m => ({ default: m.ApprovalWorkflow })));
+const TimeTrackingPanel = React.lazy(() => import('./TimeTrackingPanel').then(m => ({ default: m.TimeTrackingPanel })));
+const ParallelTasksManager = React.lazy(() => import('./ParallelTasksManager').then(m => ({ default: m.ParallelTasksManager })));
+const TaskReassignmentPanel = React.lazy(() => import('./TaskReassignmentPanel').then(m => ({ default: m.TaskReassignmentPanel })));
+const NotificationCenter = React.lazy(() => import('./NotificationCenter').then(m => ({ default: m.NotificationCenter })));
+const AuditTrailViewer = React.lazy(() => import('./AuditTrailViewer').then(m => ({ default: m.AuditTrailViewer })));
+
+// Loading fallback for tab content
+const TabLoadingFallback = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="animate-pulse text-slate-400">Loading tab content...</div>
+  </div>
+);
 
 interface EnhancedWorkflowPanelProps {
   caseId: string;
@@ -37,6 +70,10 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
   tasks,
   onUpdate
 }) => {
+  // Enzyme: Page tracking
+  usePageView('enhanced_workflow_panel');
+  const trackEvent = useTrackEvent();
+
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [expandedAnalyticsSection, setExpandedAnalyticsSection] = useState<string | null>('capabilities');
   const {
@@ -61,9 +98,25 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
     { id: 'analytics', label: 'Analytics', icon: BarChart3 }
   ];
 
-  const toggleAnalyticsSection = (section: string) => {
+  // Enzyme: Stable callback for tab changes with tracking
+  const handleTabChange = useLatestCallback((tabId: string) => {
+    const previousTab = activeTab;
+    setActiveTab(tabId);
+    trackEvent('workflow_panel_tab_changed', { tab: tabId, previousTab });
+  });
+
+  // Enzyme: Stable callback for analytics section toggle with tracking
+  const handleToggleAnalyticsSection = useLatestCallback((section: string) => {
+    const isExpanding = expandedAnalyticsSection !== section;
     setExpandedAnalyticsSection(prev => (prev === section ? null : section));
-  };
+    trackEvent('workflow_panel_analytics_toggled', { section, expanded: isExpanding });
+  });
+
+  // Enzyme: Stable callback for refresh with tracking
+  const handleRefreshAnalytics = useLatestCallback(() => {
+    refreshAnalytics();
+    trackEvent('workflow_panel_refreshed', { activeTab });
+  });
 
   return (
     <div className="space-y-6">
@@ -93,7 +146,7 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
             {tabs.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'bg-blue-600 text-white'
@@ -109,142 +162,180 @@ export const EnhancedWorkflowPanel: React.FC<EnhancedWorkflowPanelProps> = ({
         <div className="p-4">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* SLA Status Summary */}
-                <SLAMonitor caseId={caseId} showBreachReport />
-                
-                {/* Notifications */}
-                <NotificationCenter userId={currentUserId} />
-              </div>
+            <HydrationBoundary id="workflow-overview" priority="high" trigger="immediate">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* SLA Status Summary */}
+                    <SLAMonitor caseId={caseId} showBreachReport />
 
+                    {/* Notifications */}
+                    <NotificationCenter userId={currentUserId} />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="font-bold text-slate-900 flex items-center">
+                        <BarChart3 className="h-5 w-5 mr-2 text-slate-500" /> Workflow Snapshot
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={RefreshCw}
+                        onClick={handleRefreshAnalytics}
+                        disabled={isRefreshing}
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+                    <WorkflowMetricGrid metrics={metrics} velocity={velocity} />
+                    <TaskDistributionSection metrics={metrics} />
+                    <SLABreachAlert metrics={metrics} onViewDetails={() => checkSLABreaches(caseId)} />
+                  </div>
+                </div>
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Dependencies Tab */}
+          {activeTab === 'dependencies' && taskId && (
+            <HydrationBoundary id="workflow-dependencies" priority="high" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <TaskDependencyManager
+                  taskId={taskId}
+                  taskTitle={tasks.find(t => t.id === taskId)?.title || 'Task'}
+                  availableTasks={tasks}
+                  onUpdate={onUpdate}
+                />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* SLA Tab */}
+          {activeTab === 'sla' && (
+            <HydrationBoundary id="workflow-sla" priority="high" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <div className="space-y-6">
+                  {taskId && <SLAMonitor taskId={taskId} />}
+                  <SLAMonitor caseId={caseId} showBreachReport />
+                </div>
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Approvals Tab */}
+          {activeTab === 'approvals' && taskId && (
+            <HydrationBoundary id="workflow-approvals" priority="high" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <ApprovalWorkflow
+                  taskId={taskId}
+                  taskTitle={tasks.find(t => t.id === taskId)?.title || 'Task'}
+                  currentUserId={currentUserId}
+                  users={users}
+                  onUpdate={onUpdate}
+                />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Time Tracking Tab */}
+          {activeTab === 'time' && taskId && (
+            <HydrationBoundary id="workflow-time" priority="normal" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <TimeTrackingPanel
+                  taskId={taskId}
+                  taskTitle={tasks.find(t => t.id === taskId)?.title || 'Task'}
+                  userId={currentUserId}
+                  onUpdate={onUpdate}
+                />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Parallel Tasks Tab */}
+          {activeTab === 'parallel' && stageId && (
+            <HydrationBoundary id="workflow-parallel" priority="normal" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <ParallelTasksManager
+                  stageId={stageId}
+                  tasks={tasks}
+                  onUpdate={onUpdate}
+                />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Reassignment Tab */}
+          {activeTab === 'reassign' && (
+            <HydrationBoundary id="workflow-reassign" priority="normal" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <TaskReassignmentPanel
+                  caseId={caseId}
+                  currentUserId={currentUserId}
+                  users={users}
+                  tasks={tasks}
+                  onUpdate={onUpdate}
+                />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Notifications Tab */}
+          {activeTab === 'notifications' && (
+            <HydrationBoundary id="workflow-notifications" priority="normal" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <NotificationCenter userId={currentUserId} />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Audit Trail Tab */}
+          {activeTab === 'audit' && (
+            <HydrationBoundary id="workflow-audit" priority="normal" trigger="visible">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <AuditTrailViewer caseId={caseId} limit={100} />
+              </Suspense>
+            </HydrationBoundary>
+          )}
+
+          {/* Analytics Tab */}
+          {activeTab === 'analytics' && (
+            <HydrationBoundary id="workflow-analytics" priority="high" trigger="visible">
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="font-bold text-slate-900 flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-slate-500" /> Workflow Snapshot
+                    <BarChart3 className="h-5 w-5 mr-2 text-slate-500" /> Workflow Analytics
                   </h3>
                   <Button
                     variant="outline"
                     size="sm"
                     icon={RefreshCw}
-                    onClick={refreshAnalytics}
+                    onClick={handleRefreshAnalytics}
                     disabled={isRefreshing}
                   >
                     Refresh
                   </Button>
                 </div>
                 <WorkflowMetricGrid metrics={metrics} velocity={velocity} />
+                <EnterpriseCapabilitiesSection
+                  metrics={metrics}
+                  isExpanded={expandedAnalyticsSection === 'capabilities'}
+                  onToggle={() => handleToggleAnalyticsSection('capabilities')}
+                />
+                <StageProgressSection
+                  metrics={metrics}
+                  isExpanded={expandedAnalyticsSection === 'stages'}
+                  onToggle={() => handleToggleAnalyticsSection('stages')}
+                />
+                <BottleneckInsights
+                  bottlenecks={bottlenecks}
+                  isExpanded={expandedAnalyticsSection === 'bottlenecks'}
+                  onToggle={() => handleToggleAnalyticsSection('bottlenecks')}
+                />
                 <TaskDistributionSection metrics={metrics} />
                 <SLABreachAlert metrics={metrics} onViewDetails={() => checkSLABreaches(caseId)} />
               </div>
-            </div>
-          )}
-
-          {/* Dependencies Tab */}
-          {activeTab === 'dependencies' && taskId && (
-            <TaskDependencyManager
-              taskId={taskId}
-              taskTitle={tasks.find(t => t.id === taskId)?.title || 'Task'}
-              availableTasks={tasks}
-              onUpdate={onUpdate}
-            />
-          )}
-
-          {/* SLA Tab */}
-          {activeTab === 'sla' && (
-            <div className="space-y-6">
-              {taskId && <SLAMonitor taskId={taskId} />}
-              <SLAMonitor caseId={caseId} showBreachReport />
-            </div>
-          )}
-
-          {/* Approvals Tab */}
-          {activeTab === 'approvals' && taskId && (
-            <ApprovalWorkflow
-              taskId={taskId}
-              taskTitle={tasks.find(t => t.id === taskId)?.title || 'Task'}
-              currentUserId={currentUserId}
-              users={users}
-              onUpdate={onUpdate}
-            />
-          )}
-
-          {/* Time Tracking Tab */}
-          {activeTab === 'time' && taskId && (
-            <TimeTrackingPanel
-              taskId={taskId}
-              taskTitle={tasks.find(t => t.id === taskId)?.title || 'Task'}
-              userId={currentUserId}
-              onUpdate={onUpdate}
-            />
-          )}
-
-          {/* Parallel Tasks Tab */}
-          {activeTab === 'parallel' && stageId && (
-            <ParallelTasksManager
-              stageId={stageId}
-              tasks={tasks}
-              onUpdate={onUpdate}
-            />
-          )}
-
-          {/* Reassignment Tab */}
-          {activeTab === 'reassign' && (
-            <TaskReassignmentPanel
-              caseId={caseId}
-              currentUserId={currentUserId}
-              users={users}
-              tasks={tasks}
-              onUpdate={onUpdate}
-            />
-          )}
-
-          {/* Notifications Tab */}
-          {activeTab === 'notifications' && (
-            <NotificationCenter userId={currentUserId} />
-          )}
-
-          {/* Audit Trail Tab */}
-          {activeTab === 'audit' && (
-            <AuditTrailViewer caseId={caseId} limit={100} />
-          )}
-
-          {/* Analytics Tab */}
-          {activeTab === 'analytics' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="font-bold text-slate-900 flex items-center">
-                  <BarChart3 className="h-5 w-5 mr-2 text-slate-500" /> Workflow Analytics
-                </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  icon={RefreshCw}
-                  onClick={refreshAnalytics}
-                  disabled={isRefreshing}
-                >
-                  Refresh
-                </Button>
-              </div>
-              <WorkflowMetricGrid metrics={metrics} velocity={velocity} />
-              <EnterpriseCapabilitiesSection
-                metrics={metrics}
-                isExpanded={expandedAnalyticsSection === 'capabilities'}
-                onToggle={() => toggleAnalyticsSection('capabilities')}
-              />
-              <StageProgressSection
-                metrics={metrics}
-                isExpanded={expandedAnalyticsSection === 'stages'}
-                onToggle={() => toggleAnalyticsSection('stages')}
-              />
-              <BottleneckInsights
-                bottlenecks={bottlenecks}
-                isExpanded={expandedAnalyticsSection === 'bottlenecks'}
-                onToggle={() => toggleAnalyticsSection('bottlenecks')}
-              />
-              <TaskDistributionSection metrics={metrics} />
-              <SLABreachAlert metrics={metrics} onViewDetails={() => checkSLABreaches(caseId)} />
-            </div>
+            </HydrationBoundary>
           )}
         </div>
       </div>

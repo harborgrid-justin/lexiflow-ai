@@ -1,10 +1,31 @@
+/**
+ * ENZYME MIGRATION
+ *
+ * Migrated to Enzyme framework with progressive hydration and analytics tracking.
+ *
+ * Enzyme Features:
+ * - useTrackEvent: Tracks billing view and export button clicks
+ * - useLatestCallback: Stable callback reference for export handler
+ * - LazyHydration: Lazy hydrates time entries table on visible (priority="normal")
+ *
+ * Analytics Events:
+ * - case_billing_viewed: Fired when billing tab is viewed (tracks billingModel, entryCount)
+ * - case_billing_export_clicked: Fired when export button is clicked
+ *
+ * Progressive Hydration:
+ * - Stats cards: Immediate (critical billing info)
+ * - Time entries table: Lazy on visible (normal priority)
+ *
+ * @see /client/enzyme/MIGRATION_PLAN.md
+ */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TimeEntry, BillingModel } from '../../types';
 import { Download, Clock, DollarSign } from 'lucide-react';
 import { toNumber } from '../../utils/type-transformers';
 import { Badge } from '../common';
 import { EmptyState } from '../common/EmptyState';
+import { useTrackEvent, useLatestCallback, LazyHydration } from '../../enzyme';
 
 interface CaseBillingProps {
     billingModel: BillingModel;
@@ -13,10 +34,26 @@ interface CaseBillingProps {
 }
 
 export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, entries }) => {
+    const trackEvent = useTrackEvent();
+
     // Calculate totals dynamically based on props
     const unbilledTotal = (entries || [])
         .filter(e => e.status === 'Unbilled')
         .reduce((sum, e) => sum + toNumber(e.total), 0);
+
+    // Track billing view when component mounts or data changes
+    useEffect(() => {
+        trackEvent('case_billing_viewed', {
+            billingModel,
+            entryCount: entries.length
+        });
+    }, [trackEvent, billingModel, entries.length]);
+
+    // Track export button clicks
+    const handleExportClick = useLatestCallback(() => {
+        trackEvent('case_billing_export_clicked');
+        // TODO: Implement export logic
+    });
 
     return (
         <div className="h-full flex flex-col space-y-6 animate-fade-in pb-2">
@@ -38,11 +75,17 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-0">
                 <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50 shrink-0">
                     <h3 className="font-bold text-slate-900">Time Entries</h3>
-                    <button className="text-sm text-blue-600 hover:text-blue-800 flex items-center"><Download className="h-4 w-4 mr-1"/> Export</button>
+                    <button
+                        onClick={handleExportClick}
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                    >
+                        <Download className="h-4 w-4 mr-1"/> Export
+                    </button>
                 </div>
-                
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-y-auto flex-1">
+
+                <LazyHydration priority="normal" trigger="visible">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-y-auto flex-1">
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-50">
                             <tr>
@@ -81,30 +124,31 @@ export const CaseBilling: React.FC<CaseBillingProps> = ({ billingModel, value, e
                     </table>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden overflow-y-auto flex-1">
-                    {(entries || []).length > 0 ? (entries || []).map(e => (
-                        <div key={e.id} className="p-4 border-b border-slate-100 last:border-0">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs text-slate-500 font-mono">{e.date}</span>
-                                <Badge variant={e.status === 'Billed' ? 'success' : 'warning'} size="sm">
-                                    {e.status}
-                                </Badge>
+                    {/* Mobile Cards */}
+                    <div className="md:hidden overflow-y-auto flex-1">
+                        {(entries || []).length > 0 ? (entries || []).map(e => (
+                            <div key={e.id} className="p-4 border-b border-slate-100 last:border-0">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-xs text-slate-500 font-mono">{e.date}</span>
+                                    <Badge variant={e.status === 'Billed' ? 'success' : 'warning'} size="sm">
+                                        {e.status}
+                                    </Badge>
+                                </div>
+                                <p className="text-sm text-slate-900 font-medium mb-2">{e.description}</p>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="flex items-center text-slate-600"><Clock className="h-3 w-3 mr-1"/> {(toNumber(e.duration)/60).toFixed(1)} hrs</span>
+                                    <span className="flex items-center font-bold text-slate-900"><DollarSign className="h-3 w-3 mr-1 text-slate-400"/> {toNumber(e.total).toFixed(2)}</span>
+                                </div>
                             </div>
-                            <p className="text-sm text-slate-900 font-medium mb-2">{e.description}</p>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="flex items-center text-slate-600"><Clock className="h-3 w-3 mr-1"/> {(toNumber(e.duration)/60).toFixed(1)} hrs</span>
-                                <span className="flex items-center font-bold text-slate-900"><DollarSign className="h-3 w-3 mr-1 text-slate-400"/> {toNumber(e.total).toFixed(2)}</span>
-                            </div>
-                        </div>
-                    )) : (
-                        <EmptyState
-                            title="No time entries recorded yet"
-                            description="Track billable hours and expenses for this case."
-                            variant="card"
-                        />
-                    )}
-                </div>
+                        )) : (
+                            <EmptyState
+                                title="No time entries recorded yet"
+                                description="Track billable hours and expenses for this case."
+                                variant="card"
+                            />
+                        )}
+                    </div>
+                </LazyHydration>
             </div>
         </div>
     );

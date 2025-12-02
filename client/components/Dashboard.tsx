@@ -1,10 +1,25 @@
+/**
+ * Executive Dashboard Component
+ *
+ * Displays high-level firm overview with stats, SLA warnings, case distribution charts,
+ * and recent alerts. Entry point for senior partners to monitor firm performance.
+ *
+ * ENZYME MIGRATION:
+ * - ✅ usePageView('dashboard') - Page tracking
+ * - ✅ useTrackEvent() - Dashboard view and case click analytics
+ * - ✅ useLatestCallback - Stable callback for case selection
+ * - ✅ LazyHydration - Chart component (BarChart) lazy hydrated on visible
+ * - ✅ HydrationBoundary - Alerts section with normal priority, visible trigger
+ *
+ * @component
+ */
 
 import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Clock, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
 import { PageHeader, StatCard, Card, Button, StatusCard } from './common';
 import { useDashboard } from '../hooks/useDashboard';
-import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
+import { useTrackEvent, useLatestCallback, usePageView, HydrationBoundary, LazyHydration } from '../enzyme';
 
 interface DashboardProps {
   onSelectCase: (caseId: string) => void;
@@ -13,8 +28,9 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
   const CHART_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981', '#f59e0b'];
   const { stats, chartData, alerts, slaBreaches, loading } = useDashboard();
-  
-  // ✅ ENZYME HOOK: Track analytics events
+
+  // ✅ ENZYME HOOKS: Page tracking and analytics
+  usePageView('dashboard');
   const trackEvent = useTrackEvent();
   
   useEffect(() => {
@@ -78,45 +94,49 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectCase }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Case Distribution by Phase">
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip 
-                  cursor={{fill: '#f1f5f9'}}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <LazyHydration priority="normal" trigger="visible">
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip
+                    cursor={{fill: '#f1f5f9'}}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </LazyHydration>
         </Card>
 
         <Card title="Recent Alerts">
-          <div className="space-y-4">
-            {alerts.map((alert) => (
-              <div 
-                key={alert.id} 
-                className={`flex items-start p-3 rounded-md transition-colors border-l-4 border-l-blue-500 bg-slate-50/50 ${alert.caseId ? 'cursor-pointer hover:bg-blue-50' : ''}`}
-                onClick={() => alert.caseId && handleCaseSelect(alert.caseId)}
-              >
-                <div className="flex-1">
-                  <p className={`text-sm font-medium ${alert.caseId ? 'text-blue-700' : 'text-slate-900'}`}>{alert.message}</p>
-                  <p className="text-xs text-slate-500 mt-1">{alert.detail}</p>
+          <HydrationBoundary id="dashboard-alerts" priority="normal" trigger="visible">
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`flex items-start p-3 rounded-md transition-colors border-l-4 border-l-blue-500 bg-slate-50/50 ${alert.caseId ? 'cursor-pointer hover:bg-blue-50' : ''}`}
+                  onClick={() => alert.caseId && handleCaseSelect(alert.caseId)}
+                >
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${alert.caseId ? 'text-blue-700' : 'text-slate-900'}`}>{alert.message}</p>
+                    <p className="text-xs text-slate-500 mt-1">{alert.detail}</p>
+                  </div>
+                  <span className="text-xs font-medium text-slate-400">{alert.time}</span>
                 </div>
-                <span className="text-xs font-medium text-slate-400">{alert.time}</span>
-              </div>
-            ))}
-          </div>
-          <Button variant="ghost" className="w-full mt-4 text-blue-600 hover:text-blue-700">
-            View All Notifications
-          </Button>
+              ))}
+            </div>
+            <Button variant="ghost" className="w-full mt-4 text-blue-600 hover:text-blue-700">
+              View All Notifications
+            </Button>
+          </HydrationBoundary>
         </Card>
       </div>
       

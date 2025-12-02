@@ -1,6 +1,19 @@
+/**
+ * NotificationCenter - Workflow notification center with real-time updates
+ *
+ * ENZYME MIGRATION:
+ * - useTrackEvent: Tracks notification interactions (mark read, filter toggle)
+ * - useLatestCallback: Stable callbacks for handleMarkRead and setShowAll toggle
+ * - useIsMounted: Safe async state updates in loadNotifications
+ *
+ * Events tracked:
+ * - notification_mark_read: When notification is marked as read
+ * - notification_toggle_filter: When show all/unread toggle is clicked
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, CheckCircle, AlertTriangle, Clock, X } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
+import { useTrackEvent, useLatestCallback, useIsMounted } from '../../enzyme';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import type { NotificationEvent } from '../../types/workflow-engine';
@@ -15,15 +28,17 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   compact = false
 }) => {
   const { getNotifications, markNotificationRead, loading: _loading } = useWorkflowEngine();
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [showAll, setShowAll] = useState(false);
 
   const loadNotifications = useCallback(async () => {
     const notifs = await getNotifications(userId, !showAll);
-    if (notifs) {
+    if (notifs && isMounted()) {
       setNotifications(notifs);
     }
-  }, [getNotifications, userId, showAll]);
+  }, [getNotifications, userId, showAll, isMounted]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -32,10 +47,17 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
-  const handleMarkRead = async (notificationId: string) => {
+  const handleMarkRead = useLatestCallback(async (notificationId: string) => {
     await markNotificationRead(notificationId);
+    trackEvent('notification_mark_read', { notificationId });
     await loadNotifications();
-  };
+  });
+
+  const handleToggleFilter = useLatestCallback(() => {
+    const newShowAll = !showAll;
+    setShowAll(newShowAll);
+    trackEvent('notification_toggle_filter', { showAll: newShowAll });
+  });
 
   const getNotificationIcon = (type: NotificationEvent['type']) => {
     switch (type) {
@@ -87,7 +109,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => setShowAll(!showAll)}
+            onClick={handleToggleFilter}
           >
             {showAll ? 'Unread Only' : 'Show All'}
           </Button>

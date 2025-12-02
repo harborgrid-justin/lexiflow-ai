@@ -1,3 +1,20 @@
+/**
+ * ENZYME MIGRATION - CaseMotions Component
+ *
+ * Enzyme Features Implemented:
+ * - ✅ useTrackEvent() - Analytics tracking for motion actions
+ * - ✅ useLatestCallback() - Stable callbacks for all handlers
+ * - ✅ useIsMounted() - Safe state updates after async fetch
+ *
+ * Event Tracking:
+ * - case_motion_created - When motion is saved
+ * - case_motion_strategy_generated - When AI generates strategy
+ * - case_motion_calendar_synced - When calendar sync is clicked
+ * - case_motion_workflow_added - When motion is added to workflow
+ * - case_motion_detail_viewed - When motion detail is opened
+ *
+ * Migration completed by Agent 18 on December 2, 2025
+ */
 
 import React, { useState, useEffect } from 'react';
 import { Motion, MotionStatus, MotionType, User, DocketEntry } from '../../types';
@@ -9,6 +26,7 @@ import { Plus, Gavel, Calendar, Wand2, ArrowRight, RefreshCw, GitGraph, Clock, E
 import { Modal } from '../common/Modal';
 import { Input } from '../common/Inputs';
 import { MotionDetail } from './MotionDetail';
+import { useTrackEvent, useLatestCallback, useIsMounted } from '../../enzyme';
 
 interface CaseMotionsProps {
   caseId: string;
@@ -17,6 +35,9 @@ interface CaseMotionsProps {
 }
 
 export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, currentUser }) => {
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
   const [motions, setMotions] = useState<Motion[]>([]);
   const [docketEntries, setDocketEntries] = useState<DocketEntry[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,14 +52,16 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
               ApiService.getCaseMotions(caseId),
               ApiService.getDocketEntries(caseId)
             ]);
-            setMotions(motionsData);
-            setDocketEntries(docketData || []);
+            if (isMounted()) {
+              setMotions(motionsData);
+              setDocketEntries(docketData || []);
+            }
         } catch (e) {
             console.error("Failed to fetch motions and docket entries", e);
         }
     };
     if (caseId) fetchData();
-  }, [caseId]);
+  }, [caseId, isMounted]);
 
   // Auto-calculate deadlines when hearing date changes
   useEffect(() => {
@@ -65,7 +88,7 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
    
   }, [newMotion.hearingDate]);
 
-  const handleSave = async () => {
+  const handleSave = useLatestCallback(async () => {
     if (!newMotion.title) return;
     try {
       const motionData: Partial<Motion> = {
@@ -84,28 +107,57 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
       setMotions([...motions, createdMotion]);
       setIsModalOpen(false);
       setNewMotion({ type: 'Dismiss', status: 'Draft' });
+
+      // Track motion creation
+      trackEvent('case_motion_created', {
+        motionType: newMotion.type,
+        hasHearingDate: !!newMotion.hearingDate,
+        caseId
+      });
     } catch (error) {
       console.error("Failed to create motion", error);
     }
-  };
+  });
 
-  const handleGenerateStrategy = async () => {
+  const handleGenerateStrategy = useLatestCallback(async () => {
     if (!newMotion.title) return;
     setIsGenerating(true);
     // Simulate AI generation for strategy
     await new Promise(resolve => setTimeout(resolve, 1500));
     alert(`AI Strategy Generated: Arguments for ${newMotion.title} based on ${caseTitle} have been drafted to your documents.`);
     setIsGenerating(false);
-  };
 
-  const handleSyncCalendar = () => {
+    // Track AI strategy generation
+    trackEvent('case_motion_strategy_generated', {
+      motionTitle: newMotion.title,
+      motionType: newMotion.type,
+      caseTitle
+    });
+  });
+
+  const handleSyncCalendar = useLatestCallback(() => {
     const deadlinesCount = motions.filter(m => m.hearingDate).length * 3; // Hearing + Opp + Reply
     alert(`Synced ${deadlinesCount} deadlines to Master Calendar and Outlook.`);
-  };
 
-  const handleAddToWorkflow = (motion: Motion) => {
+    // Track calendar sync
+    trackEvent('case_motion_calendar_synced', {
+      deadlinesCount,
+      motionsWithHearing: motions.filter(m => m.hearingDate).length,
+      caseId
+    });
+  });
+
+  const handleAddToWorkflow = useLatestCallback((motion: Motion) => {
       alert(`Created new Workflow Stage: "${motion.title} Prep" with tasks for Research, Drafting, and Filing.`);
-  };
+
+      // Track workflow addition
+      trackEvent('case_motion_workflow_added', {
+        motionId: motion.id,
+        motionTitle: motion.title,
+        motionType: motion.type,
+        caseId
+      });
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -116,6 +168,22 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
       default: return 'neutral';
     }
   };
+
+  const handleMotionDetailView = useLatestCallback((motionId: string) => {
+    setSelectedMotionId(motionId);
+
+    const motion = motions.find(m => m.id === motionId);
+    if (motion) {
+      // Track motion detail view
+      trackEvent('case_motion_detail_viewed', {
+        motionId,
+        motionTitle: motion.title,
+        motionType: motion.type,
+        motionStatus: motion.status,
+        caseId
+      });
+    }
+  });
 
   if (selectedMotionId) {
     const selectedMotion = motions.find(m => m.id === selectedMotionId);
@@ -198,7 +266,7 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button size="sm" variant="ghost" className="text-indigo-600" onClick={() => handleAddToWorkflow(motion)} icon={GitGraph}>To Workflow</Button>
-                    <Button size="sm" variant="ghost" className="text-blue-600" onClick={() => setSelectedMotionId(motion.id)}>Details</Button>
+                    <Button size="sm" variant="ghost" className="text-blue-600" onClick={() => handleMotionDetailView(motion.id)}>Details</Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -246,7 +314,7 @@ export const CaseMotions: React.FC<CaseMotionsProps> = ({ caseId, caseTitle, cur
             
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <Button size="sm" variant="outline" className="flex-1" icon={GitGraph} onClick={() => handleAddToWorkflow(motion)}>To Workflow</Button>
-              <Button size="sm" variant="outline" className="flex-1" onClick={() => setSelectedMotionId(motion.id)}>Details</Button>
+              <Button size="sm" variant="outline" className="flex-1" onClick={() => handleMotionDetailView(motion.id)}>Details</Button>
             </div>
           </div>
         ))}

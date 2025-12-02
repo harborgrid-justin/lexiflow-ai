@@ -1,4 +1,39 @@
 
+/**
+ * DocumentManager Component
+ *
+ * ENZYME MIGRATION - COMPLETED
+ * =========================
+ * This component has been fully migrated to use the Enzyme framework for:
+ * - Progressive hydration with priority-based loading
+ * - Analytics tracking with usePageView and useTrackEvent
+ * - Stable callbacks with useLatestCallback
+ * - Safe async operations with useIsMounted
+ *
+ * Enzyme Features Applied:
+ * - usePageView('document_manager') - Page view tracking
+ * - useTrackEvent() - Event analytics for all user interactions
+ * - useLatestCallback() - Stable callbacks preventing stale closures
+ * - useIsMounted() - Safe state updates in async operations
+ * - HydrationBoundary - High-priority hydration for filters (immediate)
+ * - LazyHydration - Normal-priority lazy hydration for document table (visible)
+ *
+ * Analytics Events:
+ * - document_manager_viewed: Tracks page views with stats
+ * - document_share_clicked: Share button interactions
+ * - document_upload_clicked: Upload button interactions
+ * - document_compare_activated: Compare mode activation
+ * - document_bulk_summarize: Bulk AI summarization
+ * - document_sync_clicked: Document sync operations
+ *
+ * Performance Optimizations:
+ * - DocumentFilters: priority="high", trigger="immediate" (critical for UX)
+ * - DocumentTable: priority="normal", trigger="visible" (lazy load when visible)
+ *
+ * @see /client/enzyme/MIGRATION_SCRATCHPAD.md
+ * @see /client/enzyme/LESSONS_LEARNED.md
+ */
+
 import React from 'react';
 import { Plus, Share2, Split, Wand2, RefreshCw, X, Activity, Zap } from 'lucide-react';
 import { UserRole, LegalDocument } from '../types';
@@ -9,7 +44,8 @@ import { DocumentTable } from './document/DocumentTable';
 import { DocumentFilters } from './document/DocumentFilters';
 import { ensureTagsArray } from '../utils/type-transformers';
 import { useTagManagement } from '../hooks/useTagManagement';
-import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
+import { useTrackEvent, useLatestCallback, usePageView, useIsMounted } from '@missionfabric-js/enzyme/hooks';
+import { HydrationBoundary, LazyHydration } from '../enzyme';
 
 interface DocumentManagerProps {
   currentUserRole?: UserRole;
@@ -46,15 +82,21 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
   } = useTagManagement();
 
   const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
 
-  // Track page view
+  // Track page view with Enzyme
+  usePageView('document_manager');
+
+  // Track filter changes with safe mounted check
   React.useEffect(() => {
-    trackEvent('document_manager_viewed', {
-      totalDocs: stats.total,
-      activeFilter: activeModuleFilter,
-      selectedCount: selectedDocs.length
-    });
-  }, [activeModuleFilter]);
+    if (isMounted()) {
+      trackEvent('document_manager_viewed', {
+        totalDocs: stats.total,
+        activeFilter: activeModuleFilter,
+        selectedCount: selectedDocs.length
+      });
+    }
+  }, [activeModuleFilter, stats.total, selectedDocs.length, isMounted, trackEvent]);
 
   // Stable callback for share with analytics
   const handleShare = useLatestCallback(() => {
@@ -164,7 +206,9 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
-          <DocumentFilters activeModuleFilter={activeModuleFilter} setActiveModuleFilter={setActiveModuleFilter} />
+          <HydrationBoundary id="document-filters" priority="high" trigger="immediate">
+            <DocumentFilters activeModuleFilter={activeModuleFilter} setActiveModuleFilter={setActiveModuleFilter} />
+          </HydrationBoundary>
 
           <Card className="flex-1 flex flex-col overflow-hidden p-0">
              {/* Toolbar */}
@@ -188,14 +232,16 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
                 </div>
              </div>
 
-             <DocumentTable 
-                documents={filtered}
-                selectedDocs={selectedDocs}
-                toggleSelection={toggleSelection}
-                setSelectedDocs={setSelectedDocs}
-                setSelectedDocForHistory={setSelectedDocForHistory}
-                setTaggingDoc={setTaggingDoc}
-             />
+             <LazyHydration priority="normal" trigger="visible">
+               <DocumentTable
+                  documents={filtered}
+                  selectedDocs={selectedDocs}
+                  toggleSelection={toggleSelection}
+                  setSelectedDocs={setSelectedDocs}
+                  setSelectedDocForHistory={setSelectedDocForHistory}
+                  setTaggingDoc={setTaggingDoc}
+               />
+             </LazyHydration>
           </Card>
       </div>
 

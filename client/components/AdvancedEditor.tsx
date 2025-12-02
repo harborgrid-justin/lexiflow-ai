@@ -1,8 +1,38 @@
+/**
+ * AdvancedEditor Component
+ *
+ * ENZYME MIGRATION - Agent 22 (Wave 3)
+ * Migration Date: December 2, 2025
+ *
+ * Enzyme Features Implemented:
+ * 1. Analytics Tracking (useTrackEvent):
+ *    - editor_selection_made: When user selects text for AI editing
+ *    - editor_ai_edit_started: When AI edit operation begins
+ *    - editor_ai_edit_completed: When AI edit operation completes
+ *    - editor_saved: When document content is saved
+ *
+ * 2. Stable Callbacks (useLatestCallback):
+ *    - handleAiEdit: AI-powered text refinement with tracking
+ *    - handleSelection: Text selection handler with tracking
+ *    - handleSave: Document save handler with tracking
+ *
+ * 3. Safe Async Operations (useIsMounted):
+ *    - Prevents state updates after component unmount in async AI edit
+ *
+ * Performance Characteristics:
+ * - ContentEditable rich text editor with AI-powered refinement
+ * - Inline toolbar for text selection with AI prompt input
+ * - Word count statistics tracking
+ *
+ * @see /client/enzyme/MIGRATION_SCRATCHPAD.md
+ * @see /client/enzyme/LESSONS_LEARNED.md
+ */
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Wand2, RotateCcw } from 'lucide-react';
 import { OpenAIService } from '../services/openAIService';
 import { EditorToolbar } from './common/EditorToolbar';
+import { useTrackEvent, useLatestCallback, useIsMounted } from '../enzyme';
 
 interface AdvancedEditorProps {
   initialContent: string;
@@ -12,6 +42,11 @@ interface AdvancedEditorProps {
 }
 
 export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, onSave, placeholder, _onInsertRequest }) => {
+  // Enzyme hooks
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
+  // Component state
   const editorRef = useRef<HTMLDivElement>(null);
   const [showAiToolbar, setShowAiToolbar] = useState(false);
   const [selectionRange, setSelectionRange] = useState<Range | null>(null);
@@ -40,7 +75,7 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, 
     updateStats();
   };
 
-  const handleSelection = () => {
+  const handleSelection = useLatestCallback(() => {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
       const range = selection.getRangeAt(0);
@@ -48,40 +83,91 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, 
       if (container && container.contains(range.commonAncestorContainer)) {
         setSelectionRange(range);
         setShowAiToolbar(true);
+        // Track text selection for AI editing
+        trackEvent('editor_selection_made', {
+          selectedTextLength: range.toString().length,
+          hasContent: range.toString().trim().length > 0
+        });
       }
     } else {
       setShowAiToolbar(false);
     }
     updateStats();
-  };
+  });
 
-  const handleAiEdit = async () => {
+  const handleAiEdit = useLatestCallback(async () => {
     if (!selectionRange || !aiPrompt) return;
-    setIsAiLoading(true);
-    
+
     const selectedText = selectionRange.toString();
-    const refinedText = await OpenAIService.generateDraft(`Rewrite this legal text: "${selectedText}". Instruction: ${aiPrompt}`, 'Text Fragment');
-    
-    selectionRange.deleteContents();
-    const newNode = document.createTextNode(refinedText);
-    selectionRange.insertNode(newNode);
-    
-    window.getSelection()?.removeAllRanges();
-    setIsAiLoading(false);
-    setShowAiToolbar(false);
-    setAiPrompt('');
-    updateStats();
-  };
+    const promptText = aiPrompt;
+
+    // Track AI edit started
+    trackEvent('editor_ai_edit_started', {
+      selectedTextLength: selectedText.length,
+      promptLength: promptText.length,
+      prompt: promptText
+    });
+
+    setIsAiLoading(true);
+
+    try {
+      const refinedText = await OpenAIService.generateDraft(
+        `Rewrite this legal text: "${selectedText}". Instruction: ${promptText}`,
+        'Text Fragment'
+      );
+
+      // Only update state if component is still mounted
+      if (!isMounted()) return;
+
+      selectionRange.deleteContents();
+      const newNode = document.createTextNode(refinedText);
+      selectionRange.insertNode(newNode);
+
+      window.getSelection()?.removeAllRanges();
+      setIsAiLoading(false);
+      setShowAiToolbar(false);
+      setAiPrompt('');
+      updateStats();
+
+      // Track AI edit completed
+      trackEvent('editor_ai_edit_completed', {
+        originalLength: selectedText.length,
+        refinedLength: refinedText.length,
+        prompt: promptText
+      });
+    } catch (error) {
+      // Only update state if component is still mounted
+      if (!isMounted()) return;
+
+      setIsAiLoading(false);
+      console.error('AI edit failed:', error);
+    }
+  });
+
+  // Handler for saving with tracking
+  const handleSave = useLatestCallback(() => {
+    const content = editorRef.current?.innerHTML || '';
+
+    // Track save event
+    trackEvent('editor_saved', {
+      contentLength: content.length,
+      wordCount: wordCount
+    });
+
+    if (onSave) {
+      onSave(content);
+    }
+  });
 
   useEffect(() => {
   }, [initialContent]);
 
   return (
     <div className="flex flex-col h-full border border-slate-200 rounded-lg bg-white shadow-sm overflow-hidden">
-      <EditorToolbar 
+      <EditorToolbar
         wordCount={wordCount}
         onCmd={execCmd}
-        onSave={onSave ? () => onSave(editorRef.current?.innerHTML || '') : undefined}
+        onSave={onSave ? handleSave : undefined}
       />
 
       <div className="relative flex-1 bg-white overflow-hidden group">

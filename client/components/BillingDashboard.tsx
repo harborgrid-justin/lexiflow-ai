@@ -1,10 +1,28 @@
+/**
+ * BillingDashboard Component
+ *
+ * ENZYME MIGRATION (Wave 2 - Agent 14):
+ * - ✅ Fixed undefined `loading` variable bug (line 160) - removed conditional
+ * - ✅ Added usePageView('billing_dashboard') for page tracking
+ * - ✅ Added HydrationBoundary for WIP chart (high priority, visible trigger)
+ * - ✅ Added HydrationBoundary for Realization chart (high priority, visible trigger)
+ * - ✅ Verified trackEvent API: trackEvent('name', { props }) - CORRECT format already used
+ * - ✅ useLatestCallback already used for handlers
+ *
+ * Features:
+ * - Financial performance dashboard with WIP vs Billed tracking
+ * - Realization breakdown visualization
+ * - Client portfolio management (My Portfolio + Firm Wide)
+ * - Analytics tracking for user interactions
+ * - Progressive hydration for chart components
+ */
 
 import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, TrendingUp, AlertCircle, Download, Users, Briefcase, Activity, Zap } from 'lucide-react';
 import { PageHeader, Button, Card, Avatar, Badge, StatCard } from './common';
 import { useBillingDashboard } from '../hooks/useBillingDashboard';
-import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
+import { useTrackEvent, useLatestCallback, usePageView, HydrationBoundary } from '../enzyme';
 
 interface BillingDashboardProps {
   navigateTo?: (view: string) => void;
@@ -12,6 +30,9 @@ interface BillingDashboardProps {
 
 export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }) => {
   const { wipData, realizationData, clients, totalWip } = useBillingDashboard();
+
+  // ✅ ENZYME HOOK: Page view tracking
+  usePageView('billing_dashboard');
   
   // ✅ ENZYME HOOKS: Analytics tracking
   const trackEvent = useTrackEvent();
@@ -70,36 +91,43 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="WIP vs Billed (Top Clients)">
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={wipData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12}/>
-                <YAxis axisLine={false} tickLine={false} fontSize={12}/>
-                <Tooltip/>
-                <Bar dataKey="billed" stackId="a" fill="#cbd5e1" name="Billed"/>
-                <Bar dataKey="wip" stackId="a" fill="#3b82f6" name="WIP"/>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-        <Card title="Realization Breakdown">
-            <div className="h-64 flex justify-center">
-             <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                    <Pie data={realizationData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                        {realizationData.map((e, index) => <Cell key={`cell-${index}`} fill={e.color} />)}
-                    </Pie>
-                    <Tooltip />
-                </PieChart>
-             </ResponsiveContainer>
+        {/* ✅ ENZYME: Progressive hydration for WIP chart */}
+        <HydrationBoundary id="billing-wip-chart" priority="high" trigger="visible">
+          <Card title="WIP vs Billed (Top Clients)">
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={wipData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false}/>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12}/>
+                  <YAxis axisLine={false} tickLine={false} fontSize={12}/>
+                  <Tooltip/>
+                  <Bar dataKey="billed" stackId="a" fill="#cbd5e1" name="Billed"/>
+                  <Bar dataKey="wip" stackId="a" fill="#3b82f6" name="WIP"/>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-            <div className="flex justify-center gap-4 text-sm mt-4">
-                <div className="flex items-center"><div className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div> Collected</div>
-                <div className="flex items-center"><div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div> Write-off</div>
-            </div>
-        </Card>
+          </Card>
+        </HydrationBoundary>
+
+        {/* ✅ ENZYME: Progressive hydration for Realization chart */}
+        <HydrationBoundary id="billing-realization-chart" priority="high" trigger="visible">
+          <Card title="Realization Breakdown">
+              <div className="h-64 flex justify-center">
+               <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                      <Pie data={realizationData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                          {realizationData.map((e, index) => <Cell key={`cell-${index}`} fill={e.color} />)}
+                      </Pie>
+                      <Tooltip />
+                  </PieChart>
+               </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-4 text-sm mt-4">
+                  <div className="flex items-center"><div className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div> Collected</div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div> Write-off</div>
+              </div>
+          </Card>
+        </HydrationBoundary>
       </div>
 
       <Card noPadding>
@@ -157,14 +185,12 @@ export const BillingDashboard: React.FC<BillingDashboardProps> = ({ navigateTo }
       </Card>
 
       {/* Enzyme Framework Features Indicator */}
-      {!loading && (
-        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-xs text-slate-600">
-          <Activity className="h-4 w-4 text-blue-600" />
-          <span className="font-semibold">Powered by Enzyme:</span>
-          <Zap className="h-3 w-3 text-amber-500" />
-          <span>TanStack Query caching • useLatestCallback • useTrackEvent analytics</span>
-        </div>
-      )}
+      <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-xs text-slate-600">
+        <Activity className="h-4 w-4 text-blue-600" />
+        <span className="font-semibold">Powered by Enzyme:</span>
+        <Zap className="h-3 w-3 text-amber-500" />
+        <span>TanStack Query caching • Progressive Hydration • useLatestCallback • useTrackEvent analytics</span>
+      </div>
     </div>
   );
 };

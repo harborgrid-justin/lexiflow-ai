@@ -1,9 +1,26 @@
+/**
+ * ENZYME MIGRATION - SLAMonitor.tsx
+ *
+ * Enzyme Features Implemented:
+ * - useTrackEvent: Analytics tracking for SLA status loads and breach reports
+ * - useLatestCallback: Stable callbacks for async SLA data fetching
+ * - useIsMounted: Safe state updates after async fetch operations
+ *
+ * Analytics Events:
+ * - sla_status_loaded: Tracks when SLA status is fetched (includes status type)
+ * - sla_breach_report_loaded: Tracks breach report loads (includes breach/warning counts)
+ *
+ * Migration Date: December 2, 2025
+ * Agent: Agent 24
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 import { useWorkflowEngine } from '../../hooks/useWorkflowEngine';
 import { Card } from '../common/Card';
 import { COLORS } from '../../constants/design-tokens';
 import type { TaskSLAStatus, SLABreachReport } from '../../types/workflow-engine';
+import { useTrackEvent, useLatestCallback, useIsMounted } from '../../enzyme';
 
 interface SLAMonitorProps {
   taskId?: string;
@@ -19,21 +36,32 @@ export const SLAMonitor: React.FC<SLAMonitorProps> = ({
   const { getTaskSLAStatus, checkSLABreaches } = useWorkflowEngine();
   const [slaStatus, setSlaStatus] = useState<TaskSLAStatus | null>(null);
   const [breachReport, setBreachReport] = useState<SLABreachReport | null>(null);
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
 
-  const loadTaskSLA = async () => {
+  const loadTaskSLA = useLatestCallback(async () => {
     if (!taskId) return;
     const status = await getTaskSLAStatus(taskId);
-    if (status) {
+    if (isMounted() && status) {
       setSlaStatus(status);
+      // Track SLA status load with status type
+      trackEvent('sla_status_loaded', {
+        status: status.status // breached, warning, or on_track
+      });
     }
-  };
+  });
 
-  const loadBreachReport = async () => {
+  const loadBreachReport = useLatestCallback(async () => {
     const report = await checkSLABreaches(caseId);
-    if (report) {
+    if (isMounted() && report) {
       setBreachReport(report);
+      // Track breach report load with counts
+      trackEvent('sla_breach_report_loaded', {
+        breachCount: report.breaches.length,
+        warningCount: report.warnings.length
+      });
     }
-  };
+  });
 
   useEffect(() => {
     if (taskId) {

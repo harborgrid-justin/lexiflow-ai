@@ -1,8 +1,25 @@
+/**
+ * ENZYME MIGRATION - Case Workflow Component
+ *
+ * Enzyme features implemented:
+ * 1. useTrackEvent() - Analytics tracking for workflow interactions
+ * 2. useLatestCallback() - Stable callbacks for handlers
+ *
+ * Event tracking:
+ * - case_workflow_tab_changed: Tracks tab changes (timeline/automation/engine)
+ * - case_workflow_stage_expanded: Tracks stage expand/collapse with stage info
+ * - case_workflow_task_toggled: Tracks task completion status changes
+ * - case_workflow_ai_assist_clicked: Tracks AI Assist button usage
+ * - case_workflow_templates_clicked: Tracks Templates button usage
+ *
+ * Migration Date: December 2, 2025
+ * Agent: Agent 23 (Wave 3)
+ */
 
 import React, { useState } from 'react';
 import { WorkflowStage } from '../../types';
-import { 
-  Cpu, Sparkles, Plus, CheckCircle, Clock, BookOpen, Zap, 
+import {
+  Cpu, Sparkles, Plus, CheckCircle, Clock, BookOpen, Zap,
   ArrowRight, FileText, DollarSign, Scale, Gavel, Layout, ChevronDown, ChevronUp, Box,
   Settings
 } from 'lucide-react';
@@ -10,6 +27,7 @@ import { Button, Badge } from '../common';
 import { UserAvatar } from '../common/UserAvatar';
 import { EnhancedWorkflowPanel } from '../workflow/EnhancedWorkflowPanel';
 import { BUTTON_VARIANTS } from '../../constants/design-tokens';
+import { useTrackEvent, useLatestCallback } from '../../enzyme';
 
 interface CaseWorkflowProps {
   stages: WorkflowStage[];
@@ -22,28 +40,82 @@ interface CaseWorkflowProps {
   onToggleTask?: (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => void;
 }
 
-export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ 
-  stages, 
+export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
+  stages,
   caseId,
   currentUserId,
   users,
-  generatingWorkflow, 
-  onGenerateWorkflow, 
-  onNavigateToModule, 
-  onToggleTask 
+  generatingWorkflow,
+  onGenerateWorkflow,
+  onNavigateToModule,
+  onToggleTask
 }) => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'automation' | 'engine'>('timeline');
-  const [expandedStage, setExpandedStage] = useState<string | null>(stages.find(s => s.status === 'Active')?.id || null);
+  const trackEvent = useTrackEvent();
+  const [activeTabState, setActiveTabState] = useState<'timeline' | 'automation' | 'engine'>('timeline');
+  const [expandedStageState, setExpandedStageState] = useState<string | null>(stages.find(s => s.status === 'Active')?.id || null);
   const [selectedTask, _setSelectedTask] = useState<string | null>(null);
 
-  const handleToggleTask = (stageId: string, taskId: string) => {
+  const handleToggleTask = useLatestCallback((stageId: string, taskId: string) => {
     const stage = stages.find(s => s.id === stageId);
     const task = stage?.tasks.find(t => t.id === taskId);
     if (task && onToggleTask) {
         const newStatus = task.status === 'Done' ? 'Pending' : 'Done';
+        trackEvent('case_workflow_task_toggled', {
+          taskId,
+          stageId,
+          stageName: stage.title,
+          taskName: task.title,
+          previousStatus: task.status,
+          newStatus
+        });
         onToggleTask(taskId, newStatus);
     }
-  };
+  });
+
+  const setActiveTab = useLatestCallback((tab: 'timeline' | 'automation' | 'engine') => {
+    const previousTab = activeTabState;
+    trackEvent('case_workflow_tab_changed', {
+      fromTab: previousTab,
+      toTab: tab
+    });
+    setActiveTabState(tab);
+  });
+
+  const setExpandedStage = useLatestCallback((stageId: string | null) => {
+    const previousExpandedStage = expandedStageState;
+    const isExpanding = stageId !== null && stageId !== previousExpandedStage;
+    if (isExpanding) {
+      const stage = stages.find(s => s.id === stageId);
+      trackEvent('case_workflow_stage_expanded', {
+        stageId,
+        stageName: stage?.title,
+        stageStatus: stage?.status,
+        taskCount: stage?.tasks?.length || 0,
+        expanded: true
+      });
+    }
+    setExpandedStageState(stageId);
+  });
+
+  const handleTemplatesClick = useLatestCallback(() => {
+    trackEvent('case_workflow_templates_clicked', {
+      caseId,
+      currentTab: activeTabState
+    });
+    alert("Loading Playbook...");
+  });
+
+  const handleAIAssistClick = useLatestCallback(() => {
+    trackEvent('case_workflow_ai_assist_clicked', {
+      caseId,
+      currentTab: activeTabState,
+      generatingWorkflow
+    });
+    onGenerateWorkflow();
+  });
+
+  const activeTab = activeTabState;
+  const expandedStage = expandedStageState;
 
   const getModuleIcon = (module?: string) => {
       switch(module) {
@@ -98,11 +170,11 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({
           </div>
 
           <div className="flex gap-2">
-             <Button variant="outline" icon={BookOpen} onClick={() => alert("Loading Playbook...")}>Templates</Button>
-             <Button 
-                variant="primary" 
-                icon={generatingWorkflow ? Cpu : Sparkles} 
-                onClick={onGenerateWorkflow} 
+             <Button variant="outline" icon={BookOpen} onClick={handleTemplatesClick}>Templates</Button>
+             <Button
+                variant="primary"
+                icon={generatingWorkflow ? Cpu : Sparkles}
+                onClick={handleAIAssistClick}
                 disabled={generatingWorkflow}
                 className="bg-purple-600 hover:bg-purple-700 border-transparent text-white"
              >
