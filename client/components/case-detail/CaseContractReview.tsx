@@ -4,7 +4,6 @@ import { ShieldAlert, Upload, FileText, Cpu, AlertTriangle } from 'lucide-react'
 import { OpenAIService } from '../../services/openAIService';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
-import { TextArea } from '../common/Inputs';
 import { EmptyState } from '../common/EmptyState';
 
 export const CaseContractReview: React.FC = () => {

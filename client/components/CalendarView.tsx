@@ -56,7 +56,6 @@ const LoadingFallback = () => (
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ onNavigateToCase }) => {
   const [activeTab, setActiveTab] = useState<CalendarTab>('master');
-  const isMounted = useIsMounted();
 
   // ENZYME: Analytics tracking
   const trackEvent = useTrackEvent();

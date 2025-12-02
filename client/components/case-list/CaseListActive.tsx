@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Case, CaseStatus } from '../../types';
-import { Filter, Briefcase, RefreshCcw, ChevronRight, User, DollarSign } from 'lucide-react';
+import { Filter, Briefcase, ChevronRight, User, DollarSign } from 'lucide-react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';

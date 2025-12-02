@@ -24,7 +24,6 @@
  */
 
 import React, { useState } from 'react';
-import { Activity, Shield, Link, Database, Network } from 'lucide-react';
 import { PageHeader, Card, Button, SidebarNavigation } from './common';
 import { useAdminPanel } from '../hooks/useAdminPanel';
 import {

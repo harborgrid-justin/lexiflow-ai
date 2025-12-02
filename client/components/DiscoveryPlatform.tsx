@@ -47,8 +47,7 @@ const LoadingFallback = () => (
 export const DiscoveryPlatform: React.FC = () => {
   const [view, setView] = useState<DiscoveryView>('dashboard');
   const [contextId, setContextId] = useState<string | null>(null);
-  const { requests, updateRequest, isLoading } = useDiscoveryPlatform();
-  const isMounted = useIsMounted();
+  const { requests, updateRequest } = useDiscoveryPlatform();
 
   // ENZYME: Analytics tracking
   const trackEvent = useTrackEvent();
@@ -81,16 +80,12 @@ export const DiscoveryPlatform: React.FC = () => {
     try {
       await updateRequest(reqId, { status: 'Responded', responsePreview: text });
 
-      if (isMounted()) {
-        trackEvent('discovery_response_saved', { requestId: reqId });
-        alert(`Response saved for ${reqId}. Status updated to Responded.`);
-        setView('requests');
-      }
+      trackEvent('discovery_response_saved', { requestId: reqId });
+      alert(`Response saved for ${reqId}. Status updated to Responded.`);
+      setView('requests');
     } catch (error) {
       console.error("Failed to save response", error);
-      if (isMounted()) {
-        alert("Failed to save response.");
-      }
+      alert("Failed to save response.");
     }
   });
 

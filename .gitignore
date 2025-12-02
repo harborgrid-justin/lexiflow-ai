@@ -38,3 +38,9 @@ enzyme-server/dist/
 data/
 
 .env
+enzyme/node_modules
+enzyme/dist
+enzyme/.env
+client-enzyme/.env
+client-enzyme/node_modules
+client-enzyme/dist

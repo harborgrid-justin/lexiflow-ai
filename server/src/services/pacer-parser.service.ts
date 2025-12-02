@@ -199,11 +199,17 @@ export class PacerParserService {
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    this.openai = new OpenAI({
-      apiKey,
-      timeout: 30000,
-      maxRetries: 2,
-    });
+    
+    // Only initialize OpenAI if API key is provided
+    if (apiKey) {
+      this.openai = new OpenAI({
+        apiKey,
+        timeout: 30000,
+        maxRetries: 2,
+      });
+    } else {
+      this.logger.warn('OpenAI API key not configured. PACER parsing features will be disabled.');
+    }
   }
 
   /**
@@ -219,6 +225,10 @@ export class PacerParserService {
    * Parse raw PACER docket text using OpenAI with Structured Outputs
    */
   async parsePacerText(docketText: string): Promise<ParsedPacerData> {
+    if (!this.openai) {
+      throw new Error('OpenAI API key not configured. PACER parsing is disabled.');
+    }
+    
     // Truncate input to prevent massive token usage
     const truncatedText = this.truncateInput(docketText, MAX_DOCKET_INPUT_CHARS);
     

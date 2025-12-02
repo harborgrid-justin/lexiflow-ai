@@ -1,33 +1,33 @@
+/**
+ * LexiFlow AI - Main Application Component (Refactored)
+ * 
+ * Enterprise-grade SOA architecture with:
+ * - Lazy-loaded feature modules
+ * - Centralized routing with role-based access
+ * - Modular state management
+ * - Clean separation of concerns
+ * 
+ * ROUTING:
+ * Uses Enzyme's hash-based router (useHashRouter) for client-side navigation.
+ * Routes are defined in core/router/routes.ts with lazy loading.
+ * 
+ * @see /client/core/router for router implementation
+ * @see /client/features for feature modules
+ */
 
-import React, { useState, useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import React, { useState, useEffect, Suspense } from 'react';
+import { AppProviders } from './core/providers/AppProviders';
+import { AppRouter } from './core/router';
+import { useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
-import { CaseManagement } from './components/CaseManagement';
-import { ResearchTool } from './components/ResearchTool';
-import { DocumentManager } from './components/DocumentManager';
-import { CalendarView } from './components/CalendarView';
-import { ClauseLibrary } from './components/ClauseLibrary';
-import { BillingDashboard } from './components/BillingDashboard';
-import { ClientCRM } from './components/ClientCRM';
-import { KnowledgeBase } from './components/KnowledgeBase';
-import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { ComplianceDashboard } from './components/ComplianceDashboard';
-import { AdminPanel } from './components/AdminPanel';
-import { DiscoveryPlatform } from './components/DiscoveryPlatform';
-import { EvidenceVault } from './components/EvidenceVault';
-import { SecureMessenger } from './components/SecureMessenger';
-import { JurisdictionManager } from './components/JurisdictionManager';
-import { MasterWorkflow } from './components/MasterWorkflow';
-import { EnzymeDemo } from './components/EnzymeDemo';
-import { HydrationDemo, EditCaseDemo } from './components/enzyme';
-import { UserProfile } from './components/UserProfile';
 import { Case, User } from './types';
 import { ApiService } from './services/apiService';
+import { useHashRouter } from './enzyme';
 import { Bell, User as UserIcon, Menu, ShieldAlert } from 'lucide-react';
-import { PacerImportPage } from './pages/cases/PacerImportPage';
 
+// ============================================================================
+// Login Form Component
+// ============================================================================
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -89,6 +89,37 @@ const LoginForm: React.FC = () => {
   );
 };
 
+// ============================================================================
+// Login Page Component
+// ============================================================================
+const LoginPage: React.FC = () => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="max-w-md w-full space-y-8">
+      <div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Sign in to LexiFlow AI
+        </h2>
+      </div>
+      <LoginForm />
+    </div>
+  </div>
+);
+
+// ============================================================================
+// Loading Screen Component
+// ============================================================================
+const LoadingScreen: React.FC = () => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// User Profile Dropdown Component
+// ============================================================================
 const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
   const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -126,40 +157,88 @@ const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
   );
 };
 
+// ============================================================================
+// Impersonation Banner Component
+// ============================================================================
+const ImpersonationBanner: React.FC<{ user: User; onStop: () => void }> = ({ user, onStop }) => (
+  <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white py-2 px-4 z-50 shadow-lg">
+    <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="h-5 w-5 animate-pulse" />
+        <span className="font-semibold text-sm">
+          🎭 Developer Mode: Viewing as {user.name} ({user.role})
+        </span>
+      </div>
+      <button
+        onClick={onStop}
+        className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-xs font-medium transition-colors"
+      >
+        Exit Impersonation
+      </button>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// App Header Component
+// ============================================================================
+interface AppHeaderProps {
+  title: string;
+  user: User;
+  onToggleSidebar: () => void;
+}
+
+const AppHeader: React.FC<AppHeaderProps> = ({ title, user, onToggleSidebar }) => (
+  <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shadow-sm z-30 shrink-0">
+    <div className="flex items-center flex-1 gap-4">
+      <button 
+        onClick={onToggleSidebar} 
+        className="p-2 rounded-lg hover:bg-slate-100 transition-colors md:hidden"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+      <h1 className="text-xl font-semibold text-slate-800 capitalize">{title}</h1>
+    </div>
+    <div className="flex items-center gap-3">
+      <div className="hidden sm:flex items-center gap-2 text-sm">
+        <span className="text-slate-600">Welcome,</span>
+        <span className="font-medium">{user.name}</span>
+        <span className="text-slate-400">•</span>
+        <span className="text-slate-500">{user.role}</span>
+      </div>
+      <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
+        <Bell className="w-5 h-5" />
+        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+      <UserProfileDropdown user={user} />
+    </div>
+  </header>
+);
+
+// ============================================================================
+// Main App Content Component
+// ============================================================================
 const AppContent: React.FC = () => {
-  const { user, loading, isAuthenticated, impersonateUser: _impersonateUser, isImpersonating, stopImpersonating } = useAuth();
-  const [activeView, setActiveView] = useState(() => {
-    // Initialize from URL hash
-    const hash = window.location.hash.slice(1);
-    return hash || 'dashboard';
-  });
+  const { user, loading, isAuthenticated, isImpersonating, stopImpersonating } = useAuth();
+  const { currentRoute, navigate } = useHashRouter();
+  
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [cases, setCases] = useState<Case[]>([]);
 
-  // Sync activeView with URL hash
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1);
-      if (hash) {
-        setActiveView(hash);
-        setSelectedCase(null);
-      }
-    };
+  // Sync with old activeView for backward compatibility
+  const activeView = currentRoute;
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
+  // Fetch cases on auth
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            const casesData = await ApiService.getCases();
-            setCases(casesData || []);
-        } catch (e) {
-            console.error("Failed to fetch cases", e);
-            setCases([]);
-        }
+      try {
+        const casesData = await ApiService.getCases();
+        setCases(casesData || []);
+      } catch (e) {
+        console.error("Failed to fetch cases", e);
+        setCases([]);
+      }
     };
 
     if (isAuthenticated) {
@@ -167,32 +246,17 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated]);
 
+  // Loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
+  // Auth guard
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to LexiFlow AI
-            </h2>
-          </div>
-          <LoginForm />
-        </div>
-      </div>
-    );
+    return <LoginPage />;
   }
 
+  // Handlers
   const handleSelectCaseById = (caseId: string) => {
     const found = cases.find(c => c.id === caseId);
     if (found) {
@@ -200,113 +264,67 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const renderContent = () => {
-    if (!user) return null;
-    
-    switch (activeView) {
-      case 'dashboard': return <Dashboard onSelectCase={handleSelectCaseById} />;
-      case 'cases': return (
-        <CaseManagement 
-          selectedCase={selectedCase}
-          onSelectCase={setSelectedCase}
-          onBackToList={() => setSelectedCase(null)}
-          currentUser={user}
-          navigateTo={setActiveView}
-        />
-      );
-      case 'pacer-import': return <PacerImportPage onBack={() => setActiveView('cases')} onImportComplete={handleSelectCaseById} />;
-      case 'messages': return <SecureMessenger currentUserId={user.id} />;
-      case 'discovery': return <DiscoveryPlatform />;
-      case 'evidence': return <EvidenceVault onNavigateToCase={handleSelectCaseById} currentUser={user} />;
-      case 'calendar': return <CalendarView onNavigateToCase={handleSelectCaseById} />;
-      case 'billing': return <BillingDashboard navigateTo={setActiveView} />;
-      case 'crm': return <ClientCRM />;
-      case 'research': return <ResearchTool currentUser={user} />;
-      case 'documents': return <DocumentManager currentUserRole={user.role} />;
-      case 'library': return <KnowledgeBase />;
-      case 'analytics': return <AnalyticsDashboard />;
-      case 'compliance': return <ComplianceDashboard />;
-      case 'admin': return <AdminPanel />;
-      case 'jurisdiction': return <JurisdictionManager />;
-      case 'workflows': return <MasterWorkflow />;
-      case 'clauses': return <ClauseLibrary />;
-      case 'enzyme-demo': return <EnzymeDemo />;
-      case 'hydration-demo': return <HydrationDemo />;
-      case 'profile': return <UserProfile userId={user.id} />;
-      default: {
-        // Check for dynamic routes like edit-case/:id
-        if (activeView.startsWith('edit-case/')) {
-          const caseId = activeView.replace('edit-case/', '');
-          return <EditCaseDemo caseId={caseId} onBack={() => setActiveView('enzyme-demo')} />;
-        }
-        return <div className="flex justify-center items-center h-full text-slate-400">Under Construction</div>;
-      }
-    }
+  const handleNavigate = (view: string) => {
+    navigate(view);
+    setSelectedCase(null);
+    setIsSidebarOpen(false);
   };
+
+  // Page title
+  const pageTitle = selectedCase 
+    ? selectedCase.title 
+    : activeView === 'dashboard' 
+      ? 'Dashboard' 
+      : activeView;
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
       {/* Impersonation Banner */}
-      {isImpersonating && (
-        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white py-2 px-4 z-50 shadow-lg">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 animate-pulse" />
-              <span className="font-semibold text-sm">
-                🎭 Developer Mode: Viewing as {user?.name} ({user?.role})
-              </span>
-            </div>
-            <button
-              onClick={stopImpersonating}
-              className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-xs font-medium transition-colors"
-            >
-              Exit Impersonation
-            </button>
-          </div>
-        </div>
+      {isImpersonating && user && (
+        <ImpersonationBanner user={user} onStop={stopImpersonating} />
       )}
 
-      {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur" onClick={() => setIsSidebarOpen(false)} />}
+      {/* Mobile sidebar overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur" 
+          onClick={() => setIsSidebarOpen(false)} 
+        />
+      )}
+
+      {/* Sidebar */}
       {user && (
         <Sidebar
           activeView={selectedCase ? 'cases' : activeView}
-          setActiveView={(v) => { setActiveView(v); setSelectedCase(null); setIsSidebarOpen(false); }}
+          setActiveView={handleNavigate}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           currentUser={user}
+          onSwitchUser={() => handleNavigate('profile')}
         />
       )}
-      <div className={`flex-1 flex flex-col md:ml-64 h-full transition-all w-full ${isImpersonating ? 'mt-10' : ''}`}>
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shadow-sm z-30 shrink-0">
-          <div className="flex items-center flex-1 gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors md:hidden">
-              <Menu className="w-5 h-5" />
-            </button>
-            <h1 className="text-xl font-semibold text-slate-800 capitalize">
-              {selectedCase ? `${selectedCase.title}` : activeView === 'dashboard' ? 'Dashboard' : activeView}
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* User Impersonator - Disabled for now
-            <UserImpersonator onImpersonate={impersonateUser} currentUser={user} />
-            */}
 
-            <div className="hidden sm:flex items-center gap-2 text-sm">
-              <span className="text-slate-600">Welcome,</span>
-              <span className="font-medium">{user?.name}</span>
-              <span className="text-slate-400">•</span>
-              <span className="text-slate-500">{user?.role}</span>
-            </div>
-            <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            <UserProfileDropdown user={user!} />
-          </div>
-        </header>
+      {/* Main content area */}
+      <div className={`flex-1 flex flex-col md:ml-64 h-full transition-all w-full ${isImpersonating ? 'mt-10' : ''}`}>
+        {/* Header */}
+        {user && (
+          <AppHeader
+            title={pageTitle}
+            user={user}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          />
+        )}
+
+        {/* Main content with router */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 md:p-8 relative">
           <div className="w-full h-full">
-            {renderContent()}
+            <Suspense fallback={<LoadingScreen />}>
+              <AppRouter
+                onSelectCase={handleSelectCaseById}
+                currentUser={user}
+              />
+            </Suspense>
           </div>
         </main>
       </div>
@@ -314,24 +332,15 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Create React Query client for Enzyme hooks
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
-
+// ============================================================================
+// App Root Component
+// ============================================================================
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </QueryClientProvider>
+    <AppProviders>
+      <AppContent />
+    </AppProviders>
   );
 };
+
 export default App;

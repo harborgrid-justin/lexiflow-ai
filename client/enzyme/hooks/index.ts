@@ -21,4 +21,5 @@ export {
   useThrottledValue,
 } from '@missionfabric-js/enzyme/hooks';
 
-// Custom hooks can be added here
+// Custom hooks
+export * from './useHashRouter';

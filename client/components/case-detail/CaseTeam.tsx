@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CaseMember, User } from '../../types';
 import { ApiService } from '../../services/apiService';
 import { Plus, X, Shield, Mail } from 'lucide-react';
-import { Button, Modal, Avatar, Badge, ConfirmationModal } from '../common';
+import { Button, Modal, Avatar, Badge } from '../common';
 
 interface CaseTeamProps {
   caseId: string;

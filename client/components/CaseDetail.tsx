@@ -108,9 +108,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
   // ENZYME: Analytics tracking hook
   const trackEvent = useTrackEvent();
 
-  // ENZYME: Mount state for safe async operations
-  const isMounted = useIsMounted();
-
   const [teamMembers] = React.useState<Array<{ id: string; name: string; role: string }>>([
     { id: '1', name: 'John Smith', role: 'Senior Partner' },
     { id: '2', name: 'Jane Doe', role: 'Associate' },

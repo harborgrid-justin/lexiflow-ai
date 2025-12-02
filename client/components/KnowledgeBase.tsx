@@ -27,7 +27,7 @@ import {
 
 export const KnowledgeBase: React.FC = () => {
   const [tab, setTab] = useState<'wiki'|'precedents'|'qa'>('wiki');
-  const { items, loading, searchTerm, setSearchTerm, filteredItems } = useKnowledgeBase(tab);
+  const { items: _items, loading, searchTerm, setSearchTerm, filteredItems } = useKnowledgeBase(tab);
 
   // ENZYME: Analytics tracking
   usePageView('knowledge_base');

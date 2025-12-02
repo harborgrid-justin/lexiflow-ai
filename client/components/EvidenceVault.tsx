@@ -9,7 +9,6 @@
  * - Added useLatestCallback for stable event handlers
  * - Added useTrackEvent for analytics tracking (no PII logged)
  * - Added usePageView for page view tracking
- * - Added useIsMounted for safe async operations
  * - Added HydrationBoundary for progressive hydration of heavy components
  */
 
@@ -27,7 +26,6 @@ import {
   useTrackEvent,
   useLatestCallback,
   usePageView,
-  useIsMounted,
   EnzymeHydrationBoundary as HydrationBoundary,
   EnzymeLazyHydration as LazyHydration
 } from '../enzyme';
@@ -55,6 +53,7 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
     filters,
     setFilters,
     filteredItems,
+    loading,
     handleItemClick,
     handleBack,
     handleIntakeComplete,
@@ -62,21 +61,18 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
   } = useEvidenceVault();
 
   const trackEvent = useTrackEvent();
-  const isMounted = useIsMounted();
 
   // ENZYME: Track page view (no PII - only view counts)
   usePageView('evidence_vault');
 
   // Track view changes (no sensitive data logged)
   React.useEffect(() => {
-    if (isMounted()) {
-      trackEvent('evidence_vault_view_changed', {
-        view,
-        itemCount: evidenceItems.length,
-        filteredCount: filteredItems.length
-      });
-    }
-  }, [view]);
+    trackEvent('evidence_vault_view_changed', {
+      view,
+      itemCount: evidenceItems.length,
+      filteredCount: filteredItems.length
+    });
+  }, [view, evidenceItems.length, filteredItems.length, trackEvent]);
 
   // Stable callback for view changes with analytics
   const handleViewChange = useLatestCallback((newView: ViewMode) => {
@@ -92,8 +88,14 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {view !== 'detail' && (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <LoadingFallback />
+        </div>
+      ) : (
         <>
+          {view !== 'detail' && (
+            <>
         <PageHeader 
             title="Evidence Vault" 
             subtitle="Secure Chain of Custody & Forensic Asset Management."
@@ -195,6 +197,8 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
         <Zap className="h-3 w-3 text-amber-500" />
         <span>TanStack Query caching • useLatestCallback • useTrackEvent analytics • Chain of Custody tracking</span>
       </div>
+        </>
+      )}
     </div>
   );
 };

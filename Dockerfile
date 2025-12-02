@@ -36,16 +36,15 @@ COPY --chown=nestjs:nodejs server/package*.json ./
 # Switch to non-root user for npm install
 USER nestjs
 
-# Use npm ci for reproducible builds with specific npm version
-RUN npm ci --only=production --ignore-scripts && \
-    npm cache clean --force
+# Install all dependencies (including devDependencies for build)
+RUN npm ci && npm cache clean --force
 
 # Copy source files after dependencies for optimal layer caching
 COPY --chown=nestjs:nodejs server/tsconfig.json server/nest-cli.json ./
 COPY --chown=nestjs:nodejs server/src ./src
 
-# Build with production optimizations
-RUN npm run build
+# Build with TypeScript compiler directly (nest build uses tsc under the hood)
+RUN npx -y @nestjs/cli@^11.0.14 build
 
 # Dedicated base image for frontend with Node 20 for better Vite performance
 FROM node:20-alpine AS client-base
@@ -62,7 +61,8 @@ WORKDIR /app/client
 
 # Create non-root user early for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S reactuser -u 1001
+    adduser -S reactuser -u 1001 && \
+    chown -R reactuser:nodejs /app/client
 
 # Copy package files with correct ownership
 COPY --chown=reactuser:nodejs client/package*.json ./

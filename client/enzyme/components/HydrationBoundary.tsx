@@ -111,7 +111,7 @@ export const HydrationBoundary: React.FC<HydrationBoundaryProps> = ({
   className,
 }) => {
   const [isHydrated, setIsHydrated] = useState(trigger === 'immediate');
-  const [isVisible, setIsVisible] = useState(false);
+  const [_isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMounted = useIsMounted();
   const isOnline = useOnlineStatus();
@@ -285,7 +285,7 @@ export const HydrationBoundary: React.FC<HydrationBoundaryProps> = ({
  * </LazyHydration>
  */
 export const LazyHydration: React.FC<Omit<HydrationBoundaryProps, 'id'>> = (props) => {
-  const id = useRef(`lazy-${Math.random().toString(36).substr(2, 9)}`).current;
+  const [id] = useState(() => `lazy-${Math.random().toString(36).substr(2, 9)}`);
   return <HydrationBoundary id={id} {...props} />;
 };
 

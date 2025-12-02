@@ -9,6 +9,7 @@
 export { SettingsPage } from './pages/SettingsPage';
 export { AdminPage } from './pages/AdminPage';
 export { IntegrationsPage } from './pages/IntegrationsPage';
+export { ProfilePage } from './pages/ProfilePage';
 
 // API Hooks
 export {

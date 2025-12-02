@@ -19,7 +19,7 @@ interface EvidenceInventoryProps {
 }
 
 export const EvidenceInventory: React.FC<EvidenceInventoryProps> = ({ 
-  _items, filteredItems, filters, setFilters, onItemClick, onIntakeClick 
+  items: _items, filteredItems, filters, setFilters, onItemClick, onIntakeClick 
 }) => {
   const [showFilters, setShowFilters] = useState(false);
 

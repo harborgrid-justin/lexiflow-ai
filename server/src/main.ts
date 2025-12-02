@@ -17,18 +17,22 @@ async function bootstrap() {
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
   }));
 
-  // Enable CORS for frontend integration
+  // Enable CORS for frontend integration - Platform Agnostic Configuration
   // Parse CORS_ORIGINS from environment variable if provided
   const corsOriginsEnv = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) || [];
 
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173',
     process.env.FRONTEND_URL,
+    process.env.CORS_ORIGIN,
     ...corsOriginsEnv,
   ].filter((origin, index, self) => Boolean(origin) && self.indexOf(origin) === index);
 
-  // Dynamic CORS origin handler to support GitHub Codespaces
+  // Platform-agnostic CORS origin handler
+  // Supports: Docker, Codespaces, Gitpod, Replit, StackBlitz, CodeSandbox, local development
   const corsOriginHandler = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Allow requests with no origin (like mobile apps, curl, or same-origin)
     if (!origin) {
@@ -38,25 +42,63 @@ async function bootstrap() {
 
     // In development, allow all origins for easier development
     if (process.env.NODE_ENV !== 'production') {
-      console.log('CORS: Allowing origin in development:', origin);
+      logger.debug(`CORS: Allowing origin in development: ${origin}`);
       callback(null, true);
       return;
     }
 
     // Check static allowed origins
     if (allowedOrigins.includes(origin)) {
+      logger.debug(`CORS: Allowing whitelisted origin: ${origin}`);
+      callback(null, true);
+      return;
+    }
+
+    // Allow Docker internal network origins (172.x.x.x, 192.168.x.x)
+    const dockerInternalPattern = /^https?:\/\/(172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|10\.)/;
+    if (dockerInternalPattern.test(origin)) {
+      logger.debug(`CORS: Allowing Docker internal network: ${origin}`);
       callback(null, true);
       return;
     }
 
     // Allow GitHub Codespaces origins (*.app.github.dev and *.github.dev)
     if (origin.endsWith('.app.github.dev') || origin.endsWith('.github.dev')) {
+      logger.debug(`CORS: Allowing GitHub Codespaces origin: ${origin}`);
       callback(null, true);
       return;
     }
 
-    // Reject other origins
-    console.log('CORS: Rejecting origin:', origin);
+    // Allow Gitpod origins (*.gitpod.io)
+    if (origin.endsWith('.gitpod.io')) {
+      logger.debug(`CORS: Allowing Gitpod origin: ${origin}`);
+      callback(null, true);
+      return;
+    }
+
+    // Allow Replit origins (*.repl.co, *.replit.dev)
+    if (origin.endsWith('.repl.co') || origin.endsWith('.replit.dev')) {
+      logger.debug(`CORS: Allowing Replit origin: ${origin}`);
+      callback(null, true);
+      return;
+    }
+
+    // Allow StackBlitz origins (*.stackblitz.io)
+    if (origin.endsWith('.stackblitz.io')) {
+      logger.debug(`CORS: Allowing StackBlitz origin: ${origin}`);
+      callback(null, true);
+      return;
+    }
+
+    // Allow CodeSandbox origins (*.csb.app)
+    if (origin.endsWith('.csb.app')) {
+      logger.debug(`CORS: Allowing CodeSandbox origin: ${origin}`);
+      callback(null, true);
+      return;
+    }
+
+    // Reject other origins in production
+    logger.warn(`CORS: Rejecting origin: ${origin}`);
     callback(null, false);
   };
 

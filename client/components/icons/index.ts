@@ -70,7 +70,6 @@ export {
   Settings,
   Settings2,
   Sliders,
-  Tool,
   Wrench,
 
   // Files & Documents

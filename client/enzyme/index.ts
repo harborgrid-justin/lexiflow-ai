@@ -15,6 +15,9 @@ export * from './components/index';
 // Hooks
 export * from './hooks/index';
 
+// Router (custom hash-based routing)
+export { useHashRouter, useRouteParam, useIsRoute } from './hooks/useHashRouter';
+
 // Services
 export * from './services/index';
 
@@ -25,10 +28,13 @@ export * from './types/index';
 export * from './utils/index';
 
 // Re-export Enzyme library features
+// Note: useApiRequest and useApiMutation are exported from ./services/index
+// which provides a simplified wrapper with both string and object syntax support.
+// For advanced usage, import directly from @missionfabric-js/enzyme/api
 export {
-  // API Hooks
-  useApiRequest,
-  useApiMutation,
+  // API Hooks - renamed to avoid conflict with local wrappers
+  useApiRequest as useEnzymeLibApiRequest,
+  useApiMutation as useEnzymeLibApiMutation,
 } from '@missionfabric-js/enzyme/api';
 
 export {

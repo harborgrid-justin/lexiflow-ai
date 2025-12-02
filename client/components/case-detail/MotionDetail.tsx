@@ -43,7 +43,6 @@ interface MotionDetailProps {
 
 export const MotionDetail: React.FC<MotionDetailProps> = ({ motion, onBack }) => {
   const trackEvent = useTrackEvent();
-  const isMounted = useIsMounted();
 
   // Handler: Back navigation with tracking
   const handleBack = useLatestCallback(() => {

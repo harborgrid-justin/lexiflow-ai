@@ -20,9 +20,7 @@ import {
   useLatestCallback,
   useTrackEvent,
   usePageView,
-  useIsMounted,
-  HydrationBoundary,
-  LazyHydration
+  HydrationBoundary
 } from '../enzyme';
 
 // Lazy load heavy analytics sub-components for better performance
@@ -48,7 +46,6 @@ const LoadingFallback = () => (
 export const AnalyticsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('judge');
   const { judgeData, counselData } = useAnalyticsDashboard();
-  const isMounted = useIsMounted();
 
   // ENZYME: Analytics tracking
   const trackEvent = useTrackEvent();

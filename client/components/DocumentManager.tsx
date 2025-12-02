@@ -36,7 +36,7 @@
 
 import React from 'react';
 import { Plus, Share2, Split, Wand2, RefreshCw, X, Activity, Zap } from 'lucide-react';
-import { UserRole, LegalDocument } from '../types';
+import { UserRole } from '../types';
 import { DocumentVersions } from './DocumentVersions';
 import { PageHeader, Button, Modal, Card, SearchInput, StatCard } from './common';
 import { useDocumentManager } from '../hooks/useDocumentManager';
@@ -65,8 +65,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ currentUserRol
     handleRestore,
     handleBulkSummarize,
     toggleSelection,
-    addTag,
-    removeTag,
+    addTag: _addTag,
+    removeTag: _removeTag,
     allTags,
     filtered,
     stats

@@ -19,9 +19,7 @@ import {
   useLatestCallback,
   useTrackEvent,
   usePageView,
-  useIsMounted,
-  HydrationBoundary,
-  LazyHydration
+  HydrationBoundary
 } from '../enzyme';
 
 type ComplianceTab = 'conflicts' | 'walls' | 'risk';
@@ -29,7 +27,6 @@ type ComplianceTab = 'conflicts' | 'walls' | 'risk';
 export const ComplianceDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ComplianceTab>('conflicts');
   const { conflicts, walls } = useComplianceDashboard();
-  const isMounted = useIsMounted();
 
   // ENZYME: Analytics tracking
   const trackEvent = useTrackEvent();

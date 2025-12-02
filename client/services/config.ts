@@ -21,13 +21,13 @@ const getCodespacesApiOrigin = (): string | null => {
     return null;
   }
 
-  // Match patterns like: ideal-space-system-9r7q47w4xjf7rwx-3000.app.github.dev
-  const match = hostname.match(/^(.*)-(\d+)\.app\.github\.dev$/);
+  // Match patterns like: ideal-space-system-9r7q47w4xjf7rwx-3000.app.github.dev or preview.app.github.dev
+  const match = hostname.match(/^(.*)-(\d+)\.(app\.github\.dev|github\.dev)$/);
   if (!match) {
     return null;
   }
 
-  const [, base, port] = match;
+  const [, base, port, domain] = match;
   const apiPort = '3001';
 
   // If we're already on the API port, reuse the current origin.
@@ -35,7 +35,7 @@ const getCodespacesApiOrigin = (): string | null => {
     return `${protocol}//${hostname}`;
   }
 
-  return `${protocol}//${base}-${apiPort}.app.github.dev`;
+  return `${protocol}//${base}-${apiPort}.${domain}`;
 };
 
 const getApiBaseUrl = (): string => {

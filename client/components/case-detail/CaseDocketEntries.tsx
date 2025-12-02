@@ -24,7 +24,7 @@ export const CaseDocketEntries: React.FC<CaseDocketEntriesProps> = ({ caseId }) 
 
   useEffect(() => {
     fetchDocketEntries();
-  }, [caseId]);
+  }, [caseId, fetchDocketEntries]);
 
   const fetchDocketEntries = async () => {
     try {

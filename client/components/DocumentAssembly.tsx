@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { X, FileText, ChevronRight, Check, Save } from 'lucide-react';
 import { LegalDocument } from '../types';
 import { useDocumentAssembly } from '../hooks/useDocumentAssembly';

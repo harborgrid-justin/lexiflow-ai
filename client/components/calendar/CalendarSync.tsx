@@ -24,7 +24,6 @@ export const CalendarSync: React.FC = () => {
   // ENZYME: Analytics tracking
   usePageView('calendar_sync');
   const trackEvent = useTrackEvent();
-  const isMounted = useIsMounted();
 
   const accounts = [
     { provider: 'Office 365', user: 'alex@lexiflow.com', status: 'Connected', lastSync: '2 mins ago' },

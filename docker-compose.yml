@@ -51,7 +51,9 @@ services:
       DATABASE_URL: postgresql://lexiflow_user:${POSTGRES_PASSWORD:-lexiflow_secure_password}@postgres:5432/lexiflow?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_change_in_production}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-1d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://frontend:3000,http://172.20.0.1:3000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "3001:3001"
     healthcheck:
