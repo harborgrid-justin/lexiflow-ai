@@ -1,5 +1,19 @@
+/**
+ * EvidenceVault - Secure Chain of Custody & Forensic Asset Management
+ *
+ * Manages evidence inventory, chain of custody tracking, and forensic asset management
+ * for legal cases with full compliance and audit trail capabilities.
+ *
+ * ENZYME MIGRATION:
+ * - Uses useEvidenceVault hook with TanStack Query for optimistic updates
+ * - Added useLatestCallback for stable event handlers
+ * - Added useTrackEvent for analytics tracking (no PII logged)
+ * - Added usePageView for page view tracking
+ * - Added useIsMounted for safe async operations
+ * - Added HydrationBoundary for progressive hydration of heavy components
+ */
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { EvidenceInventory } from './evidence/EvidenceInventory';
 import { EvidenceDetail } from './evidence/EvidenceDetail';
 import { EvidenceIntake } from './evidence/EvidenceIntake';
@@ -9,12 +23,26 @@ import { PageHeader, Button } from './common';
 import { LayoutDashboard, Box, Link, Plus, ScanLine, Activity, Zap } from 'lucide-react';
 import { useEvidenceVault, ViewMode } from '../hooks/useEvidenceVault';
 import { User } from '../types';
-import { useTrackEvent, useLatestCallback } from '@missionfabric-js/enzyme/hooks';
+import {
+  useTrackEvent,
+  useLatestCallback,
+  usePageView,
+  useIsMounted,
+  EnzymeHydrationBoundary as HydrationBoundary,
+  EnzymeLazyHydration as LazyHydration
+} from '../enzyme';
 
 interface EvidenceVaultProps {
   onNavigateToCase?: (caseId: string) => void;
   currentUser?: User;
 }
+
+// Loading fallback for lazy components
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-64 bg-white rounded-lg border border-slate-200">
+    <div className="animate-pulse text-slate-400">Loading evidence data...</div>
+  </div>
+);
 
 export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, currentUser }) => {
   const {
@@ -34,14 +62,20 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
   } = useEvidenceVault();
 
   const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
 
-  // Track page view
+  // ENZYME: Track page view (no PII - only view counts)
+  usePageView('evidence_vault');
+
+  // Track view changes (no sensitive data logged)
   React.useEffect(() => {
-    trackEvent('evidence_vault_viewed', {
-      view,
-      itemCount: evidenceItems.length,
-      filteredCount: filteredItems.length
-    });
+    if (isMounted()) {
+      trackEvent('evidence_vault_view_changed', {
+        view,
+        itemCount: evidenceItems.length,
+        filteredCount: filteredItems.length
+      });
+    }
   }, [view]);
 
   // Stable callback for view changes with analytics
@@ -96,41 +130,61 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({ onNavigateToCase, 
 
       <div className="min-h-[500px]">
         {view === 'dashboard' && (
-            <EvidenceDashboard onNavigate={(v) => handleViewChange(v as ViewMode)} />
+          <Suspense fallback={<LoadingFallback />}>
+            <HydrationBoundary id="evidence-dashboard" priority="high" trigger="visible">
+              <EvidenceDashboard onNavigate={(v) => handleViewChange(v as ViewMode)} />
+            </HydrationBoundary>
+          </Suspense>
         )}
 
         {view === 'inventory' && (
-          <EvidenceInventory 
-            items={evidenceItems} 
-            filteredItems={filteredItems}
-            filters={filters}
-            setFilters={setFilters}
-            onItemClick={handleItemClick}
-            onIntakeClick={handleIntakeClick}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <HydrationBoundary id="evidence-inventory" priority="high" trigger="visible">
+              <EvidenceInventory
+                items={evidenceItems}
+                filteredItems={filteredItems}
+                filters={filters}
+                setFilters={setFilters}
+                onItemClick={handleItemClick}
+                onIntakeClick={handleIntakeClick}
+              />
+            </HydrationBoundary>
+          </Suspense>
         )}
 
         {view === 'custody' && (
-            <EvidenceCustodyLog />
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyHydration priority="high" trigger="visible">
+              <EvidenceCustodyLog />
+            </LazyHydration>
+          </Suspense>
         )}
-        
+
         {view === 'detail' && selectedItem && (
-          <EvidenceDetail 
-            selectedItem={selectedItem}
-            handleBack={handleBack}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            onNavigateToCase={onNavigateToCase}
-            onCustodyUpdate={handleCustodyUpdate}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <HydrationBoundary id="evidence-detail" priority="high" trigger="immediate">
+              <EvidenceDetail
+                selectedItem={selectedItem}
+                handleBack={handleBack}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onNavigateToCase={onNavigateToCase}
+                onCustodyUpdate={handleCustodyUpdate}
+              />
+            </HydrationBoundary>
+          </Suspense>
         )}
 
         {view === 'intake' && (
-          <EvidenceIntake 
-            handleBack={handleBack}
-            onComplete={handleIntakeComplete}
-            currentUser={currentUser}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyHydration priority="normal" trigger="idle">
+              <EvidenceIntake
+                handleBack={handleBack}
+                onComplete={handleIntakeComplete}
+                currentUser={currentUser}
+              />
+            </LazyHydration>
+          </Suspense>
         )}
       </div>
 

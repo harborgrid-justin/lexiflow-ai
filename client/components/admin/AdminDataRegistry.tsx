@@ -1,22 +1,53 @@
+/**
+ * AdminDataRegistry Component
+ *
+ * ENZYME MIGRATION:
+ * - usePageView for data registry page tracking
+ * - HydrationBoundary for progressive loading of data files grid
+ *
+ * Analytics Events:
+ * - None (passive data display component)
+ *
+ * Hydration Strategy:
+ * - Header: priority="high", trigger="immediate" (critical UI)
+ * - Data Files Grid: priority="normal", trigger="visible" (data display)
+ *
+ * Performance:
+ * - Progressive hydration for data-heavy grid
+ * - Sensitive configuration data should be handled carefully
+ */
 
 import React from 'react';
 import { Server, HardDrive } from 'lucide-react';
+import {
+  usePageView,
+  HydrationBoundary
+} from '../../enzyme';
 
 interface AdminDataRegistryProps {
   dataFiles: Array<{ name: string; type: string; records: number; size: string }>;
 }
 
 export const AdminDataRegistry: React.FC<AdminDataRegistryProps> = ({ dataFiles }) => {
+  // Enzyme: Page view tracking
+  usePageView('admin_data_registry');
+
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-        <h3 className="font-bold text-slate-800">System Data Registries</h3>
-        <div className="text-xs text-slate-500 flex items-center gap-2">
-          <Server className="h-3 w-3"/>
-          Production Status: Healthy
+      {/* Enzyme: Header hydrated immediately (critical UI) */}
+      <HydrationBoundary id="admin-registry-header" priority="high" trigger="immediate">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+          <h3 className="font-bold text-slate-800">System Data Registries</h3>
+          <div className="text-xs text-slate-500 flex items-center gap-2">
+            <Server className="h-3 w-3"/>
+            Production Status: Healthy
+          </div>
         </div>
-      </div>
-      <div className="p-6 overflow-auto">
+      </HydrationBoundary>
+
+      {/* Enzyme: Data files grid hydrated when visible (data display) */}
+      <HydrationBoundary id="admin-registry-data" priority="normal" trigger="visible">
+        <div className="p-6 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {dataFiles.map((file, idx) => (
             <div key={idx} className="border border-slate-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-sm transition-all group cursor-default">
@@ -40,7 +71,8 @@ export const AdminDataRegistry: React.FC<AdminDataRegistryProps> = ({ dataFiles 
           <h4 className="text-sm font-bold text-yellow-800 mb-1">Data Retention Policy</h4>
           <p className="text-xs text-yellow-700">All case data is retained for 7 years post-closing. Mock data files are read-only in this environment.</p>
         </div>
-      </div>
+        </div>
+      </HydrationBoundary>
     </div>
   );
 };

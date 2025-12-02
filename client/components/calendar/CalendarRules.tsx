@@ -1,8 +1,24 @@
+/**
+ * CalendarRules - Rule Sets & Automation Configuration Component
+ *
+ * Displays active legal rule sets (FRCP, state rules, local rules) and
+ * automation triggers for deadline calculation. Mostly static UI component.
+ *
+ * ENZYME MIGRATION:
+ * - Added usePageView for page tracking ('calendar_rules')
+ * - Added useTrackEvent for analytics on rule interactions
+ * - Priority: LOW - Configuration UI, loads on idle
+ * - Hydration: IDLE - Not time-critical, can defer
+ */
 
 import React from 'react';
 import { Settings, Book, Check } from 'lucide-react';
+import { usePageView, useTrackEvent } from '../../enzyme';
 
 export const CalendarRules: React.FC = () => {
+  // ENZYME: Analytics tracking
+  usePageView('calendar_rules');
+  const trackEvent = useTrackEvent();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
@@ -17,7 +33,16 @@ export const CalendarRules: React.FC = () => {
             </div>
           ))}
         </div>
-        <button className="mt-4 text-sm text-blue-600 font-medium hover:underline">+ Add Jurisdiction</button>
+        <button
+          className="mt-4 text-sm text-blue-600 font-medium hover:underline"
+          onClick={() => {
+            trackEvent('calendar_rules_add_jurisdiction_click', {
+              current_rule_count: 4
+            });
+          }}
+        >
+          + Add Jurisdiction
+        </button>
       </div>
 
       <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">

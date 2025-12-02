@@ -1,8 +1,24 @@
+/**
+ * CalendarSOL - Statute of Limitations Watch Component
+ *
+ * CRITICAL LEGAL COMPONENT: Tracks statute of limitations expiration dates.
+ * Missing these dates results in malpractice liability. This is the highest
+ * priority legal compliance feature in the system.
+ *
+ * ENZYME MIGRATION:
+ * - Added usePageView for page tracking ('calendar_sol')
+ * - Added useTrackEvent for analytics on SOL interactions and critical alerts
+ * - Replaced useEffect/useState with useApiRequest for automatic caching & error handling
+ * - Added useIsMounted for safe async operations
+ * - Priority: CRITICAL - Malpractice prevention, must load immediately
+ * - Hydration: IMMEDIATE - Cannot delay loading of SOL data
+ * - Cache: Short (30 seconds) - SOL data must be fresh at all times
+ */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { AlertTriangle, ShieldAlert, MapPin } from 'lucide-react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
-import { ApiService } from '../../services/apiService';
+import { useApiRequest, usePageView, useTrackEvent, useIsMounted } from '../../enzyme';
 import { Badge } from '../common/Badge';
 
 interface SOLData {
@@ -15,24 +31,37 @@ interface SOLData {
 }
 
 export const CalendarSOL: React.FC = () => {
-  const [solData, setSolData] = useState<SOLData[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ENZYME: Analytics tracking
+  usePageView('calendar_sol');
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
 
-  useEffect(() => {
-    const fetchSOL = async () => {
-      try {
-        const data = await ApiService.getCalendarSOL();
-        setSolData(data || []);
-      } catch (error) {
-        console.error('Failed to fetch SOL data:', error);
-        setSolData([]);
-      } finally {
-        setLoading(false);
+  // ENZYME: Replace useEffect/useState with useApiRequest for automatic caching
+  const { data: solData = [], isLoading: loading } = useApiRequest<SOLData[]>({
+    endpoint: '/api/v1/calendar/sol',
+    options: {
+      staleTime: 30 * 1000, // 30 second cache - CRITICAL data needs very fresh updates
+      onError: (err: any) => {
+        console.error('Failed to fetch SOL data:', err);
+        if (isMounted()) {
+          trackEvent('calendar_sol_error', {
+            error: err?.message || 'Unknown error',
+            severity: 'critical'
+          });
+        }
+      },
+      onSuccess: (data: SOLData[]) => {
+        // Track critical SOL items that need immediate attention
+        const criticalCount = data.filter(d => d.critical).length;
+        if (criticalCount > 0 && isMounted()) {
+          trackEvent('calendar_sol_critical_items', {
+            critical_count: criticalCount,
+            total_count: data.length
+          });
+        }
       }
-    };
-
-    fetchSOL();
-  }, []);
+    }
+  });
 
   if (loading) {
     return <div className="p-4 text-center text-slate-500">Loading SOL data...</div>;
@@ -58,7 +87,19 @@ export const CalendarSOL: React.FC = () => {
             </TableHeader>
             <TableBody>
             {solData.map((row, i) => (
-                <TableRow key={i} className={row.critical ? 'bg-red-50/50' : ''}>
+                <TableRow
+                  key={i}
+                  className={`cursor-pointer hover:bg-slate-50 ${row.critical ? 'bg-red-50/50' : ''}`}
+                  onClick={() => {
+                    trackEvent('sol_row_click', {
+                      matter: row.matter,
+                      days_left: row.daysLeft,
+                      critical: row.critical,
+                      jurisdiction: row.jurisdiction,
+                      cause: row.cause
+                    });
+                  }}
+                >
                     <TableCell className={`font-bold ${row.critical ? 'text-red-700' : 'text-slate-700'}`}>{row.date}</TableCell>
                     <TableCell className="font-medium text-slate-900">{row.matter}</TableCell>
                     <TableCell>{row.cause}</TableCell>
@@ -78,7 +119,19 @@ export const CalendarSOL: React.FC = () => {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
         {solData.map((row, i) => (
-            <div key={i} className={`p-4 rounded-lg border shadow-sm ${row.critical ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
+            <div
+              key={i}
+              className={`p-4 rounded-lg border shadow-sm cursor-pointer transition-colors ${row.critical ? 'bg-red-50 border-red-200 hover:border-red-300' : 'bg-white border-slate-200 hover:border-blue-300'}`}
+              onClick={() => {
+                trackEvent('sol_card_click', {
+                  matter: row.matter,
+                  days_left: row.daysLeft,
+                  critical: row.critical,
+                  jurisdiction: row.jurisdiction,
+                  cause: row.cause
+                });
+              }}
+            >
                 <div className="flex justify-between items-start mb-2">
                     <span className={`text-lg font-bold ${row.critical ? 'text-red-700' : 'text-slate-700'}`}>{row.date}</span>
                     <Badge variant={row.critical ? 'error' : 'inactive'} size="sm">
