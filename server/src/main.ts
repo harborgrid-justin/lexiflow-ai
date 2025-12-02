@@ -36,6 +36,13 @@ async function bootstrap() {
       return;
     }
 
+    // In development, allow all origins for easier development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('CORS: Allowing origin in development:', origin);
+      callback(null, true);
+      return;
+    }
+
     // Check static allowed origins
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -49,6 +56,7 @@ async function bootstrap() {
     }
 
     // Reject other origins
+    console.log('CORS: Rejecting origin:', origin);
     callback(null, false);
   };
 

@@ -43,15 +43,29 @@ const getApiBaseUrl = (): string => {
   const normalizedEnvUrl = trimTrailingSlash(envApiUrl);
   const isEnvLocalhost = normalizedEnvUrl ? /localhost|127\.0\.0\.1/i.test(normalizedEnvUrl) : false;
 
-  // In development mode (with Vite dev server), always use the proxy
-  // This works both locally and in Codespaces
-  if (typeof window !== 'undefined' && import.meta.env?.DEV) {
-    return '/api/v1';
-  }
-
+  // Check if we're in Codespaces
   const codespacesOrigin = getCodespacesApiOrigin();
   if (codespacesOrigin && (!normalizedEnvUrl || isEnvLocalhost)) {
+    console.log('getApiBaseUrl: using Codespaces API URL', `${codespacesOrigin}/api/v1`);
     return `${codespacesOrigin}/api/v1`;
+  }
+
+  // In development mode (with Vite dev server), use proxy for localhost
+  if (typeof window !== 'undefined' && import.meta.env?.DEV) {
+    const hostname = window.location.hostname;
+    const isCodespaceHost = hostname.endsWith('.app.github.dev') || hostname.endsWith('.github.dev');
+    
+    if (isCodespaceHost) {
+      // In Codespaces web interface, make direct requests to backend
+      const codespaceApiUrl = getCodespacesApiOrigin();
+      if (codespaceApiUrl) {
+        console.log('getApiBaseUrl: using Codespaces direct API URL', `${codespaceApiUrl}/api/v1`);
+        return `${codespaceApiUrl}/api/v1`;
+      }
+    }
+    
+    console.log('getApiBaseUrl: using proxy /api/v1');
+    return '/api/v1';
   }
 
   if (normalizedEnvUrl) {
@@ -83,7 +97,9 @@ export const API_BASE_URL = getApiBaseUrl();
  * Get auth token from localStorage or session storage
  */
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  console.log('getAuthToken: token found?', !!token, 'from localStorage?', !!localStorage.getItem('authToken'), 'from sessionStorage?', !!sessionStorage.getItem('authToken'));
+  return token;
 };
 
 /**
@@ -91,6 +107,7 @@ export const getAuthToken = (): string | null => {
  */
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();
+  console.log('getAuthHeaders: token present?', !!token);
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

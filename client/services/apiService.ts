@@ -105,10 +105,13 @@ export const ApiService = {
 
   // Utility Methods
   setAuthToken: (token: string, remember: boolean = true) => {
+    console.log('setAuthToken: storing token, remember=', remember);
     if (remember) {
       localStorage.setItem('authToken', token);
+      console.log('setAuthToken: stored in localStorage');
     } else {
       sessionStorage.setItem('authToken', token);
+      console.log('setAuthToken: stored in sessionStorage');
     }
   },
 

@@ -5,9 +5,9 @@ import { transformApiCase } from '../../utils/type-transformers';
 import { fetchJson, postJson, putJson, deleteJson, buildQueryString } from '../http-client';
 
 export const casesService = {
-  getAll: async (orgId?: string): Promise<Case[]> => {
-    const apiCases = await fetchJson<ApiCase[]>(`/cases${buildQueryString({ orgId })}`);
-    return (apiCases || []).map(transformApiCase);
+  getAll: async (orgId?: string, page: number = 1, limit: number = 20): Promise<Case[]> => {
+    const response = await fetchJson<{ cases: ApiCase[]; total: number; page: number; limit: number; totalPages: number }>(`/cases${buildQueryString({ orgId, page, limit })}`);
+    return (response.cases || []).map(transformApiCase);
   },
 
   getById: async (id: string): Promise<Case> => {

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UserProfilesService } from './user-profiles.service';
@@ -67,6 +68,13 @@ export class UserProfilesController {
   @ApiOperation({ summary: 'Update user last active timestamp' })
   @ApiResponse({ status: 200, description: 'Last active updated successfully' })
   updateLastActive(@Param('userId') userId: string) {
+    return this.userProfilesService.updateLastActive(userId);
+  }
+
+  @Put('user/:userId/last-active')
+  @ApiOperation({ summary: 'Update user last active timestamp (PUT)' })
+  @ApiResponse({ status: 200, description: 'Last active updated successfully' })
+  updateLastActivePut(@Param('userId') userId: string) {
     return this.userProfilesService.updateLastActive(userId);
   }
 

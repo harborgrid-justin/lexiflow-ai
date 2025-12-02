@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => {
       port: CLIENT_PORT,
       strictPort: false, // Allow fallback to next available port
       host: '0.0.0.0',
+      // Allow access from Codespaces web interface
+      allowedHosts: ['.app.github.dev', '.github.dev', 'localhost', '127.0.0.1'],
       proxy: {
         // Proxy API requests to the backend server
         '/api/v1': {

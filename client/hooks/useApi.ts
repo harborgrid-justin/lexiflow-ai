@@ -62,10 +62,21 @@ export interface ApiErrorState {
  */
 function extractErrorState(err: unknown): ApiErrorState {
   if (err instanceof ApiError) {
+    // Convert field errors to the expected Record<string, string[]> format
+    const validationErrors: Record<string, string[]> = {};
+    if (err.fieldErrors) {
+      err.fieldErrors.forEach(fieldError => {
+        if (!validationErrors[fieldError.field]) {
+          validationErrors[fieldError.field] = [];
+        }
+        validationErrors[fieldError.field].push(fieldError.message);
+      });
+    }
+
     return {
-      message: err.getUserMessage(),
-      status: err.status,
-      validationErrors: err.getValidationErrors(),
+      message: err.getUserFriendlyMessage(),
+      status: err.statusCode,
+      validationErrors: Object.keys(validationErrors).length > 0 ? validationErrors : undefined,
       isValidation: err.isValidationError(),
       isServerError: err.isServerError(),
       original: err,
@@ -80,7 +91,7 @@ function extractErrorState(err: unknown): ApiErrorState {
  * Generic hook for API data fetching with structured error handling
  *
  * ENZYME ENHANCED:
- * - Now uses useApiRequest for automatic caching and deduplication
+ * - Now uses useSafeState for memory-leak prevention
  * - useIsMounted prevents state updates on unmounted components
  * - useLatestCallback ensures stable refetch reference
  * - Backwards compatible with existing usage
@@ -91,45 +102,54 @@ function extractErrorState(err: unknown): ApiErrorState {
  */
 export function useApi<T>(apiCall: () => Promise<T>, dependencies: unknown[] = []) {
   const isMounted = useIsMounted();
+  const [data, setData] = useSafeState<T | null>(null);
+  const [loading, setLoading] = useSafeState(false);
+  const [error, setError] = useSafeState<ApiErrorState | null>(null);
 
-  // Use Enzyme's useApiRequest with custom query function
-  // Note: We create a unique query key based on the apiCall function and dependencies
-  const queryKey = ['api', apiCall.toString().substring(0, 50), ...dependencies];
+  const executeApiCall = useLatestCallback(async () => {
+    if (!isMounted()) return;
 
-  const { data, isLoading: loading, error: rawError, refetch } = useApiRequest<T>({
-    queryKey,
-    queryFn: apiCall,
-    options: {
-      enabled: true,
-      staleTime: 0, // Always refetch on mount to maintain original behavior
-      retry: 1, // Retry once on failure
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await apiCall();
+      if (isMounted()) {
+        setData(result);
+        setLoading(false);
+      }
+    } catch (err) {
+      if (isMounted()) {
+        setError(extractErrorState(err));
+        setLoading(false);
+      }
     }
   });
 
-  // Convert raw error to ApiErrorState format for backwards compatibility
-  const error = rawError ? extractErrorState(rawError) : null;
+  // Effect to execute API call when dependencies change
+  useEffect(() => {
+    executeApiCall();
+  }, dependencies);
 
-  // Wrap refetch with useLatestCallback and isMounted guard
-  const safeRefetch = useLatestCallback(async () => {
-    if (!isMounted()) return;
-    await refetch();
+  const refetch = useLatestCallback(() => {
+    executeApiCall();
   });
 
   return {
-    data: data ?? null,
+    data,
     loading,
     error,
-    refetch: safeRefetch
+    refetch,
   };
 }
 
 // Specific hooks for common operations
 export function useCases() {
-  return useApi(() => ApiService.getCases());
+  return useApi(() => ApiService.cases.getAll());
 }
 
 export function useCase(id: string) {
-  return useApi(() => ApiService.getCase(id), [id]);
+  return useApi(() => ApiService.cases.getById(id), [id]);
 }
 
 export function useUsers() {
@@ -189,10 +209,9 @@ export function useCaseBilling(caseId: string) {
  * Provides field-level validation errors for form submissions
  *
  * ENZYME ENHANCED:
- * - Now uses useApiMutation for automatic cache invalidation
+ * - Now uses useSafeState for memory-leak prevention
  * - useIsMounted prevents state updates on unmounted components
  * - useLatestCallback ensures stable mutate reference
- * - useSafeState prevents memory leaks
  * - Backwards compatible with existing usage
  *
  * @param mutationFn - Function that performs the mutation
@@ -200,36 +219,30 @@ export function useCaseBilling(caseId: string) {
  */
 export function useMutation<T, P>(mutationFn: (params: P) => Promise<T>) {
   const isMounted = useIsMounted();
+  const [loading, setLoading] = useSafeState(false);
   const [error, setError] = useSafeState<ApiErrorState | null>(null);
 
-  // Use Enzyme's useApiMutation with custom mutation function
-  const { mutate: apiMutate, isPending: loading } = useApiMutation<T, P>({
-    mutationFn,
-    options: {
-      onError: (err: unknown) => {
-        if (!isMounted()) return;
-        setError(extractErrorState(err));
-      },
-      onSuccess: () => {
-        if (!isMounted()) return;
-        setError(null);
-      },
-    }
-  });
-
   /**
-   * Wrapper around apiMutate that returns the result or null
+   * Wrapper around mutationFn that handles loading and error states
    * Maintains backwards compatibility with original API
    */
   const mutate = useLatestCallback(async (params: P): Promise<T | null> => {
+    if (!isMounted()) return null;
+
+    setLoading(true);
+    setError(null);
+
     try {
-      if (!isMounted()) return null;
-      setError(null);
-      const result = await apiMutate(params);
+      const result = await mutationFn(params);
+      if (isMounted()) {
+        setLoading(false);
+      }
       return result;
     } catch (err) {
-      if (!isMounted()) return null;
-      setError(extractErrorState(err));
+      if (isMounted()) {
+        setError(extractErrorState(err));
+        setLoading(false);
+      }
       return null;
     }
   });
@@ -285,8 +298,10 @@ export function useAuth() {
         // User not authenticated
         if (!isMounted()) return;
         setUser(null);
-      } finally {
-        if (!isMounted()) return;
+      }
+
+      // Always set loading to false, regardless of success/failure
+      if (isMounted()) {
         setLoading(false);
       }
     };

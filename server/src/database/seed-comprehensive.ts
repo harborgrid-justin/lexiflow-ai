@@ -172,9 +172,28 @@ async function seedAllData() {
     await User.bulkCreate(users, { ignoreDuplicates: true });
     console.log(`✅ Created ${users.length} users`);
 
-    // Get existing users
+    // Get existing users (including the ones we just created)
     const existingUsers = await User.findAll();
     const userIds = existingUsers.map((user: any) => user.id);
+
+    // Seed user profiles for all users
+    console.log('👤 Seeding user profiles...');
+    const userProfiles = [];
+    for (const user of existingUsers) {
+      userProfiles.push({
+        user_id: user.id,
+        bio: faker.lorem.sentences(2),
+        phone: user.phone || faker.phone.number(),
+        skills: faker.helpers.arrayElements([
+          'Legal Research', 'Contract Drafting', 'Client Relations', 'Court Appearances',
+          'Document Review', 'Negotiation', 'Mediation', 'Trial Preparation'
+        ], { min: 2, max: 5 }).join(', '),
+        theme_preference: faker.helpers.arrayElement(['light', 'dark', 'system']),
+        last_active: faker.date.recent({ days: 30 }),
+      });
+    }
+    await UserProfile.bulkCreate(userProfiles, { ignoreDuplicates: true });
+    console.log(`✅ Created ${userProfiles.length} user profiles`);
 
     // Seed 20 cases with comprehensive data
     console.log('⚖️ Seeding 20 cases with associated data...');

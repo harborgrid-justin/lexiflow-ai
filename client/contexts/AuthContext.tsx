@@ -43,7 +43,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(currentUser);
           // Update last active timestamp
           if (currentUser.id) {
-            ApiService.userProfiles.updateLastActive(currentUser.id);
+            try {
+              console.log('AuthContext: Calling updateLastActive for user', currentUser.id);
+              await ApiService.userProfiles.updateLastActive(currentUser.id);
+              console.log('AuthContext: updateLastActive succeeded');
+            } catch (error) {
+              console.error('Failed to update last active timestamp:', error);
+            }
           }
         } catch (_error) {
           // Token is invalid
@@ -65,7 +71,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Update last active timestamp
       if (response.user.id) {
-        ApiService.userProfiles.updateLastActive(response.user.id);
+        try {
+          console.log('AuthContext login: Calling updateLastActive for user', response.user.id);
+          await ApiService.userProfiles.updateLastActive(response.user.id);
+          console.log('AuthContext login: updateLastActive succeeded');
+        } catch (error) {
+          console.error('Failed to update last active timestamp after login:', error);
+        }
       }
 
       return true;

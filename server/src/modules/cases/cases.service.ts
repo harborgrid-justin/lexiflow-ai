@@ -20,9 +20,11 @@ export class CasesService {
     return this.caseModel.create(caseData as unknown as Partial<Case>);
   }
 
-  async findAll(orgId?: string): Promise<Case[]> {
+  async findAll(orgId?: string, page: number = 1, limit: number = 20): Promise<{ cases: Case[]; total: number; page: number; limit: number; totalPages: number }> {
     const whereClause = orgId ? { owner_org_id: orgId } : {};
-    return this.caseModel.findAll({
+    const offset = (page - 1) * limit;
+
+    const { rows: cases, count: total } = await this.caseModel.findAndCountAll({
       where: whereClause,
       include: [
         'organization',
@@ -31,7 +33,19 @@ export class CasesService {
         'docketEntries',
       ],
       order: [['created_at', 'DESC']],
+      limit,
+      offset,
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      cases,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async findOne(id: string): Promise<Case> {

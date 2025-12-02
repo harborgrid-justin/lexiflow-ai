@@ -1,17 +1,17 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Case } from '../types';
 import { useApiRequest, useApiMutation } from '../enzyme';
 import { useLatestCallback, useIsMounted } from '@missionfabric-js/enzyme/hooks';
 
 export const useCaseList = () => {
   // ✅ ENZYME: useApiRequest - automatic caching, refetching, and loading states
-  const { 
-    data: cases = [], 
-    isLoading: loading, 
+  const {
+    data: response,
+    isLoading: loading,
     error: queryError,
-    refetch 
-  } = useApiRequest<Case[]>({
+    refetch: rawRefetch
+  } = useApiRequest<{ cases: Case[]; total: number; page: number; limit: number; totalPages: number }>({
     endpoint: '/api/v1/cases',
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -19,7 +19,18 @@ export const useCaseList = () => {
     }
   });
 
-  const isMounted = useIsMounted();
+  const cases = response?.cases || [];
+  const pagination = response ? {
+    total: response.total,
+    page: response.page,
+    limit: response.limit,
+    totalPages: response.totalPages,
+  } : null;
+
+  // Wrap refetch to maintain the same interface
+  const refetch = useCallback(async () => {
+    await rawRefetch();
+  }, [rawRefetch]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -40,37 +51,40 @@ export const useCaseList = () => {
     setTypeFilter('All');
   });
 
-  // ✅ ENZYME: useApiMutation - automatic invalidation and refetching
-  const createCaseMutation = useApiMutation({
-    endpoint: '/api/v1/cases',
-    method: 'POST',
-    onSuccess: () => {
-      refetch();
-      if (isMounted()) {
-        setIsModalOpen(false);
-      }
-    },
-  });
+  // TODO: Fix Enzyme mutations - temporarily disabled
+  // const createCaseMutation = useApiMutation({
+  //   endpoint: '/api/v1/cases',
+  //   method: 'POST',
+  //   onSuccess: () => {
+  //     refetch();
+  //     if (isMounted()) {
+  //       setIsModalOpen(false);
+  //     }
+  //   },
+  // });
 
-  const deleteCaseMutation = useApiMutation({
-    endpoint: '/api/v1/cases/:id',
-    method: 'DELETE',
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  // const deleteCaseMutation = useApiMutation({
+  //   endpoint: '/api/v1/cases/:id',
+  //   method: 'DELETE',
+  //   onSuccess: () => {
+  //     refetch();
+  //   },
+  // });
 
-  const updateCaseMutation = useApiMutation({
-    endpoint: '/api/v1/cases/:id',
-    method: 'PUT',
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  // const updateCaseMutation = useApiMutation({
+  //   endpoint: '/api/v1/cases/:id',
+  //   method: 'PUT',
+  //   onSuccess: () => {
+  //     refetch();
+  //   },
+  // });
 
   const addCase = useLatestCallback(async (newCase: Partial<Case>) => {
     try {
-      const createdCase = await createCaseMutation.mutate(newCase);
+      // Use regular API service instead of broken Enzyme mutation
+      const { ApiService } = await import('../services/apiService');
+      const createdCase = await ApiService.cases.create(newCase);
+      await refetch(); // Refresh the list
       return createdCase;
     } catch (err) {
       console.error('Failed to create case:', err);
@@ -80,7 +94,10 @@ export const useCaseList = () => {
 
   const deleteCase = useLatestCallback(async (caseId: string) => {
     try {
-      await deleteCaseMutation.mutate({ id: caseId });
+      // Use regular API service instead of broken Enzyme mutation
+      const { ApiService } = await import('../services/apiService');
+      await ApiService.cases.delete(caseId);
+      await refetch(); // Refresh the list
     } catch (err) {
       console.error('Failed to delete case:', err);
       throw err;
@@ -89,7 +106,10 @@ export const useCaseList = () => {
 
   const updateCase = useLatestCallback(async (caseId: string, updates: Partial<Case>) => {
     try {
-      const updatedCase = await updateCaseMutation.mutate({ id: caseId, ...updates });
+      // Use regular API service instead of broken Enzyme mutation
+      const { ApiService } = await import('../services/apiService');
+      const updatedCase = await ApiService.cases.update(caseId, updates);
+      await refetch(); // Refresh the list
       return updatedCase;
     } catch (err) {
       console.error('Failed to update case:', err);

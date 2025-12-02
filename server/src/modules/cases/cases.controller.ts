@@ -195,11 +195,20 @@ export class CasesController {
    * const orgCases = await findAll('org-uuid-123');
    */
   @Get()
-  @ApiOperation({ summary: 'Get all cases' })
+  @ApiOperation({ summary: 'Get all cases with pagination' })
   @ApiQuery({ name: 'orgId', required: false, description: 'Organization ID filter' })
-  @ApiResponse({ status: 200, description: 'Cases retrieved successfully', type: [Case] })
-  findAll(@Query('orgId') orgId?: string): Promise<Case[]> {
-    return this.casesService.findAll(orgId);
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (default: 1)', type: Number })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default: 20, max: 100)', type: Number })
+  @ApiResponse({ status: 200, description: 'Cases retrieved successfully' })
+  async findAll(
+    @Query('orgId') orgId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{ cases: Case[]; total: number; page: number; limit: number; totalPages: number }> {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? Math.min(parseInt(limit, 10), 100) : 20; // Max 100 items per page
+
+    return this.casesService.findAll(orgId, pageNum, limitNum);
   }
 
   /**

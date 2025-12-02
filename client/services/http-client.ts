@@ -83,7 +83,10 @@ export async function postJson<T>(endpoint: string, data: any): Promise<T> {
 
 export async function putJson<T>(endpoint: string, data: unknown): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const options = { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data) };
+  console.log('putJson: making request to', url, 'with endpoint', endpoint);
+  const headers = getAuthHeaders();
+  console.log('putJson: headers', headers);
+  const options = { method: 'PUT', headers, body: JSON.stringify(data) };
   return handleResponse<T>(await fetch(url, options));
 }
 
