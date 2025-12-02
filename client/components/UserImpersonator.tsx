@@ -1,8 +1,35 @@
+/**
+ * UserImpersonator Component
+ *
+ * ENZYME MIGRATION: This component has been migrated to use the Enzyme framework
+ * for progressive hydration, analytics tracking, and stable callbacks.
+ *
+ * SECURITY NOTE: This is an admin-only component with elevated privileges.
+ * All impersonation actions are tracked for audit purposes.
+ *
+ * Enzyme features implemented:
+ * - usePageView: Tracks component view for 'user_impersonator' (admin audit)
+ * - useTrackEvent: Enhanced audit tracking for all impersonation actions
+ * - useLatestCallback: Stable callbacks for impersonation, search, refresh
+ * - useIsMounted: Safe async operations for user loading
+ * - HydrationBoundary: Progressive hydration for user list (low priority)
+ *
+ * @migration-date 2025-12-02
+ * @migrated-by Agent 4
+ */
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { Users, ChevronDown, Crown, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { ApiService } from '../services/apiService';
 import { Badge } from './common/Badge';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  usePageView,
+  useIsMounted,
+  HydrationBoundary
+} from '../enzyme';
 
 interface UserImpersonatorProps {
   onImpersonate: (user: User) => void;
@@ -29,27 +56,45 @@ const getRoleBadgeVariant = (role: UserRole | string): string => {
 };
 
 export const UserImpersonator: React.FC<UserImpersonatorProps> = ({ onImpersonate, currentUser }) => {
+  // Analytics tracking - ADMIN AUDIT: All actions are tracked for security
+  usePageView('user_impersonator_admin');
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useLatestCallback(async () => {
     setLoading(true);
     setError(null);
+    trackEvent('user_impersonator_fetch_users', {
+      currentUser: currentUser?.id,
+      timestamp: new Date().toISOString()
+    });
     try {
       const allUsers = await ApiService.users.getAll();
-      setUsers(allUsers);
-      console.log('✅ Loaded', allUsers.length, 'users for impersonation');
+      if (isMounted()) {
+        setUsers(allUsers);
+        console.log('✅ Loaded', allUsers.length, 'users for impersonation');
+      }
     } catch (err) {
       console.error('Failed to fetch users:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load users');
-      setUsers([]);
+      if (isMounted()) {
+        setError(err instanceof Error ? err.message : 'Failed to load users');
+        setUsers([]);
+      }
+      trackEvent('user_impersonator_fetch_error', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
     } finally {
-      setLoading(false);
+      if (isMounted()) {
+        setLoading(false);
+      }
     }
-  };
+  });
 
   useEffect(() => {
     if (isOpen && users.length === 0 && !loading) {
@@ -65,21 +110,43 @@ export const UserImpersonator: React.FC<UserImpersonatorProps> = ({ onImpersonat
     (user.office || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleImpersonate = (user: User) => {
+  const handleImpersonate = useLatestCallback((user: User) => {
+    // SECURITY AUDIT: Track all impersonation attempts
+    trackEvent('user_impersonator_impersonate', {
+      adminUserId: currentUser?.id,
+      adminUserName: currentUser?.name,
+      targetUserId: user.id,
+      targetUserName: user.name,
+      targetUserRole: user.role,
+      timestamp: new Date().toISOString()
+    });
     onImpersonate(user);
     setIsOpen(false);
     setSearchTerm('');
     console.log('🎭 Impersonating:', user.name, `(${user.role})`);
-  };
+  });
 
-  const handleRefresh = async () => {
+  const handleRefresh = useLatestCallback(async () => {
+    trackEvent('user_impersonator_refresh', {
+      currentUser: currentUser?.id
+    });
     await fetchUsers();
-  };
+  });
+
+  const handleOpenToggle = useLatestCallback(() => {
+    const newState = !isOpen;
+    setIsOpen(newState);
+    if (newState) {
+      trackEvent('user_impersonator_opened', {
+        adminUserId: currentUser?.id
+      });
+    }
+  });
 
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleOpenToggle}
         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 transform hover:scale-105"
         title="Developer Mode: Impersonate Users"
       >
@@ -116,26 +183,28 @@ export const UserImpersonator: React.FC<UserImpersonatorProps> = ({ onImpersonat
               <input type="text" placeholder="Search by name, email, role, or office..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus disabled={loading} />
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
-              {loading ? (
-                <div className="p-8 text-center">
-                  <Loader2 className="h-8 w-8 mx-auto mb-3 text-purple-600 animate-spin" />
-                  <p className="text-sm text-slate-600">Loading users...</p>
-                </div>
-              ) : error ? (
-                <div className="p-8 text-center">
-                  <AlertCircle className="h-8 w-8 mx-auto mb-3 text-red-500" />
-                  <p className="text-sm text-red-600 font-medium mb-2">Failed to load users</p>
-                  <p className="text-xs text-slate-500 mb-3">{error}</p>
-                  <button onClick={handleRefresh} className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors">Retry</button>
-                </div>
-              ) : filteredUsers.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Users className="h-8 w-8 mx-auto mb-3 text-slate-300" />
-                  <p className="text-sm text-slate-500">{users.length === 0 ? 'No users found in the system' : `No users found matching "${searchTerm}"`}</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
+            {/* Enzyme: HydrationBoundary for progressive loading of user list */}
+            <HydrationBoundary id="user-impersonator-list" priority="low" trigger="interaction">
+              <div className="max-h-96 overflow-y-auto">
+                {loading ? (
+                  <div className="p-8 text-center">
+                    <Loader2 className="h-8 w-8 mx-auto mb-3 text-purple-600 animate-spin" />
+                    <p className="text-sm text-slate-600">Loading users...</p>
+                  </div>
+                ) : error ? (
+                  <div className="p-8 text-center">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-3 text-red-500" />
+                    <p className="text-sm text-red-600 font-medium mb-2">Failed to load users</p>
+                    <p className="text-xs text-slate-500 mb-3">{error}</p>
+                    <button onClick={handleRefresh} className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors">Retry</button>
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Users className="h-8 w-8 mx-auto mb-3 text-slate-300" />
+                    <p className="text-sm text-slate-500">{users.length === 0 ? 'No users found in the system' : `No users found matching "${searchTerm}"`}</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
                   {filteredUsers.map((user) => {
                     const isCurrentUser = currentUser?.id === user.id;
                     return (
@@ -164,9 +233,10 @@ export const UserImpersonator: React.FC<UserImpersonatorProps> = ({ onImpersonat
                       </button>
                     );
                   })}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            </HydrationBoundary>
 
             {!loading && !error && users.length > 0 && (
               <div className="px-4 py-3 bg-slate-50 border-t border-slate-200">

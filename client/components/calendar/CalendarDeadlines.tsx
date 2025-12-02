@@ -1,9 +1,24 @@
+/**
+ * CalendarDeadlines - Court Deadline Tracker Component
+ *
+ * CRITICAL LEGAL COMPONENT: Displays calculated court deadlines based on FRCP
+ * and local rules. Deadlines are calculated automatically with weekend/holiday
+ * exclusions where applicable.
+ *
+ * ENZYME MIGRATION:
+ * - Added usePageView for page tracking ('calendar_deadlines')
+ * - Added useTrackEvent for analytics on deadline interactions
+ * - Replaced useEffect/useState with useApiRequest for automatic caching & error handling
+ * - Added useIsMounted for safe async operations
+ * - Priority: HIGH - This is mission-critical legal compliance data
+ * - Hydration: IMMEDIATE - Deadlines must load instantly
+ */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../common/Table';
 import { Badge } from '../common/Badge';
 import { Calendar, AlertCircle, Clock } from 'lucide-react';
-import { ApiService } from '../../services/apiService';
+import { useApiRequest, usePageView, useTrackEvent, useIsMounted } from '../../enzyme';
 
 interface Deadline {
   id: number | string;
@@ -15,24 +30,26 @@ interface Deadline {
 }
 
 export const CalendarDeadlines: React.FC = () => {
-  const [deadlines, setDeadlines] = useState<Deadline[]>([]);
-  const [loading, setLoading] = useState(true);
+  // ENZYME: Analytics tracking
+  usePageView('calendar_deadlines');
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
 
-  useEffect(() => {
-    const fetchDeadlines = async () => {
-      try {
-        const data = await ApiService.getCalendarDeadlines();
-        setDeadlines(data || []);
-      } catch (error) {
-        console.error('Failed to fetch deadlines:', error);
-        setDeadlines([]);
-      } finally {
-        setLoading(false);
+  // ENZYME: Replace useEffect/useState with useApiRequest for automatic caching
+  const { data: deadlines = [], isLoading: loading } = useApiRequest<Deadline[]>({
+    endpoint: '/api/v1/calendar/deadlines',
+    options: {
+      staleTime: 1 * 60 * 1000, // 1 min cache - critical data needs fresh updates
+      onError: (err: any) => {
+        console.error('Failed to fetch deadlines:', err);
+        if (isMounted()) {
+          trackEvent('calendar_deadlines_error', {
+            error: err?.message || 'Unknown error'
+          });
+        }
       }
-    };
-
-    fetchDeadlines();
-  }, []);
+    }
+  });
 
   if (loading) {
     return <div className="p-4 text-center text-slate-500">Loading deadlines...</div>;
@@ -60,7 +77,18 @@ export const CalendarDeadlines: React.FC = () => {
             </TableHeader>
             <TableBody>
             {deadlines.map(d => (
-                <TableRow key={d.id}>
+                <TableRow
+                  key={d.id}
+                  onClick={() => {
+                    trackEvent('deadline_row_click', {
+                      deadline_id: d.id,
+                      status: d.status,
+                      type: d.type,
+                      matter: d.matter
+                    });
+                  }}
+                  className="cursor-pointer hover:bg-slate-50"
+                >
                 <TableCell className="font-bold text-slate-900 flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-slate-400"/> {d.date}
                 </TableCell>
@@ -81,7 +109,18 @@ export const CalendarDeadlines: React.FC = () => {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
         {deadlines.map(d => (
-            <div key={d.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+            <div
+              key={d.id}
+              className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer hover:border-blue-300 transition-colors"
+              onClick={() => {
+                trackEvent('deadline_card_click', {
+                  deadline_id: d.id,
+                  status: d.status,
+                  type: d.type,
+                  matter: d.matter
+                });
+              }}
+            >
                 <div className="flex justify-between items-start mb-2">
                     <span className="flex items-center text-sm font-bold text-slate-900">
                         <Calendar className="h-4 w-4 mr-2 text-slate-500"/> {d.date}

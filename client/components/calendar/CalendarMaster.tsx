@@ -1,3 +1,17 @@
+/**
+ * CalendarMaster - Master Calendar Grid Component
+ *
+ * Displays a monthly calendar view with all events (cases, tasks, compliance).
+ * Integrates with the master calendar system and syncs with external providers.
+ *
+ * ENZYME MIGRATION:
+ * - Added usePageView for page tracking ('calendar_master')
+ * - Added useTrackEvent for analytics on event interactions and month navigation
+ * - Added useLatestCallback for stable event handlers
+ * - Added useIsMounted for safe async operations
+ * - Priority: HIGH - Main calendar view, must load immediately
+ * - Hydration: IMMEDIATE - Core feature, loads first
+ */
 
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Briefcase, CheckSquare, Shield, Calendar, Clock, AlertCircle, ArrowRight } from 'lucide-react';
@@ -6,12 +20,18 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { BADGE_VARIANTS } from '../../constants/design-tokens';
+import { usePageView, useTrackEvent, useLatestCallback, useIsMounted } from '../../enzyme';
 
 interface CalendarMasterProps {
   onNavigateToCase?: (caseId: string) => void;
 }
 
 export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase }) => {
+  // ENZYME: Analytics tracking
+  usePageView('calendar_master');
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
+
   const {
     getEventsForDay,
     changeMonth,
@@ -19,8 +39,41 @@ export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase
     daysInMonth,
     firstDay
   } = useCalendarView();
-  
+
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+  // ENZYME: Stable callback for month navigation
+  const handleMonthChange = useLatestCallback((offset: number) => {
+    changeMonth(offset);
+    if (isMounted()) {
+      trackEvent('calendar_month_change', {
+        offset,
+        direction: offset > 0 ? 'next' : 'previous'
+      });
+    }
+  });
+
+  // ENZYME: Stable callback for event selection
+  const handleEventClick = useLatestCallback((event: any) => {
+    setSelectedEvent(event);
+    trackEvent('calendar_event_click', {
+      event_id: event.id,
+      event_type: event.type,
+      event_priority: event.priority,
+      event_title: event.title
+    });
+  });
+
+  // ENZYME: Stable callback for case navigation
+  const handleNavigateToCase = useLatestCallback((caseId: string) => {
+    if (onNavigateToCase) {
+      onNavigateToCase(caseId);
+      trackEvent('calendar_navigate_to_case', {
+        case_id: caseId
+      });
+    }
+    setSelectedEvent(null);
+  });
 
   const getEventStyle = (type: string, priority: string) => {
     if (type === 'case') return BADGE_VARIANTS['event-case'];
@@ -39,9 +92,9 @@ export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase
       <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
          <h3 className="font-bold text-slate-800 text-sm md:text-base">Monthly Overview</h3>
          <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
-             <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-md transition-colors"><ChevronLeft className="h-4 w-4 md:h-5 md:w-5 text-slate-600"/></button>
+             <button onClick={() => handleMonthChange(-1)} className="p-2 hover:bg-slate-100 rounded-md transition-colors"><ChevronLeft className="h-4 w-4 md:h-5 md:w-5 text-slate-600"/></button>
              <span className="px-2 md:px-4 font-bold text-slate-800 text-xs md:text-sm min-w-[100px] md:min-w-[140px] text-center">{monthLabel}</span>
-             <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-md transition-colors"><ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-slate-600"/></button>
+             <button onClick={() => handleMonthChange(1)} className="p-2 hover:bg-slate-100 rounded-md transition-colors"><ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-slate-600"/></button>
          </div>
       </div>
 
@@ -68,9 +121,9 @@ export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase
                 
                 <div className="mt-1 space-y-2 md:space-y-1">
                   {dayEvents.map((evt, idx) => (
-                    <div 
-                      key={`${evt.id}-${idx}`} 
-                      onClick={() => setSelectedEvent(evt)}
+                    <div
+                      key={`${evt.id}-${idx}`}
+                      onClick={() => handleEventClick(evt)}
                       className={`text-xs p-2 md:p-1 rounded border truncate cursor-pointer flex items-center hover:opacity-80 transition-opacity ${getEventStyle(evt.type, evt.priority as string)}`}
                     >
                       <span className="shrink-0">{getEventIcon(evt.type)}</span>
@@ -139,13 +192,10 @@ export const CalendarMaster: React.FC<CalendarMasterProps> = ({ onNavigateToCase
             <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
               <Button variant="secondary" onClick={() => setSelectedEvent(null)}>Close</Button>
               {selectedEvent.caseId && onNavigateToCase && (
-                <Button 
-                  variant="primary" 
-                  icon={ArrowRight} 
-                  onClick={() => {
-                    onNavigateToCase(selectedEvent.caseId);
-                    setSelectedEvent(null);
-                  }}
+                <Button
+                  variant="primary"
+                  icon={ArrowRight}
+                  onClick={() => handleNavigateToCase(selectedEvent.caseId)}
                 >
                   Go to Case
                 </Button>

@@ -1,12 +1,58 @@
+/**
+ * AdminPanel Component
+ *
+ * ENZYME MIGRATION:
+ * - usePageView for admin console page tracking
+ * - useLatestCallback for stable tab change handler
+ * - useTrackEvent for admin navigation analytics
+ * - HydrationBoundary for progressive loading of admin sections
+ *
+ * Analytics Events:
+ * - admin_tab_changed: When user switches between admin tabs
+ *
+ * Hydration Strategy:
+ * - Navigation: priority="high", trigger="immediate" (critical UI)
+ * - Hierarchy: priority="high", trigger="immediate" (most used tab)
+ * - Audit logs: priority="normal", trigger="visible" (data-heavy)
+ * - Platform manager: priority="normal", trigger="visible" (complex UI)
+ * - Integrations/Security: priority="low", trigger="idle" (rarely accessed)
+ *
+ * Performance:
+ * - Progressive hydration reduces initial load time
+ * - Tab switching tracked for usage analytics
+ * - Conditional rendering keeps DOM lightweight
+ */
 
 import React, { useState } from 'react';
 import { Activity, Shield, Link, Database, Network } from 'lucide-react';
 import { PageHeader, Card, Button, SidebarNavigation } from './common';
 import { useAdminPanel } from '../hooks/useAdminPanel';
+import {
+  usePageView,
+  useLatestCallback,
+  useTrackEvent,
+  HydrationBoundary
+} from '../enzyme';
 
 export const AdminPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('hierarchy');
+  // Enzyme: Page view tracking
+  usePageView('admin_panel');
+
+  // Enzyme: Event tracking
+  const trackEvent = useTrackEvent();
+
+  const [activeTab, setActiveTabState] = useState('hierarchy');
   const { logs } = useAdminPanel(activeTab);
+
+  // Enzyme: Stable callback with tracking for tab changes
+  const setActiveTab = useLatestCallback((tab: string) => {
+    const previousTab = activeTab;
+    trackEvent('admin_tab_changed', {
+      from: previousTab,
+      to: tab
+    });
+    setActiveTabState(tab);
+  });
 
   return (
     <div className="h-full flex flex-col space-y-4 animate-fade-in">
@@ -16,19 +62,41 @@ export const AdminPanel: React.FC = () => {
       />
       
       <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
-        <SidebarNavigation
-          items={navigationItems}
-          activeItem={activeTab}
-          onItemChange={setActiveTab}
-        />
+        {/* Enzyme: Navigation hydrated immediately (critical UI) */}
+        <HydrationBoundary id="admin-navigation" priority="high" trigger="immediate">
+          <SidebarNavigation
+            items={navigationItems}
+            activeItem={activeTab}
+            onItemChange={setActiveTab}
+          />
+        </HydrationBoundary>
 
         <Card className="flex-1 overflow-hidden flex flex-col p-0">
-            {activeTab === 'hierarchy' && <AdminHierarchy />}
-            {activeTab === 'logs' && <AdminAuditLog logs={logs} />}
-            {activeTab === 'data' && <AdminPlatformManager />}
+            {/* Enzyme: Hierarchy tab hydrated immediately (most used) */}
+            {activeTab === 'hierarchy' && (
+              <HydrationBoundary id="admin-hierarchy-tab" priority="high" trigger="immediate">
+                <AdminHierarchy />
+              </HydrationBoundary>
+            )}
 
+            {/* Enzyme: Audit logs hydrated when visible (data-heavy) */}
+            {activeTab === 'logs' && (
+              <HydrationBoundary id="admin-logs-tab" priority="normal" trigger="visible">
+                <AdminAuditLog logs={logs} />
+              </HydrationBoundary>
+            )}
+
+            {/* Enzyme: Platform manager hydrated when visible (complex UI) */}
+            {activeTab === 'data' && (
+              <HydrationBoundary id="admin-platform-tab" priority="normal" trigger="visible">
+                <AdminPlatformManager />
+              </HydrationBoundary>
+            )}
+
+            {/* Enzyme: Integrations hydrated when idle (rarely accessed) */}
             {activeTab === 'integrations' && (
-            <div className="p-8 space-y-6 overflow-auto">
+              <HydrationBoundary id="admin-integrations-tab" priority="low" trigger="idle">
+                <div className="p-8 space-y-6 overflow-auto">
                 <h3 className="font-bold text-lg mb-4">Connected Platforms</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border p-4 rounded-lg flex items-center justify-between">
@@ -54,9 +122,12 @@ export const AdminPanel: React.FC = () => {
                 </div>
                 </div>
             </div>
+              </HydrationBoundary>
             )}
 
+            {/* Enzyme: Security hydrated when idle (rarely accessed) */}
             {activeTab === 'security' && (
+              <HydrationBoundary id="admin-security-tab" priority="low" trigger="idle">
                 <div className="p-8 overflow-auto">
                     <h3 className="font-bold text-lg mb-6">Policy Enforcement</h3>
                     <div className="space-y-4">
@@ -76,6 +147,7 @@ export const AdminPanel: React.FC = () => {
                         </div>
                     </div>
                 </div>
+              </HydrationBoundary>
             )}
         </Card>
       </div>

@@ -1,20 +1,86 @@
+/**
+ * AdminHierarchy Component
+ *
+ * ENZYME MIGRATION:
+ * - usePageView for hierarchy page tracking
+ * - useIsMounted for safe async state updates
+ * - useLatestCallback for stable selection handlers
+ * - useTrackEvent for hierarchy navigation analytics
+ * - HydrationBoundary for progressive loading of org/group/user columns
+ *
+ * Analytics Events:
+ * - admin_org_selected: When user selects an organization
+ * - admin_group_selected: When user selects a group
+ * - admin_add_org_clicked: When user clicks Add Org button
+ * - admin_add_group_clicked: When user clicks Add Group button
+ * - admin_add_user_clicked: When user clicks Add User button
+ *
+ * Hydration Strategy:
+ * - Header/Actions: priority="high", trigger="immediate" (critical UI)
+ * - Organizations Column: priority="high", trigger="immediate" (primary navigation)
+ * - Groups Column: priority="normal", trigger="visible" (secondary navigation)
+ * - Users Table: priority="normal", trigger="visible" (data display)
+ *
+ * Performance:
+ * - Progressive hydration improves initial load
+ * - Safe async updates prevent memory leaks
+ * - Hierarchical navigation tracked for usage analytics
+ */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, Users, User, ChevronRight, Shield, Globe, 
-  MoreVertical, Plus, CheckCircle 
+import {
+  Building2, Users, User, ChevronRight, Shield, Globe,
+  MoreVertical, Plus, CheckCircle
 } from 'lucide-react';
 import { ApiService } from '../../services/apiService';
 import { Organization, Group, User as UserType } from '../../types';
 import { Button, Badge } from '../common';
 import { UserAvatar } from '../common/UserAvatar';
+import {
+  usePageView,
+  useIsMounted,
+  useLatestCallback,
+  useTrackEvent,
+  HydrationBoundary
+} from '../../enzyme';
 
 export const AdminHierarchy: React.FC = () => {
+  // Enzyme: Page view tracking
+  usePageView('admin_hierarchy');
+
+  // Enzyme: Event tracking
+  const trackEvent = useTrackEvent();
+
+  // Enzyme: Safe async state updates
+  const isMounted = useIsMounted();
+
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedOrgId, setSelectedOrgIdState] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupIdState] = useState<string | null>(null);
+
+  // Enzyme: Stable callback with tracking for org selection
+  const setSelectedOrgId = useLatestCallback((orgId: string) => {
+    trackEvent('admin_org_selected', {
+      orgId,
+      previousOrgId: selectedOrgId
+    });
+    setSelectedOrgIdState(orgId);
+    setSelectedGroupIdState(null); // Reset group selection
+  });
+
+  // Enzyme: Stable callback with tracking for group selection
+  const setSelectedGroupId = useLatestCallback((groupId: string | null) => {
+    if (groupId) {
+      trackEvent('admin_group_selected', {
+        groupId,
+        orgId: selectedOrgId,
+        previousGroupId: selectedGroupId
+      });
+    }
+    setSelectedGroupIdState(groupId);
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,43 +90,71 @@ export const AdminHierarchy: React.FC = () => {
                 ApiService.getGroups(),
                 ApiService.getUsers()
             ]);
-            setOrgs(o);
-            setGroups(g);
-            setUsers(u);
-            if (o.length > 0 && !selectedOrgId) setSelectedOrgId(o[0].id);
+
+            // Enzyme: Only update state if component is still mounted
+            if (isMounted()) {
+              setOrgs(o);
+              setGroups(g);
+              setUsers(u);
+              if (o.length > 0 && !selectedOrgId) setSelectedOrgIdState(o[0].id);
+            }
         } catch (e) {
             console.error("Failed to fetch hierarchy data", e);
         }
     };
     fetchData();
-  }, [selectedOrgId]);
+  }, [isMounted, selectedOrgId]);
 
   const selectedOrg = orgs.find(o => o.id === selectedOrgId);
   const orgGroups = groups.filter(g => g.orgId === selectedOrgId);
-  
+
   // Users in the selected group OR if no group selected, all users in the org
-  const displayedUsers = users.filter(u => 
-    u.orgId === selectedOrgId && 
+  const displayedUsers = users.filter(u =>
+    u.orgId === selectedOrgId &&
     (!selectedGroupId || u.groupIds?.includes(selectedGroupId))
   );
 
+  // Enzyme: Stable callbacks with tracking for add actions
+  const handleAddOrg = useLatestCallback(() => {
+    trackEvent('admin_add_org_clicked');
+    // TODO: Open org creation modal
+  });
+
+  const handleAddGroup = useLatestCallback(() => {
+    trackEvent('admin_add_group_clicked', {
+      orgId: selectedOrgId
+    });
+    // TODO: Open group creation modal
+  });
+
+  const handleAddUser = useLatestCallback(() => {
+    trackEvent('admin_add_user_clicked', {
+      orgId: selectedOrgId,
+      groupId: selectedGroupId
+    });
+    // TODO: Open user creation modal
+  });
+
   return (
     <div className="flex flex-col h-full bg-slate-50 border border-slate-200 rounded-lg overflow-hidden animate-fade-in">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm z-10 shrink-0">
-        <div>
-          <h3 className="font-bold text-slate-900 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-blue-600"/> Enterprise Hierarchy
-          </h3>
-          <p className="text-xs text-slate-500 hidden md:block">Manage multi-tenant organizations, groups, and user access.</p>
+      {/* Enzyme: Header hydrated immediately (critical UI) */}
+      <HydrationBoundary id="admin-hierarchy-header" priority="high" trigger="immediate">
+        <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm z-10 shrink-0">
+          <div>
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-blue-600"/> Enterprise Hierarchy
+            </h3>
+            <p className="text-xs text-slate-500 hidden md:block">Manage multi-tenant organizations, groups, and user access.</p>
+          </div>
+          <Button variant="primary" size="sm" icon={Plus} onClick={handleAddOrg}>Add Org</Button>
         </div>
-        <Button variant="primary" size="sm" icon={Plus}>Add Org</Button>
-      </div>
+      </HydrationBoundary>
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        {/* Column 1: Organizations */}
-        <div className="w-full md:w-1/4 md:min-w-[250px] border-b md:border-b-0 md:border-r border-slate-200 bg-white flex flex-col h-48 md:h-full">
+
+        {/* Enzyme: Organizations column hydrated immediately (primary navigation) */}
+        <HydrationBoundary id="admin-hierarchy-orgs" priority="high" trigger="immediate">
+          <div className="w-full md:w-1/4 md:min-w-[250px] border-b md:border-b-0 md:border-r border-slate-200 bg-white flex flex-col h-48 md:h-full">
           <div className="p-3 bg-slate-50 border-b border-slate-100 font-bold text-xs text-slate-500 uppercase tracking-wide shrink-0">
             Organizations
           </div>
@@ -88,15 +182,17 @@ export const AdminHierarchy: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
+          </div>
+        </HydrationBoundary>
 
-        {/* Column 2: Groups */}
-        <div className="w-full md:w-1/4 md:min-w-[250px] border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/30 flex flex-col h-48 md:h-full">
+        {/* Enzyme: Groups column hydrated when visible (secondary navigation) */}
+        <HydrationBoundary id="admin-hierarchy-groups" priority="normal" trigger="visible">
+          <div className="w-full md:w-1/4 md:min-w-[250px] border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/30 flex flex-col h-48 md:h-full">
           <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
             <span className="font-bold text-xs text-slate-500 uppercase tracking-wide">
               Groups & Depts
             </span>
-            {selectedOrgId && <button className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Plus className="h-4 w-4"/></button>}
+            {selectedOrgId && <button onClick={handleAddGroup} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Plus className="h-4 w-4"/></button>}
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {!selectedOrgId ? (
@@ -136,17 +232,19 @@ export const AdminHierarchy: React.FC = () => {
               </>
             )}
           </div>
-        </div>
+          </div>
+        </HydrationBoundary>
 
-        {/* Column 3: Users */}
-        <div className="flex-1 bg-white flex flex-col min-w-[300px] h-full overflow-hidden">
+        {/* Enzyme: Users column hydrated when visible (data display) */}
+        <HydrationBoundary id="admin-hierarchy-users" priority="normal" trigger="visible">
+          <div className="flex-1 bg-white flex flex-col min-w-[300px] h-full overflow-hidden">
           <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
             <span className="font-bold text-xs text-slate-500 uppercase tracking-wide truncate max-w-[200px]">
               {selectedGroupId ? `${orgGroups.find(g => g.id === selectedGroupId)?.name}` : 'All Users'}
             </span>
             <div className="flex gap-2">
                <span className="text-xs bg-white border px-2 py-0.5 rounded text-slate-500">{displayedUsers.length}</span>
-               <button className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Plus className="h-4 w-4"/></button>
+               <button onClick={handleAddUser} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Plus className="h-4 w-4"/></button>
             </div>
           </div>
           
@@ -216,7 +314,8 @@ export const AdminHierarchy: React.FC = () => {
                 </>
             )}
           </div>
-        </div>
+          </div>
+        </HydrationBoundary>
       </div>
     </div>
   );

@@ -1,39 +1,98 @@
+/**
+ * UserProfile Component
+ *
+ * ENZYME MIGRATION: This component has been migrated to use the Enzyme framework
+ * for progressive hydration, analytics tracking, and stable callbacks.
+ *
+ * Enzyme features implemented:
+ * - usePageView: Tracks page view for 'user_profile'
+ * - useTrackEvent: Tracks profile actions (edit_started, field_updated, save_clicked)
+ * - useLatestCallback: Stable callbacks for edit mode, field updates, and save
+ * - HydrationBoundary: Progressive hydration for profile details (high priority)
+ *
+ * @migration-date 2025-12-02
+ * @migrated-by Agent 4
+ */
+
 import React from 'react';
 import { PageHeader, Avatar } from './common';
 import { User as UserIcon, Mail, Phone, Settings, Save } from 'lucide-react';
 import { Button } from './common/Button';
 import { useUserProfile } from '../hooks/useUserProfile';
+import {
+  useLatestCallback,
+  useTrackEvent,
+  usePageView,
+  HydrationBoundary
+} from '../enzyme';
 
 interface UserProfileProps {
   userId: string; // Current user ID
 }
 
 export const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
+  // Analytics tracking
+  usePageView('user_profile');
+  const trackEvent = useTrackEvent();
+
   const {
     user,
     profile,
     loading,
     saving,
     editMode,
-    setEditMode,
+    setEditMode: originalSetEditMode,
     bio,
-    setBio,
+    setBio: originalSetBio,
     phone,
-    setPhone,
+    setPhone: originalSetPhone,
     skills,
-    setSkills,
+    setSkills: originalSetSkills,
     theme,
-    setTheme,
-    handleSave
+    setTheme: originalSetTheme,
+    handleSave: originalHandleSave
   } = useUserProfile(userId);
+
+  // Wrap handlers with useLatestCallback and add tracking
+  const setEditMode = useLatestCallback((enabled: boolean) => {
+    originalSetEditMode(enabled);
+    trackEvent('user_profile_edit_mode_toggled', { enabled });
+  });
+
+  const setBio = useLatestCallback((value: string) => {
+    originalSetBio(value);
+  });
+
+  const setPhone = useLatestCallback((value: string) => {
+    originalSetPhone(value);
+  });
+
+  const setSkills = useLatestCallback((value: string) => {
+    originalSetSkills(value);
+  });
+
+  const setTheme = useLatestCallback((value: string) => {
+    originalSetTheme(value);
+    trackEvent('user_profile_theme_changed', { theme: value });
+  });
+
+  const handleSave = useLatestCallback(async () => {
+    trackEvent('user_profile_save_clicked', {
+      userId,
+      hasBio: !!bio,
+      hasPhone: !!phone,
+      skillCount: skills.split(',').filter(s => s.trim()).length
+    });
+    await originalHandleSave();
+  });
 
   if (loading) return <div className="p-10 text-center text-slate-500">Loading profile...</div>;
   if (!user) return <div className="p-10 text-center text-red-500">User not found</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader 
-        title="User Profile" 
+      <PageHeader
+        title="User Profile"
         subtitle="Manage your personal information and preferences."
         actions={
             !editMode ? (
@@ -49,7 +108,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Enzyme: HydrationBoundary for progressive loading of profile details */}
+      <HydrationBoundary id="user-profile-details" priority="high" trigger="immediate">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Info Card */}
         <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 text-center">
@@ -142,7 +203,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                 </div>
             </div>
         </div>
-      </div>
+        </div>
+      </HydrationBoundary>
     </div>
   );
 };

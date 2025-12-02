@@ -5,8 +5,23 @@
 export { enzymeClient, createScopedClient, isApiError } from './client';
 export type { ApiClientConfig, ApiError } from './client';
 
-// React hooks - Custom simplified hooks
-export { useApiRequest, useApiMutation, useLazyApiRequest } from './hooks';
+// React hooks - Custom simplified hooks with enhanced features
+export {
+  useApiRequest,
+  useApiMutation,
+  useLazyApiRequest,
+  invalidateCache,
+  clearCache,
+} from './hooks';
+
+// Hook types and interfaces
+export type {
+  UseApiRequestOptions,
+  UseApiRequestResult,
+  UseApiMutationOptions,
+  UseApiMutationResult,
+  UseLazyApiRequestResult,
+} from './hooks';
 
 // Re-export Enzyme's built-in hooks for advanced use cases
 export {
