@@ -20,6 +20,7 @@ import { AppProviders } from './core/providers/AppProviders';
 import { AppRouter } from './core/router';
 import { useAuth } from './contexts/AuthContext';
 import { Sidebar } from './components/Sidebar';
+import { TokenRefreshButton } from './components/common';
 import { Case, User } from './types';
 import { ApiService } from './services/apiService';
 import { useHashRouter } from './enzyme';
@@ -328,6 +329,9 @@ const AppContent: React.FC = () => {
           </div>
         </main>
       </div>
+
+      {/* Token Refresh Button - visible when SHOW_TOKEN_REFRESH_BUTTON feature flag is enabled */}
+      <TokenRefreshButton position="bottom-right" />
     </div>
   );
 };

@@ -38,6 +38,7 @@ export { StepHeader } from './StepHeader';
 export { TableContainer, TableHeader, TableBody, TableRow, TableHead, TableCell } from './Table';
 export { Tabs } from './Tabs';
 export { TabNavigation } from './TabNavigation';
+export { TokenRefreshButton } from './TokenRefreshButton';
 export { UserAvatar } from './UserAvatar';
 
 // Re-export types for convenience

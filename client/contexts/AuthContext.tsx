@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '../types';
 import { ApiService } from '../services/apiService';
+import { FEATURE_FLAGS, AUTH_CONFIG } from '../config';
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +13,16 @@ interface AuthContextType {
   impersonateUser: (user: User) => void;
   isImpersonating: boolean;
   stopImpersonating: () => void;
+  /** Refresh the authentication token without affecting other settings */
+  refreshToken: () => Promise<boolean>;
+  /** Whether the app is in dev login bypass mode */
+  isDevBypassMode: boolean;
+  /** Token expiry warning state */
+  tokenExpiryWarning: boolean;
+  /** Last error message from auth operations */
+  error: string | null;
+  /** Clear the error state */
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,10 +44,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [originalUser, setOriginalUser] = useState<User | null>(null);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tokenExpiryWarning, setTokenExpiryWarning] = useState(false);
+  const [isDevBypassMode, setIsDevBypassMode] = useState(false);
+
+  // Clear error helper
+  const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('authToken');
+      // Check for DEV_LOGIN_BYPASS mode
+      if (FEATURE_FLAGS.DEV_LOGIN_BYPASS) {
+        console.log('🔓 [DEV] Login bypass enabled - auto-authenticating as admin');
+        setUser(AUTH_CONFIG.DEV_ADMIN_USER as User);
+        setIsDevBypassMode(true);
+        setLoading(false);
+        return;
+      }
+
+      const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
       if (token) {
         try {
           const currentUser = await ApiService.auth.getCurrentUser();
@@ -44,17 +70,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Update last active timestamp
           if (currentUser.id) {
             try {
-              console.log('AuthContext: Calling updateLastActive for user', currentUser.id);
+              if (FEATURE_FLAGS.ENABLE_DEBUG_LOGGING) {
+                console.log('AuthContext: Calling updateLastActive for user', currentUser.id);
+              }
               await ApiService.userProfiles.updateLastActive(currentUser.id);
-              console.log('AuthContext: updateLastActive succeeded');
-            } catch (error) {
-              console.error('Failed to update last active timestamp:', error);
+            } catch (updateError) {
+              console.error('Failed to update last active timestamp:', updateError);
             }
           }
         } catch (_error) {
           // Token is invalid
-          localStorage.removeItem('authToken');
-          sessionStorage.removeItem('authToken');
+          localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+          sessionStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+          setError('Session expired. Please log in again.');
         }
       }
       setLoading(false);
@@ -64,6 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    clearError();
     try {
       const response = await ApiService.auth.login(email, password);
       ApiService.setAuthToken(response.access_token);
@@ -72,17 +101,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Update last active timestamp
       if (response.user.id) {
         try {
-          console.log('AuthContext login: Calling updateLastActive for user', response.user.id);
+          if (FEATURE_FLAGS.ENABLE_DEBUG_LOGGING) {
+            console.log('AuthContext login: Calling updateLastActive for user', response.user.id);
+          }
           await ApiService.userProfiles.updateLastActive(response.user.id);
-          console.log('AuthContext login: updateLastActive succeeded');
-        } catch (error) {
-          console.error('Failed to update last active timestamp after login:', error);
+        } catch (updateError) {
+          console.error('Failed to update last active timestamp after login:', updateError);
         }
       }
 
       return true;
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
+      setError(message);
+      console.error('Login failed:', err);
+      return false;
+    }
+  };
+
+  /**
+   * Refresh the authentication token without affecting other user settings
+   * This is useful when changing servers or when the token is about to expire
+   */
+  const refreshToken = async (): Promise<boolean> => {
+    // In dev bypass mode, just return true
+    if (isDevBypassMode) {
+      console.log('🔓 [DEV] Token refresh skipped in bypass mode');
+      return true;
+    }
+
+    try {
+      // Try to get current user to validate/refresh the session
+      const currentUser = await ApiService.auth.getCurrentUser();
+      setUser(currentUser);
+      setTokenExpiryWarning(false);
+      setError(null);
+
+      if (FEATURE_FLAGS.ENABLE_DEBUG_LOGGING) {
+        console.log('✅ Token refreshed successfully');
+      }
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to refresh token';
+      setError(message);
+      console.error('Token refresh failed:', err);
       return false;
     }
   };
@@ -136,6 +198,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     impersonateUser,
     isImpersonating,
     stopImpersonating,
+    refreshToken,
+    isDevBypassMode,
+    tokenExpiryWarning,
+    error,
+    clearError,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
