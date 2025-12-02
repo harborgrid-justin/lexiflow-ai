@@ -148,8 +148,8 @@ export class CasesController {
             tasks: { type: 'array' },
           },
         },
-      }
-    }
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Invalid PACER data' })
   async importFromPacer(

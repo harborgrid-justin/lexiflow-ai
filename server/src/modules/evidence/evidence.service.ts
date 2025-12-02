@@ -30,7 +30,7 @@ export class EvidenceService {
         'organization',
         { association: 'chainOfCustody', separate: true },
       ],
-    });
+    }) || [];
   }
 
   async findOne(id: string): Promise<Evidence> {

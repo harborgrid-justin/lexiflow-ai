@@ -71,21 +71,29 @@ export class Attorney extends Model {
   @Column(DataType.STRING)
   email?: string;
 
-  @ApiProperty({ example: '703-837-5000', description: 'Phone number' })
+  @ApiProperty({ example: '703-837-5000', description: 'Office phone number' })
   @Column(DataType.STRING)
-  phone?: string;
+  office_phone?: string;
 
-  @ApiProperty({ example: '703-555-0100', description: 'Personal phone' })
+  @ApiProperty({ example: '703-555-0100', description: 'Mobile phone' })
   @Column(DataType.STRING)
-  personal_phone?: string;
+  mobile_phone?: string;
 
-  @ApiProperty({ example: '703-555-0101', description: 'Business phone' })
+  @ApiProperty({ example: 'VA123456', description: 'Bar number' })
   @Column(DataType.STRING)
-  business_phone?: string;
+  bar_number?: string;
 
-  @ApiProperty({ example: '703-555-0102', description: 'Fax number' })
+  @ApiProperty({ example: 'VA', description: 'Bar state' })
   @Column(DataType.STRING)
-  fax?: string;
+  bar_state?: string;
+
+  @ApiProperty({ example: true, description: 'Is lead attorney' })
+  @Column(DataType.BOOLEAN)
+  is_lead?: boolean;
+
+  @ApiProperty({ example: true, description: 'Pro hac vice status' })
+  @Column(DataType.BOOLEAN)
+  pro_hac_vice?: boolean;
 
   @ApiProperty({ example: 'MERCERTRIGIANI', description: 'Law firm name' })
   @Column(DataType.STRING)
@@ -93,15 +101,11 @@ export class Attorney extends Model {
 
   @ApiProperty({ example: '112 South Alfred Street', description: 'Address line 1' })
   @Column(DataType.STRING)
-  address1?: string;
+  address_line1?: string;
 
   @ApiProperty({ example: 'Suite 100', description: 'Address line 2' })
   @Column(DataType.STRING)
-  address2?: string;
-
-  @ApiProperty({ example: '', description: 'Address line 3' })
-  @Column(DataType.STRING)
-  address3?: string;
+  address_line2?: string;
 
   @ApiProperty({ example: 'Alexandria', description: 'City' })
   @Column(DataType.STRING)
@@ -115,25 +119,25 @@ export class Attorney extends Model {
   @Column(DataType.STRING)
   zip?: string;
 
-  @ApiProperty({ example: 'Main Office', description: 'Office name' })
+  @ApiProperty({ example: 'US', description: 'Country' })
   @Column(DataType.STRING)
-  office?: string;
-
-  @ApiProperty({ example: '101', description: 'Unit number' })
-  @Column(DataType.STRING)
-  unit?: string;
-
-  @ApiProperty({ example: '5B', description: 'Room number' })
-  @Column(DataType.STRING)
-  room?: string;
+  country?: string;
 
   @ApiProperty({ example: '2025-12-31T00:00:00Z', description: 'Termination date' })
   @Column(DataType.DATE)
   termination_date?: Date;
 
-  @ApiProperty({ example: '[COR NTC Retained]', description: 'Notice information' })
+  @ApiProperty({ example: '2025-03-17T10:00:00Z', description: 'Termination notice date' })
+  @Column(DataType.DATE)
+  termination_notice_date?: Date;
+
+  @ApiProperty({ example: 'John Doe', description: 'Notice to name' })
   @Column(DataType.STRING)
-  notice_info?: string;
+  notice_to_name?: string;
+
+  @ApiProperty({ example: '123 Main St', description: 'Notice to address' })
+  @Column(DataType.STRING)
+  notice_to_address?: string;
 
   @ApiProperty({ example: 'Retained', description: 'Status (Retained, Pro Se, etc.)' })
   @Column(DataType.STRING)

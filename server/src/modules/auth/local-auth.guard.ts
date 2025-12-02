@@ -42,9 +42,9 @@ export class LocalAuthGuard extends AuthGuard('local') {
   handleRequest<TUser = unknown>(
     err: unknown,
     user: unknown,
-    info: unknown,
-    context: ExecutionContext,
-    status?: unknown,
+    _info: unknown,
+    _context: ExecutionContext,
+    _status?: unknown,
   ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Invalid credentials');

@@ -27,7 +27,7 @@ export class ClientsService {
         {
           model: Case,
           as: 'cases',
-        }
+        },
       ],
     });
 
@@ -50,13 +50,13 @@ export class ClientsService {
   }
 
   async create(createClientDto: CreateClientDto): Promise<Client> {
-    return this.clientModel.create(createClientDto);
+    return this.clientModel.create(createClientDto as any);
   }
 
   async update(id: string, updateClientDto: UpdateClientDto): Promise<Client> {
     const [affectedCount] = await this.clientModel.update(
       updateClientDto,
-      { where: { id } }
+      { where: { id } },
     );
 
     if (affectedCount === 0) {

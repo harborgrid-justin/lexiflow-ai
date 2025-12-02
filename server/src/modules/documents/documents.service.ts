@@ -20,8 +20,8 @@ export class DocumentsService {
 
   async findAll(caseId?: string, orgId?: string): Promise<Document[]> {
     const whereClause: Record<string, string> = {};
-    if (caseId) whereClause.case_id = caseId;
-    if (orgId) whereClause.owner_org_id = orgId;
+    if (caseId) {whereClause.case_id = caseId;}
+    if (orgId) {whereClause.owner_org_id = orgId;}
 
     return this.documentModel.findAll({
       where: whereClause,
@@ -56,7 +56,7 @@ export class DocumentsService {
 
   async findByType(type: string, orgId?: string): Promise<Document[]> {
     const whereClause: Record<string, string> = { type };
-    if (orgId) whereClause.owner_org_id = orgId;
+    if (orgId) {whereClause.owner_org_id = orgId;}
 
     return this.documentModel.findAll({
       where: whereClause,

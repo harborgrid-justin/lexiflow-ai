@@ -9,7 +9,7 @@ export class CreateOrganizationDto {
   @ApiPropertyOptional({
     example: 'Law Firm',
     description: 'Type of organization',
-    enum: ['Law Firm', 'Corporate', 'Government', 'Court', 'Vendor']
+    enum: ['Law Firm', 'Corporate', 'Government', 'Court', 'Vendor'],
   })
   @IsOptional()
   @IsString()
@@ -54,7 +54,7 @@ export class CreateOrganizationDto {
   @ApiPropertyOptional({
     example: 'active',
     description: 'Organization status',
-    enum: ['active', 'inactive', 'suspended']
+    enum: ['active', 'inactive', 'suspended'],
   })
   @IsOptional()
   @IsString()

@@ -20,7 +20,7 @@ export class OpposingCounselService {
     const profile = await this.counselModel.findByPk(id);
 
     if (!profile) {
-      throw new NotFoundException(\`Opposing counsel profile with ID \${id} not found\`);
+      throw new NotFoundException(`Opposing counsel profile with ID ${id} not found`);
     }
 
     return profile;
@@ -29,7 +29,7 @@ export class OpposingCounselService {
   async findByName(name: string): Promise<OpposingCounselProfile[]> {
     return this.counselModel.findAll({
       where: {
-        name: { [Op.like]: \`%\${name}%\` },
+        name: { [Op.like]: `%${name}%` },
       },
     });
   }

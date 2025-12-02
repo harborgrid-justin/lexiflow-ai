@@ -148,7 +148,7 @@ export class DocumentsController {
       documentData.case_id = metadata.case_id;
     }
 
-    return this.documentsService.create(documentData);
+    return this.documentsService.create(documentData as CreateDocumentDto);
   }
 
   @Get()

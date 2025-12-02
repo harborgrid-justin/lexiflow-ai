@@ -5,7 +5,6 @@ import {
   DataType,
   PrimaryKey,
   Default,
-  HasMany,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 

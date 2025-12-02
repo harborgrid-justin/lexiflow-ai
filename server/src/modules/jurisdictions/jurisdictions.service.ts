@@ -46,13 +46,13 @@ export class JurisdictionsService {
   }
 
   async create(createJurisdictionDto: CreateJurisdictionDto): Promise<Jurisdiction> {
-    return this.jurisdictionModel.create(createJurisdictionDto);
+    return this.jurisdictionModel.create(createJurisdictionDto as any);
   }
 
   async update(id: string, updateJurisdictionDto: UpdateJurisdictionDto): Promise<Jurisdiction> {
     const [affectedCount] = await this.jurisdictionModel.update(
       updateJurisdictionDto,
-      { where: { id } }
+      { where: { id } },
     );
 
     if (affectedCount === 0) {

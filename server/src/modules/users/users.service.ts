@@ -26,7 +26,7 @@ export class UsersService {
     const user = await this.userModel.findByPk(id, {
       include: [
         'organization',
-        { model: UserProfile, as: 'profile' }
+        { model: UserProfile, as: 'profile' },
       ],
       attributes: { exclude: ['password_hash'] },
     });
@@ -93,11 +93,11 @@ export class UsersService {
       const newFirstName = first_name || user.first_name;
       const newLastName = last_name || user.last_name;
       updateData['name'] = `${newFirstName} ${newLastName}`;
-      if (first_name) updateData['first_name'] = first_name;
-      if (last_name) updateData['last_name'] = last_name;
+      if (first_name) {updateData['first_name'] = first_name;}
+      if (last_name) {updateData['last_name'] = last_name;}
     }
 
-    const [affectedCount, affectedRows] = await this.userModel.update(
+    const [affectedCount, _affectedRows] = await this.userModel.update(
       updateData,
       {
         where: { id },
@@ -125,7 +125,7 @@ export class UsersService {
   async updateLastActive(id: string): Promise<void> {
     await this.userModel.update(
       { last_active: new Date() },
-      { where: { id } }
+      { where: { id } },
     );
   }
 }

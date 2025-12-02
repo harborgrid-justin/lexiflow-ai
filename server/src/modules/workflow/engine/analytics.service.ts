@@ -79,7 +79,7 @@ export class AnalyticsService {
     
     return {
       velocity,
-      unit: 'tasks/day'
+      unit: 'tasks/day',
     };
   }
 

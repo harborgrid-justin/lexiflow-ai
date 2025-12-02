@@ -346,7 +346,7 @@ export class SearchService {
   /**
    * Find similar documents based on document ID
    */
-  async findSimilarDocuments(documentId: string, limit?: number, user?: User) {
+  async findSimilarDocuments(documentId: string, limit?: number, _user?: User) {
     const results = await this.vectorSearchService.findSimilarDocuments(
       documentId,
       limit || 5,

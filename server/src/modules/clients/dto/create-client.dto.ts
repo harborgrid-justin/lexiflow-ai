@@ -28,7 +28,7 @@ export class CreateClientDto {
   @ApiPropertyOptional({
     example: 'active',
     description: 'Client status',
-    enum: ['active', 'inactive', 'archived']
+    enum: ['active', 'inactive', 'archived'],
   })
   @IsOptional()
   @IsString()

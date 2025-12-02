@@ -23,7 +23,7 @@ export class PlaybooksService {
     });
 
     if (!playbook) {
-      throw new NotFoundException(\`Playbook with ID \${id} not found\`);
+      throw new NotFoundException(`Playbook with ID ${id} not found`);
     }
 
     return playbook;
@@ -39,7 +39,7 @@ export class PlaybooksService {
   async findByMatterType(matterType: string): Promise<Playbook[]> {
     return this.playbookModel.findAll({
       where: {
-        matter_type: { [Op.like]: \`%\${matterType}%\` },
+        matter_type: { [Op.like]: `%${matterType}%` },
       },
       include: ['jurisdiction'],
     });

@@ -72,7 +72,7 @@ export class PartiesService {
     const affectedCount = await this.partyModel.destroy({
       where: {
         case_id: caseId,
-        linked_org_id: userId // Assuming userId is mapped to linked_org_id
+        linked_org_id: userId, // Assuming userId is mapped to linked_org_id
       },
     });
 

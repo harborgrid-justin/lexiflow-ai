@@ -9,7 +9,7 @@ export class EthicalWallService {
     private ethicalWallModel: typeof EthicalWall,
   ) {}
 
-  async findAll(orgId?: string): Promise<EthicalWall[]> {
+  async findAll(_orgId?: string): Promise<EthicalWall[]> {
     const whereClause: any = {};
     // Add org filtering if your schema supports it
     return this.ethicalWallModel.findAll({
@@ -25,7 +25,7 @@ export class EthicalWallService {
     });
 
     if (!wall) {
-      throw new NotFoundException(\`Ethical wall with ID \${id} not found\`);
+      throw new NotFoundException(`Ethical wall with ID ${id} not found`);
     }
 
     return wall;
@@ -56,7 +56,7 @@ export class EthicalWallService {
 
     for (const wall of walls) {
       const authorizedUsers = wall.authorized_users ? wall.authorized_users.split(',') : [];
-      const restrictedGroups = wall.restricted_groups ? wall.restricted_groups.split(',') : [];
+      const _restrictedGroups = wall.restricted_groups ? wall.restricted_groups.split(',') : [];
 
       // Check if user is explicitly authorized
       if (authorizedUsers.includes(userId)) {

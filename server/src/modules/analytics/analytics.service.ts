@@ -28,7 +28,7 @@ export class AnalyticsService {
     });
 
     if (!analytics) {
-      throw new NotFoundException(\`Analytics record with ID \${id} not found\`);
+      throw new NotFoundException(`Analytics record with ID ${id} not found`);
     }
 
     return analytics;
@@ -72,7 +72,7 @@ export class AnalyticsService {
     const judgeAnalytics = await this.analyticsModel.findAll({
       where: {
         metric_type: 'judge_analytics',
-        title: { [Op.like]: \`%\${judgeName}%\` },
+        title: { [Op.like]: `%${judgeName}%` },
       },
       order: [['created_at', 'DESC']],
       limit: 1,
@@ -89,7 +89,7 @@ export class AnalyticsService {
     const counselAnalytics = await this.analyticsModel.findAll({
       where: {
         metric_type: 'counsel_performance',
-        title: { [Op.like]: \`%\${counselName}%\` },
+        title: { [Op.like]: `%${counselName}%` },
       },
       order: [['created_at', 'DESC']],
       limit: 1,

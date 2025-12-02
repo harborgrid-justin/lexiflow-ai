@@ -9,7 +9,7 @@ export class CreateEvidenceDto {
   @ApiProperty({
     example: 'Email',
     description: 'Evidence type',
-    enum: ['Physical', 'Digital', 'Document', 'Testimony', 'Forensic', 'Email']
+    enum: ['Physical', 'Digital', 'Document', 'Testimony', 'Forensic', 'Email'],
   })
   @IsString()
   @IsIn(['Physical', 'Digital', 'Document', 'Testimony', 'Forensic', 'Email'])

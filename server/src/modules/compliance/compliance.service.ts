@@ -62,7 +62,7 @@ export class ComplianceService {
   }
 
   // Conflict Check Methods
-  async getConflicts(orgId?: string): Promise<ConflictCheck[]> {
+  async getConflicts(_orgId?: string): Promise<ConflictCheck[]> {
     const whereClause: any = {};
     // Add org filtering if needed based on your schema
     return this.conflictCheckModel.findAll({
@@ -77,7 +77,7 @@ export class ComplianceService {
   }
 
   // Ethical Wall Methods
-  async getWalls(orgId?: string): Promise<EthicalWall[]> {
+  async getWalls(_orgId?: string): Promise<EthicalWall[]> {
     const whereClause: any = {};
     // Add org filtering if needed based on your schema
     return this.ethicalWallModel.findAll({

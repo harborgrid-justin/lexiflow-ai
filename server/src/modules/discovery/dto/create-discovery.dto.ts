@@ -9,7 +9,7 @@ export class CreateDiscoveryDto {
   @ApiProperty({
     example: 'Production',
     description: 'Type of discovery request',
-    enum: ['Production', 'Interrogatory', 'Admission', 'Deposition', 'document_request']
+    enum: ['Production', 'Interrogatory', 'Admission', 'Deposition', 'document_request'],
   })
   @IsString()
   @IsIn(['Production', 'Interrogatory', 'Admission', 'Deposition', 'document_request'])
@@ -27,7 +27,7 @@ export class CreateDiscoveryDto {
   @ApiProperty({
     example: 'Draft',
     description: 'Discovery status',
-    enum: ['Draft', 'Served', 'Responded', 'Overdue', 'Closed']
+    enum: ['Draft', 'Served', 'Responded', 'Overdue', 'Closed'],
   })
   @IsString()
   @IsIn(['Draft', 'Served', 'Responded', 'Overdue', 'Closed'])

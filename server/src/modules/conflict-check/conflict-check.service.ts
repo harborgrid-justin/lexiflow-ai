@@ -9,7 +9,7 @@ export class ConflictCheckService {
     private conflictCheckModel: typeof ConflictCheck,
   ) {}
 
-  async findAll(orgId?: string): Promise<ConflictCheck[]> {
+  async findAll(_orgId?: string): Promise<ConflictCheck[]> {
     const whereClause: any = {};
     // Add org filtering if your schema supports it
     return this.conflictCheckModel.findAll({
@@ -25,7 +25,7 @@ export class ConflictCheckService {
     });
 
     if (!check) {
-      throw new NotFoundException(\`Conflict check with ID \${id} not found\`);
+      throw new NotFoundException(`Conflict check with ID ${id} not found`);
     }
 
     return check;

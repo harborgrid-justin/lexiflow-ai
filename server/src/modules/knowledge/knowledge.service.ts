@@ -25,7 +25,7 @@ export class KnowledgeService {
     });
 
     if (!article) {
-      throw new NotFoundException(\`Knowledge article with ID \${id} not found\`);
+      throw new NotFoundException(`Knowledge article with ID ${id} not found`);
     }
 
     // Increment view count
@@ -38,9 +38,9 @@ export class KnowledgeService {
     return this.knowledgeModel.findAll({
       where: {
         [Op.or]: [
-          { title: { [Op.like]: \`%\${query}%\` } },
-          { content: { [Op.like]: \`%\${query}%\` } },
-          { tags: { [Op.like]: \`%\${query}%\` } },
+          { title: { [Op.like]: `%${query}%` } },
+          { content: { [Op.like]: `%${query}%` } },
+          { tags: { [Op.like]: `%${query}%` } },
         ],
       },
       include: ['author', 'organization'],
@@ -63,7 +63,7 @@ export class KnowledgeService {
     const article = await this.knowledgeModel.findByPk(id);
     
     if (!article) {
-      throw new NotFoundException(\`Knowledge article with ID \${id} not found\`);
+      throw new NotFoundException(`Knowledge article with ID ${id} not found`);
     }
 
     await article.update(updateData);

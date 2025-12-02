@@ -18,7 +18,7 @@ export class CreateGroupDto {
   @ApiPropertyOptional({
     example: ['case:read', 'case:write', 'document:read'],
     description: 'Group permissions',
-    type: [String]
+    type: [String],
   })
   @IsOptional()
   @IsArray()

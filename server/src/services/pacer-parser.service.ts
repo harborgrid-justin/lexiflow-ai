@@ -103,10 +103,10 @@ const PacerDocketSchema: ResponseFormatJSONSchema = {
             feeStatus: { type: ['string', 'null'] },
             presidingJudge: { type: ['string', 'null'] },
             orderingJudge: { type: ['string', 'null'] },
-            status: { type: ['string', 'null'] }
+            status: { type: ['string', 'null'] },
           },
           required: ['docketNumber', 'originatingCaseNumber', 'title', 'court', 'jurisdiction', 'natureOfSuit', 'caseType', 'filingDate', 'dateOrderJudgment', 'dateNOAFiled', 'dateRecvCOA', 'feeStatus', 'presidingJudge', 'orderingJudge', 'status'],
-          additionalProperties: false
+          additionalProperties: false,
         },
         parties: {
           type: 'array',
@@ -127,16 +127,16 @@ const PacerDocketSchema: ResponseFormatJSONSchema = {
                     phone: { type: ['string', 'null'] },
                     email: { type: ['string', 'null'] },
                     status: { type: ['string', 'null'] },
-                    address: { type: ['string', 'null'] }
+                    address: { type: ['string', 'null'] },
                   },
                   required: ['name', 'firm', 'phone', 'email', 'status', 'address'],
-                  additionalProperties: false
-                }
-              }
+                  additionalProperties: false,
+                },
+              },
             },
             required: ['name', 'role', 'type', 'contact', 'counsel'],
-            additionalProperties: false
-          }
+            additionalProperties: false,
+          },
         },
         docketEntries: {
           type: 'array',
@@ -148,11 +148,11 @@ const PacerDocketSchema: ResponseFormatJSONSchema = {
               description: { type: ['string', 'null'] },
               pages: { type: ['integer', 'null'] },
               fileSize: { type: ['string', 'null'] },
-              documentId: { type: ['string', 'null'] }
+              documentId: { type: ['string', 'null'] },
             },
             required: ['entryNumber', 'date', 'description', 'pages', 'fileSize', 'documentId'],
-            additionalProperties: false
-          }
+            additionalProperties: false,
+          },
         },
         consolidatedCases: {
           type: 'array',
@@ -162,15 +162,15 @@ const PacerDocketSchema: ResponseFormatJSONSchema = {
               caseNumber: { type: ['string', 'null'] },
               relationship: { type: ['string', 'null'] },
               startDate: { type: ['string', 'null'] },
-              endDate: { type: ['string', 'null'] }
+              endDate: { type: ['string', 'null'] },
             },
             required: ['caseNumber', 'relationship', 'startDate', 'endDate'],
-            additionalProperties: false
-          }
+            additionalProperties: false,
+          },
         },
         priorCases: {
           type: 'array',
-          items: { type: 'string' }
+          items: { type: 'string' },
         },
         deadlines: {
           type: 'array',
@@ -179,17 +179,17 @@ const PacerDocketSchema: ResponseFormatJSONSchema = {
             properties: {
               date: { type: ['string', 'null'] },
               title: { type: ['string', 'null'] },
-              type: { type: ['string', 'null'] }
+              type: { type: ['string', 'null'] },
             },
             required: ['date', 'title', 'type'],
-            additionalProperties: false
-          }
-        }
+            additionalProperties: false,
+          },
+        },
       },
       required: ['caseInfo', 'parties', 'docketEntries', 'consolidatedCases', 'priorCases', 'deadlines'],
-      additionalProperties: false
-    }
-  }
+      additionalProperties: false,
+    },
+  },
 };
 
 @Injectable()
@@ -210,7 +210,7 @@ export class PacerParserService {
    * Truncate input to prevent token explosion
    */
   private truncateInput(text: string, maxChars: number): string {
-    if (text.length <= maxChars) return text;
+    if (text.length <= maxChars) {return text;}
     this.logger.warn(`Truncating docket text from ${text.length} to ${maxChars} characters`);
     return text.substring(0, maxChars) + '\n[...truncated]';
   }
@@ -229,7 +229,7 @@ export class PacerParserService {
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemMessage },
-        { role: 'user', content: truncatedText }
+        { role: 'user', content: truncatedText },
       ],
       response_format: PacerDocketSchema,
       max_tokens: 4096,

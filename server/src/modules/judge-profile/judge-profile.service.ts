@@ -20,7 +20,7 @@ export class JudgeProfileService {
     const profile = await this.judgeProfileModel.findByPk(id);
 
     if (!profile) {
-      throw new NotFoundException(\`Judge profile with ID \${id} not found\`);
+      throw new NotFoundException(`Judge profile with ID ${id} not found`);
     }
 
     return profile;
@@ -29,7 +29,7 @@ export class JudgeProfileService {
   async findByName(name: string): Promise<JudgeProfile[]> {
     return this.judgeProfileModel.findAll({
       where: {
-        name: { [Op.like]: \`%\${name}%\` },
+        name: { [Op.like]: `%${name}%` },
       },
     });
   }

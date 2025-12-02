@@ -11,8 +11,8 @@ export class AuditService {
 
   async findAll(entityId?: string, userId?: string): Promise<AuditLogEntry[]> {
     const whereClause: any = {};
-    if (entityId) whereClause.resource_id = entityId;
-    if (userId) whereClause.user_id = userId;
+    if (entityId) {whereClause.resource_id = entityId;}
+    if (userId) {whereClause.user_id = userId;}
 
     return this.auditModel.findAll({
       where: whereClause,

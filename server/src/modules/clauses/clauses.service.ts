@@ -12,8 +12,8 @@ export class ClausesService {
 
   async findAll(category?: string, type?: string): Promise<Clause[]> {
     const whereClause: any = {};
-    if (category) whereClause.category = category;
-    if (type) whereClause.type = type;
+    if (category) {whereClause.category = category;}
+    if (type) {whereClause.type = type;}
 
     return this.clauseModel.findAll({
       where: whereClause,
@@ -28,7 +28,7 @@ export class ClausesService {
     });
 
     if (!clause) {
-      throw new NotFoundException(\`Clause with ID \${id} not found\`);
+      throw new NotFoundException(`Clause with ID ${id} not found`);
     }
 
     // Increment usage count
@@ -41,9 +41,9 @@ export class ClausesService {
     return this.clauseModel.findAll({
       where: {
         [Op.or]: [
-          { title: { [Op.like]: \`%\${query}%\` } },
-          { content: { [Op.like]: \`%\${query}%\` } },
-          { tags: { [Op.like]: \`%\${query}%\` } },
+          { title: { [Op.like]: `%${query}%` } },
+          { content: { [Op.like]: `%${query}%` } },
+          { tags: { [Op.like]: `%${query}%` } },
         ],
       },
       include: ['author', 'organization'],
@@ -67,7 +67,7 @@ export class ClausesService {
     const clause = await this.clauseModel.findByPk(id);
     
     if (!clause) {
-      throw new NotFoundException(\`Clause with ID \${id} not found\`);
+      throw new NotFoundException(`Clause with ID ${id} not found`);
     }
 
     await clause.update(updateData);
@@ -78,7 +78,7 @@ export class ClausesService {
     const clause = await this.clauseModel.findByPk(id);
     
     if (!clause) {
-      throw new NotFoundException(\`Clause with ID \${id} not found\`);
+      throw new NotFoundException(`Clause with ID ${id} not found`);
     }
 
     await clause.destroy();

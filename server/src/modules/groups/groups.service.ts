@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Group } from '../../models/group.model';
 import { UserGroup } from '../../models/user-group.model';
 import { User } from '../../models/user.model';
-import { CreateGroupDto } from './dto/group.dto';
-import { UpdateGroupDto } from './dto/group.dto';
+import { CreateGroupDto, UpdateGroupDto } from './dto/group.dto';
 
 @Injectable()
 export class GroupsService {
@@ -69,7 +68,7 @@ export class GroupsService {
 
     const [affectedCount] = await this.groupModel.update(
       dataToUpdate,
-      { where: { id } }
+      { where: { id } },
     );
 
     if (affectedCount === 0) {
@@ -120,7 +119,7 @@ export class GroupsService {
 
     if (deletedCount === 0) {
       throw new NotFoundException(
-        `User ${userId} is not a member of group ${groupId}`
+        `User ${userId} is not a member of group ${groupId}`,
       );
     }
   }
@@ -136,7 +135,7 @@ export class GroupsService {
           model: User,
           as: 'user',
           attributes: { exclude: ['password_hash'] },
-        }
+        },
       ],
     });
 

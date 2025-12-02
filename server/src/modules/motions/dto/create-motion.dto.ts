@@ -13,7 +13,7 @@ export class CreateMotionDto {
   @ApiProperty({
     example: 'Summary Judgment',
     description: 'Type of motion',
-    enum: ['Dismiss', 'Summary Judgment', 'Compel Discovery', 'In Limine', 'Continuance', 'Sanctions']
+    enum: ['Dismiss', 'Summary Judgment', 'Compel Discovery', 'In Limine', 'Continuance', 'Sanctions'],
   })
   @IsString()
   @IsIn(['Dismiss', 'Summary Judgment', 'Compel Discovery', 'In Limine', 'Continuance', 'Sanctions'])
@@ -27,7 +27,7 @@ export class CreateMotionDto {
   @ApiProperty({
     example: 'Draft',
     description: 'Motion status',
-    enum: ['Draft', 'Filed', 'Opposition Served', 'Reply Served', 'Hearing Set', 'Submitted', 'Decided']
+    enum: ['Draft', 'Filed', 'Opposition Served', 'Reply Served', 'Hearing Set', 'Submitted', 'Decided'],
   })
   @IsString()
   @IsIn(['Draft', 'Filed', 'Opposition Served', 'Reply Served', 'Hearing Set', 'Submitted', 'Decided'])

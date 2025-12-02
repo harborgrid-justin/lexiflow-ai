@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Organization } from '../../models/organization.model';
 import { User } from '../../models/user.model';
-import { Case } from '../../models/case.model';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
@@ -14,7 +13,7 @@ export class OrganizationsService {
   ) {}
 
   async create(createOrgDto: CreateOrganizationDto): Promise<Organization> {
-    return this.organizationModel.create(createOrgDto);
+    return this.organizationModel.create(createOrgDto as any);
   }
 
   async findAll(): Promise<Organization[]> {
@@ -36,7 +35,7 @@ export class OrganizationsService {
         include: [
           [
             this.organizationModel.sequelize.literal(
-              '(SELECT COUNT(*) FROM cases WHERE cases.organization_id = Organization.id)'
+              '(SELECT COUNT(*) FROM cases WHERE cases.organization_id = Organization.id)',
             ),
             'casesCount',
           ],
@@ -54,7 +53,7 @@ export class OrganizationsService {
   async update(id: string, updateOrgDto: UpdateOrganizationDto): Promise<Organization> {
     const [affectedCount] = await this.organizationModel.update(
       updateOrgDto,
-      { where: { id } }
+      { where: { id } },
     );
 
     if (affectedCount === 0) {

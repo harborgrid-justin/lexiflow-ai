@@ -9,7 +9,7 @@ export class CreateJurisdictionDto {
   @ApiProperty({
     example: 'state',
     description: 'Jurisdiction type',
-    enum: ['federal', 'state', 'county', 'city', 'district']
+    enum: ['federal', 'state', 'county', 'city', 'district'],
   })
   @IsString()
   @IsIn(['federal', 'state', 'county', 'city', 'district'])
@@ -35,7 +35,7 @@ export class CreateJurisdictionDto {
 
   @ApiPropertyOptional({
     example: { 'statute_of_limitations': '2 years' },
-    description: 'Jurisdiction-specific rules (JSONB)'
+    description: 'Jurisdiction-specific rules (JSONB)',
   })
   @IsOptional()
   @IsObject()
@@ -49,7 +49,7 @@ export class CreateJurisdictionDto {
   @ApiPropertyOptional({
     example: 'active',
     description: 'Jurisdiction status',
-    enum: ['active', 'inactive']
+    enum: ['active', 'inactive'],
   })
   @IsOptional()
   @IsString()
