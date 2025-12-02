@@ -37,8 +37,11 @@ export class DocumentEmbedding extends Model {
   @Column({ type: DataType.TEXT, allowNull: false })
   content: string;
 
-  @ApiProperty({ example: '[0.1, 0.2, 0.3, ...]', description: 'Vector embedding representation' })
-  @Column(DataType.ARRAY(DataType.FLOAT))
+  @ApiProperty({ example: '[0.1, 0.2, 0.3, ...]', description: 'Vector embedding representation (1536-dimensional for OpenAI ada-002)' })
+  @Column({
+    type: 'VECTOR(1536)',
+    allowNull: true,
+  })
   embedding: number[];
 
   @ApiProperty({ example: 'openai-text-embedding-ada-002', description: 'Embedding model used' })

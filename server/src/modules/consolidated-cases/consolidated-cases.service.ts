@@ -15,8 +15,12 @@ export class ConsolidatedCasesService {
     return this.consolidatedCaseModel.create(createConsolidatedCaseDto as any);
   }
 
-  async findAll(): Promise<ConsolidatedCase[]> {
+  async findAll(caseId?: string): Promise<ConsolidatedCase[]> {
+    if (caseId) {
+      return this.findByCaseId(caseId);
+    }
     return this.consolidatedCaseModel.findAll({
+      include: ['leadCase', 'memberCase'],
       order: [['date_start', 'DESC']],
     });
   }

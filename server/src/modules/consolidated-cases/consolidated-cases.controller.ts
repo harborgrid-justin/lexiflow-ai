@@ -31,10 +31,7 @@ export class ConsolidatedCasesController {
   @Get()
   @ApiOperation({ summary: 'Get all consolidated cases or filter by case' })
   findAll(@Query('case_id') caseId?: string) {
-    if (caseId) {
-      return this.consolidatedCasesService.findByCaseId(caseId);
-    }
-    return this.consolidatedCasesService.findAll();
+    return this.consolidatedCasesService.findAll(caseId);
   }
 
   @Get('case/:caseId')

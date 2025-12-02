@@ -1,87 +1,52 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { OpposingCounselProfile } from '../../models/opposing-counsel-profile.model';
-import { CreateOpposingCounselProfileDto, UpdateOpposingCounselProfileDto } from './dto/opposing-counsel-profile.dto';
 import { Op } from 'sequelize';
 
 @Injectable()
-export class OpposingCounselProfileService {
+export class OpposingCounselService {
   constructor(
     @InjectModel(OpposingCounselProfile)
-    private opposingCounselProfileModel: typeof OpposingCounselProfile,
+    private counselModel: typeof OpposingCounselProfile,
   ) {}
 
-  async create(createOpposingCounselProfileDto: CreateOpposingCounselProfileDto): Promise<OpposingCounselProfile> {
-    try {
-      const profile = await this.opposingCounselProfileModel.create(createOpposingCounselProfileDto as any);
-      return profile;
-    } catch {
-      throw new BadRequestException('Failed to create opposing counsel profile');
-    }
-  }
-
-  async findAll(firmName?: string): Promise<OpposingCounselProfile[]> {
-    const where = firmName ? { firmName } : {};
-    return this.opposingCounselProfileModel.findAll({
-      where,
+  async findAll(): Promise<OpposingCounselProfile[]> {
+    return this.counselModel.findAll({
       order: [['name', 'ASC']],
     });
   }
 
-  async findOne(id: number): Promise<OpposingCounselProfile> {
-    const profile = await this.opposingCounselProfileModel.findByPk(id);
+  async findOne(id: string): Promise<OpposingCounselProfile> {
+    const profile = await this.counselModel.findByPk(id);
+
     if (!profile) {
-      throw new NotFoundException(`Opposing counsel profile with ID ${id} not found`);
+      throw new NotFoundException(\`Opposing counsel profile with ID \${id} not found\`);
     }
+
     return profile;
   }
 
-  async update(id: number, updateOpposingCounselProfileDto: UpdateOpposingCounselProfileDto): Promise<OpposingCounselProfile> {
-    const profile = await this.findOne(id);
-    
-    try {
-      await profile.update(updateOpposingCounselProfileDto);
-      return profile;
-    } catch {
-      throw new BadRequestException('Failed to update opposing counsel profile');
-    }
+  async findByName(name: string): Promise<OpposingCounselProfile[]> {
+    return this.counselModel.findAll({
+      where: {
+        name: { [Op.like]: \`%\${name}%\` },
+      },
+    });
   }
 
-  async remove(id: number): Promise<void> {
+  async create(createDto: any): Promise<OpposingCounselProfile> {
+    const profile = await this.counselModel.create(createDto);
+    return this.findOne(profile.id);
+  }
+
+  async update(id: string, updateDto: any): Promise<OpposingCounselProfile> {
+    const profile = await this.findOne(id);
+    await profile.update(updateDto);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
     const profile = await this.findOne(id);
     await profile.destroy();
-  }
-
-  async search(query: string, firmName?: string): Promise<OpposingCounselProfile[]> {
-    const where: Record<string, unknown> = {
-      [Op.or]: [
-        { name: { [Op.iLike]: `%${query}%` } },
-        { firmName: { [Op.iLike]: `%${query}%` } },
-        { email: { [Op.iLike]: `%${query}%` } },
-        { specialties: { [Op.iLike]: `%${query}%` } },
-      ],
-    };
-
-    if (firmName) {
-      where.firmName = { [Op.iLike]: `%${firmName}%` };
-    }
-
-    return this.opposingCounselProfileModel.findAll({
-      where,
-      order: [['name', 'ASC']],
-    });
-  }
-
-  async findByFirm(firmName: string): Promise<OpposingCounselProfile[]> {
-    return this.opposingCounselProfileModel.findAll({
-      where: { firmName: { [Op.iLike]: `%${firmName}%` } },
-      order: [['name', 'ASC']],
-    });
-  }
-
-  async findByEmail(email: string): Promise<OpposingCounselProfile | null> {
-    return this.opposingCounselProfileModel.findOne({
-      where: { email },
-    });
   }
 }

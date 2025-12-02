@@ -1,18 +1,14 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { 
+import {
   Case,
+  Party,
+  CaseMember,
   Document,
-  Evidence,
+  DocketEntry,
   Motion,
-  TimeEntry,
-  DiscoveryRequest,
-  Analytics,
-  ComplianceRecord,
-  WorkflowStage,
-  WorkflowTask,
-  CalendarEvent,
-  Task,
+  ConsolidatedCase,
+  Organization,
 } from '../../models';
 import { CasesController } from './cases.controller';
 import { CasesService } from './cases.service';
@@ -21,17 +17,13 @@ import { PacerParserService } from '../../services/pacer-parser.service';
 @Module({
   imports: [SequelizeModule.forFeature([
     Case,
+    Party,
+    CaseMember,
     Document,
-    Evidence,
+    DocketEntry,
     Motion,
-    TimeEntry,
-    DiscoveryRequest,
-    Analytics,
-    ComplianceRecord,
-    WorkflowStage,
-    WorkflowTask,
-    CalendarEvent,
-    Task,
+    ConsolidatedCase,
+    Organization,
   ])],
   controllers: [CasesController],
   providers: [CasesService, PacerParserService],

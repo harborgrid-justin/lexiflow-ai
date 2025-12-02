@@ -8,10 +8,12 @@ import {
   ForeignKey,
   BelongsTo,
   HasMany,
+  Index,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.model';
 import { Case } from './case.model';
+import { Organization } from './organization.model';
 
 @Table({
   tableName: 'conversations',
@@ -71,6 +73,12 @@ export class Conversation extends Model {
   @Column(DataType.DATE)
   last_message_at?: Date;
 
+  @ApiProperty({ example: 'org-123', description: 'Owner organization ID' })
+  @ForeignKey(() => Organization)
+  @Index
+  @Column(DataType.UUID)
+  owner_org_id?: string;
+
   @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -84,6 +92,9 @@ export class Conversation extends Model {
 
   @BelongsTo(() => User, 'created_by')
   creator?: User;
+
+  @BelongsTo(() => Organization, 'owner_org_id')
+  organization?: Organization;
 
   @HasMany(() => Message)
   messages?: Message[];
@@ -148,6 +159,12 @@ export class Message extends Model {
   @Column(DataType.STRING)
   status: string;
 
+  @ApiProperty({ example: 'org-123', description: 'Owner organization ID' })
+  @ForeignKey(() => Organization)
+  @Index
+  @Column(DataType.UUID)
+  owner_org_id?: string;
+
   @ApiProperty({ example: '2024-01-15T10:30:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -161,4 +178,7 @@ export class Message extends Model {
 
   @BelongsTo(() => User, 'sender_id')
   sender?: User;
+
+  @BelongsTo(() => Organization, 'owner_org_id')
+  organization?: Organization;
 }

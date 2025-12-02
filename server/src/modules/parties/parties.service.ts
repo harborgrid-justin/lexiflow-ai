@@ -67,4 +67,17 @@ export class PartiesService {
       include: ['linkedOrganization'],
     });
   }
+
+  async removeFromCase(caseId: string, userId: string): Promise<void> {
+    const affectedCount = await this.partyModel.destroy({
+      where: {
+        case_id: caseId,
+        linked_org_id: userId // Assuming userId is mapped to linked_org_id
+      },
+    });
+
+    if (affectedCount === 0) {
+      throw new NotFoundException(`Party with user ID ${userId} not found in case ${caseId}`);
+    }
+  }
 }

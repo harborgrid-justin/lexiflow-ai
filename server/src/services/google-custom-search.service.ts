@@ -1,3 +1,5 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 interface GoogleSearchResult {
@@ -24,21 +26,23 @@ export interface LegalSearchResult {
   relevanceScore?: number;
 }
 
+@Injectable()
 export class GoogleCustomSearchService {
+  private readonly logger = new Logger(GoogleCustomSearchService.name);
   private apiKey: string;
   private searchEngineId: string;
   private baseUrl = 'https://www.googleapis.com/customsearch/v1';
 
-  constructor() {
-    this.apiKey = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY || '';
+  constructor(private configService?: ConfigService) {
+    this.apiKey = this.configService?.get<string>('GOOGLE_CUSTOM_SEARCH_API_KEY') || process.env.GOOGLE_CUSTOM_SEARCH_API_KEY || '';
     // You'll need to create a Custom Search Engine ID at: https://programmablesearchengine.google.com/
-    this.searchEngineId = process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID || '';
+    this.searchEngineId = this.configService?.get<string>('GOOGLE_CUSTOM_SEARCH_ENGINE_ID') || process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID || '';
 
     if (!this.apiKey) {
-      console.warn('Google Custom Search API key not configured');
+      this.logger.warn('Google Custom Search API key not configured');
     }
     if (!this.searchEngineId) {
-      console.warn('Google Custom Search Engine ID not configured. Create one at https://programmablesearchengine.google.com/');
+      this.logger.warn('Google Custom Search Engine ID not configured. Create one at https://programmablesearchengine.google.com/');
     }
   }
 
@@ -104,7 +108,7 @@ export class GoogleCustomSearchService {
         relevanceScore: 1 - (index / response.data.items!.length), // Higher score for earlier results
       }));
     } catch (error: any) {
-      console.error('Google Custom Search error:', error.response?.data || error.message);
+      this.logger.error('Google Custom Search error:', error.response?.data || error.message);
       throw new Error(`Search failed: ${error.response?.data?.error?.message || error.message}`);
     }
   }

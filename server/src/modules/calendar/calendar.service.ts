@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CalendarEvent } from '../../models/calendar.model';
+import { CreateCalendarEventDto } from './dto/create-calendar-event.dto';
+import { UpdateCalendarEventDto } from './dto/update-calendar-event.dto';
 import { Op } from 'sequelize';
 
 @Injectable()
@@ -10,16 +12,16 @@ export class CalendarService {
     private calendarModel: typeof CalendarEvent,
   ) {}
 
-  async create(createEventData: Partial<CalendarEvent>): Promise<CalendarEvent> {
-    return this.calendarModel.create(createEventData);
-  }
+  async findAll(caseId?: string, startDate?: string, endDate?: string): Promise<CalendarEvent[]> {
+    const whereClause: any = {};
 
-  async findAll(caseId?: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]> {
-    const whereClause: Record<string, unknown> = {};
-    if (caseId) {whereClause.case_id = caseId;}
+    if (caseId) {
+      whereClause.case_id = caseId;
+    }
+
     if (startDate && endDate) {
       whereClause.start_time = {
-        [Op.between]: [startDate, endDate],
+        [Op.between]: [new Date(startDate), new Date(endDate)],
       };
     }
 
@@ -42,30 +44,6 @@ export class CalendarService {
     return event;
   }
 
-  async update(id: string, updateData: Partial<CalendarEvent>): Promise<CalendarEvent> {
-    const [affectedCount, affectedRows] = await this.calendarModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
-    );
-
-    if (affectedCount === 0) {
-      throw new NotFoundException(`Calendar event with ID ${id} not found`);
-    }
-
-    return affectedRows[0];
-  }
-
-  async findByType(type: string): Promise<CalendarEvent[]> {
-    return this.calendarModel.findAll({
-      where: { type },
-      include: ['case', 'organizer', 'organization'],
-      order: [['start_time', 'ASC']],
-    });
-  }
-
   async findUpcoming(days: number = 7): Promise<CalendarEvent[]> {
     const now = new Date();
     const futureDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -79,5 +57,35 @@ export class CalendarService {
       include: ['case', 'organizer', 'organization'],
       order: [['start_time', 'ASC']],
     });
+  }
+
+  async findByType(type: string): Promise<CalendarEvent[]> {
+    return this.calendarModel.findAll({
+      where: { type },
+      include: ['case', 'organizer', 'organization'],
+      order: [['start_time', 'ASC']],
+    });
+  }
+
+  async create(createDto: CreateCalendarEventDto): Promise<CalendarEvent> {
+    const event = await this.calendarModel.create({
+      ...createDto,
+      status: createDto.status || 'scheduled',
+      priority: createDto.priority || 'medium',
+      all_day: createDto.all_day || false,
+    });
+
+    return this.findOne(event.id);
+  }
+
+  async update(id: string, updateDto: UpdateCalendarEventDto): Promise<CalendarEvent> {
+    const event = await this.findOne(id);
+    await event.update(updateDto);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    const event = await this.findOne(id);
+    await event.destroy();
   }
 }

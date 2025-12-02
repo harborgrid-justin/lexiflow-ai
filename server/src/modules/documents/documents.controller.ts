@@ -32,6 +32,8 @@ import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentsService } from './documents.service';
 import { Document } from '../../models/document.model';
+import { CreateDocumentDto } from './dto/create-document.dto';
+import { UpdateDocumentDto } from './dto/update-document.dto';
 
 // Storage path for uploaded documents
 const UPLOAD_DIR = process.env.DOCUMENT_STORAGE_PATH || './uploads/documents';
@@ -48,8 +50,8 @@ export class DocumentsController {
     description: 'Document created successfully',
     type: Document,
   })
-  create(@Body() createDocData: Partial<Document>): Promise<Document> {
-    return this.documentsService.create(createDocData);
+  create(@Body() createDocumentDto: CreateDocumentDto): Promise<Document> {
+    return this.documentsService.create(createDocumentDto);
   }
 
   @Post('upload')
@@ -255,9 +257,9 @@ export class DocumentsController {
   @ApiResponse({ status: 404, description: 'Document not found' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<Document>,
+    @Body() updateDocumentDto: UpdateDocumentDto,
   ): Promise<Document> {
-    return this.documentsService.update(id, updateData);
+    return this.documentsService.update(id, updateDocumentDto);
   }
 
   @Delete(':id')

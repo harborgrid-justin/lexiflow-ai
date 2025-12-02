@@ -1,39 +1,40 @@
-import { IsString, IsOptional, IsNumber, IsArray, Length } from 'class-validator';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { IsString, IsOptional, IsUUID, IsArray } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class CreateGroupDto {
-  @ApiProperty({ description: 'Name of the group', minLength: 1, maxLength: 100 })
+  @ApiProperty({ example: 'Litigation Team', description: 'Group name' })
   @IsString()
-  @Length(1, 100)
   name: string;
 
-  @ApiProperty({ description: 'Description of the group', required: false })
+  @ApiPropertyOptional({ example: 'Handles all litigation matters', description: 'Group description' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ description: 'Organization ID', required: false })
-  @IsOptional()
-  @IsNumber()
-  organizationId?: number;
+  @ApiProperty({ example: 'org-123', description: 'Organization ID this group belongs to' })
+  @IsUUID()
+  owner_org_id: string;
 
-  @ApiProperty({ description: 'Parent group ID', required: false })
-  @IsOptional()
-  @IsNumber()
-  parentId?: number;
-
-  @ApiProperty({ description: 'Group permissions', required: false })
+  @ApiPropertyOptional({
+    example: ['case:read', 'case:write', 'document:read'],
+    description: 'Group permissions',
+    type: [String]
+  })
   @IsOptional()
   @IsArray()
+  @IsString({ each: true })
   permissions?: string[];
-
-  @ApiProperty({ description: 'Group settings as JSON', required: false })
-  @IsOptional()
-  settings?: any;
-
-  @ApiProperty({ description: 'Whether the group is active', required: false })
-  @IsOptional()
-  isActive?: boolean;
 }
 
 export class UpdateGroupDto extends PartialType(CreateGroupDto) {}
+
+export class AddMemberDto {
+  @ApiProperty({ example: 'user-123', description: 'User ID to add to group' })
+  @IsUUID()
+  user_id: string;
+
+  @ApiPropertyOptional({ example: 'Member', description: 'Role in the group' })
+  @IsOptional()
+  @IsString()
+  role?: string;
+}

@@ -1,10 +1,15 @@
-import { IsString, IsEmail, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsUUID, MinLength, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'john.doe@lawfirm.com', description: 'User email address' })
   @IsEmail()
   email: string;
+
+  @ApiProperty({ example: 'SecurePassword123!', description: 'User password (minimum 6 characters)' })
+  @IsString()
+  @MinLength(6)
+  password: string;
 
   @ApiProperty({ example: 'John', description: 'First name' })
   @IsString()
@@ -14,8 +19,9 @@ export class CreateUserDto {
   @IsString()
   last_name: string;
 
-  @ApiProperty({ example: 'Attorney', description: 'User role' })
+  @ApiProperty({ example: 'Attorney', description: 'User role in the organization' })
   @IsString()
+  @IsIn(['Attorney', 'Partner', 'Associate', 'Paralegal', 'Administrator', 'Client'])
   role: string;
 
   @ApiPropertyOptional({ example: 'Partner', description: 'Position or title' })
@@ -42,6 +48,27 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   expertise?: string;
+
+  @ApiPropertyOptional({ example: 'New York Office', description: 'Office location' })
+  @IsOptional()
+  @IsString()
+  office?: string;
+
+  @ApiPropertyOptional({ example: 'Internal', description: 'User type' })
+  @IsOptional()
+  @IsString()
+  user_type?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg', description: 'User avatar URL' })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @ApiPropertyOptional({ example: 'active', description: 'Account status' })
+  @IsOptional()
+  @IsString()
+  @IsIn(['active', 'inactive', 'suspended'])
+  status?: string;
 
   @ApiProperty({ example: 'org-123', description: 'Organization ID' })
   @IsUUID()

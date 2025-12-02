@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { AuditService } from './audit.service';
-import { AuditController } from './audit.controller';
 import { AuditLogEntry } from '../../models/audit-log-entry.model';
+import { AuditController } from './audit.controller';
+import { AuditService } from './audit.service';
 
 @Module({
   imports: [SequelizeModule.forFeature([AuditLogEntry])],

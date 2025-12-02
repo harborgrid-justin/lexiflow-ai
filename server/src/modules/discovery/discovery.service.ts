@@ -1,41 +1,43 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DiscoveryRequest } from '../../models/discovery.model';
+import { CreateDiscoveryDto } from './dto/create-discovery.dto';
+import { UpdateDiscoveryDto } from './dto/update-discovery.dto';
 
 @Injectable()
 export class DiscoveryService {
   constructor(
     @InjectModel(DiscoveryRequest)
-    private discoveryRequestModel: typeof DiscoveryRequest,
+    private discoveryModel: typeof DiscoveryRequest,
   ) {}
 
-  async create(createDiscoveryData: Partial<DiscoveryRequest>): Promise<DiscoveryRequest> {
-    return this.discoveryRequestModel.create(createDiscoveryData);
+  async create(createDiscoveryDto: CreateDiscoveryDto): Promise<DiscoveryRequest> {
+    return this.discoveryModel.create(createDiscoveryDto as any);
   }
 
   async findAll(caseId?: string): Promise<DiscoveryRequest[]> {
     const whereClause = caseId ? { case_id: caseId } : {};
-    return this.discoveryRequestModel.findAll({
+    return this.discoveryModel.findAll({
       where: whereClause,
-      include: ['case', 'creator'],
+      include: ['case'],
     });
   }
 
   async findOne(id: string): Promise<DiscoveryRequest> {
-    const discoveryRequest = await this.discoveryRequestModel.findByPk(id, {
-      include: ['case', 'creator'],
+    const discovery = await this.discoveryModel.findByPk(id, {
+      include: ['case'],
     });
 
-    if (!discoveryRequest) {
+    if (!discovery) {
       throw new NotFoundException(`Discovery request with ID ${id} not found`);
     }
 
-    return discoveryRequest;
+    return discovery;
   }
 
-  async update(id: string, updateData: Partial<DiscoveryRequest>): Promise<DiscoveryRequest> {
-    const [affectedCount, affectedRows] = await this.discoveryRequestModel.update(
-      updateData,
+  async update(id: string, updateDiscoveryDto: UpdateDiscoveryDto): Promise<DiscoveryRequest> {
+    const [affectedCount, affectedRows] = await this.discoveryModel.update(
+      updateDiscoveryDto as any,
       {
         where: { id },
         returning: true,
@@ -50,7 +52,7 @@ export class DiscoveryService {
   }
 
   async remove(id: string): Promise<void> {
-    const deletedCount = await this.discoveryRequestModel.destroy({
+    const deletedCount = await this.discoveryModel.destroy({
       where: { id },
     });
 

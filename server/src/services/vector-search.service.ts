@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/sequelize';
+import { ConfigService } from '@nestjs/config';
 import { DocumentEmbedding } from '../models/document-embedding.model';
 import { SearchQuery } from '../models/search-query.model';
+import { FileChunk } from '../models/file-chunk.model';
+import { Document } from '../models/document.model';
 import { Sequelize, QueryTypes, Op } from 'sequelize';
+import OpenAI from 'openai';
 
 /**
  * Options for configuring vector similarity search
- * 
+ *
  * @interface VectorSearchOptions
  */
 export interface VectorSearchOptions {
@@ -25,6 +29,29 @@ export interface VectorSearchOptions {
     /** Filter by case ID */
     caseId?: string;
   };
+}
+
+/**
+ * Options for semantic search
+ */
+export interface SemanticSearchOptions {
+  limit?: number;
+  threshold?: number;
+  caseId?: string;
+  documentType?: string;
+  orgId?: string;
+}
+
+/**
+ * Options for hybrid search
+ */
+export interface HybridSearchOptions {
+  limit?: number;
+  keywordWeight?: number;
+  semanticWeight?: number;
+  threshold?: number;
+  caseId?: string;
+  orgId?: string;
 }
 
 /**
@@ -74,21 +101,39 @@ export interface VectorSearchResult {
  */
 @Injectable()
 export class VectorSearchService {
+  private readonly logger = new Logger(VectorSearchService.name);
+  private openai: OpenAI;
+
   /**
    * Creates an instance of VectorSearchService
-   * 
+   *
    * @param {typeof DocumentEmbedding} embeddingModel - Sequelize model for document embeddings
    * @param {typeof SearchQuery} searchQueryModel - Sequelize model for search query logging
+   * @param {typeof FileChunk} fileChunkModel - Sequelize model for file chunks
+   * @param {typeof Document} documentModel - Sequelize model for documents
    * @param {Sequelize} sequelize - Sequelize connection instance for raw SQL queries
+   * @param {ConfigService} configService - Configuration service for environment variables
    */
   constructor(
     @InjectModel(DocumentEmbedding)
     private embeddingModel: typeof DocumentEmbedding,
     @InjectModel(SearchQuery)
     private searchQueryModel: typeof SearchQuery,
+    @InjectModel(FileChunk)
+    private fileChunkModel: typeof FileChunk,
+    @InjectModel(Document)
+    private documentModel: typeof Document,
     @InjectConnection()
     private sequelize: Sequelize,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
+    this.openai = new OpenAI({
+      apiKey,
+      timeout: 30000,
+      maxRetries: 2,
+    });
+  }
 
   /**
    * Perform semantic search using vector similarity
@@ -314,7 +359,7 @@ export class VectorSearchService {
     endDate?: Date,
   ) {
     const whereClause: Record<string, unknown> = { organization_id: organizationId };
-    
+
     if (startDate && endDate) {
       whereClause.created_at = {
         [Op.between]: [startDate, endDate],
@@ -336,5 +381,260 @@ export class VectorSearchService {
       avgResultCount,
       recentQueries: queries.slice(0, 10),
     };
+  }
+
+  /**
+   * Generate embedding using OpenAI ada-002
+   *
+   * @param text - Text to generate embedding for
+   * @returns 1536-dimensional embedding vector
+   */
+  async generateEmbedding(text: string): Promise<number[]> {
+    try {
+      this.logger.log(`Generating embedding for text of length ${text.length}`);
+
+      const response = await this.openai.embeddings.create({
+        model: 'text-embedding-ada-002',
+        input: text,
+      });
+
+      const embedding = response.data[0].embedding;
+      this.logger.log(`Generated embedding with ${embedding.length} dimensions`);
+
+      return embedding;
+    } catch (error) {
+      this.logger.error('Failed to generate embedding', error);
+      throw new Error(`Embedding generation failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create embedding for document
+   *
+   * @param documentId - ID of the document
+   * @param content - Content to embed
+   * @returns Created DocumentEmbedding
+   */
+  async createDocumentEmbedding(
+    documentId: string,
+    content: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<DocumentEmbedding> {
+    try {
+      this.logger.log(`Creating embedding for document ${documentId}`);
+
+      const embedding = await this.generateEmbedding(content);
+
+      const documentEmbedding = await this.storeEmbedding(
+        documentId,
+        content,
+        embedding,
+        0,
+        {},
+        userId,
+        organizationId,
+      );
+
+      this.logger.log(`Created embedding ${documentEmbedding.id} for document ${documentId}`);
+
+      return documentEmbedding;
+    } catch (error) {
+      this.logger.error(`Failed to create embedding for document ${documentId}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Chunk document and create embeddings
+   * Splits content into chunks of 1000 tokens with 100 token overlap
+   *
+   * @param documentId - ID of the document
+   * @param content - Full document content
+   * @param userId - User creating the embeddings
+   * @param organizationId - Organization ID
+   * @returns Array of created embeddings
+   */
+  async chunkAndEmbed(
+    documentId: string,
+    content: string,
+    userId?: string,
+    organizationId?: string,
+  ): Promise<DocumentEmbedding[]> {
+    try {
+      this.logger.log(`Chunking and embedding document ${documentId}`);
+
+      const chunks = this.chunkText(content, 1000, 100);
+      this.logger.log(`Split document into ${chunks.length} chunks`);
+
+      const embeddings: DocumentEmbedding[] = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const embedding = await this.generateEmbedding(chunk.text);
+
+        const documentEmbedding = await this.storeEmbedding(
+          documentId,
+          chunk.text,
+          embedding,
+          i,
+          {
+            startPosition: chunk.start,
+            endPosition: chunk.end,
+          },
+          userId,
+          organizationId,
+        );
+
+        embeddings.push(documentEmbedding);
+        this.logger.log(`Created embedding ${i + 1}/${chunks.length} for document ${documentId}`);
+      }
+
+      this.logger.log(`Successfully created ${embeddings.length} embeddings for document ${documentId}`);
+
+      return embeddings;
+    } catch (error) {
+      this.logger.error(`Failed to chunk and embed document ${documentId}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Chunk text into overlapping segments
+   * Uses approximate token count (4 chars ≈ 1 token)
+   *
+   * @param text - Text to chunk
+   * @param chunkSize - Number of tokens per chunk (default: 1000)
+   * @param overlap - Number of tokens to overlap (default: 100)
+   * @returns Array of text chunks with positions
+   */
+  private chunkText(
+    text: string,
+    chunkSize: number = 1000,
+    overlap: number = 100,
+  ): Array<{ text: string; start: number; end: number }> {
+    const chunks: Array<{ text: string; start: number; end: number }> = [];
+
+    // Approximate: 1 token ≈ 4 characters
+    const charsPerChunk = chunkSize * 4;
+    const overlapChars = overlap * 4;
+
+    let start = 0;
+
+    while (start < text.length) {
+      const end = Math.min(start + charsPerChunk, text.length);
+      const chunkText = text.substring(start, end);
+
+      chunks.push({
+        text: chunkText,
+        start,
+        end,
+      });
+
+      // Move start position forward by (chunkSize - overlap)
+      start = end - overlapChars;
+
+      // Prevent infinite loop if we're at the end
+      if (end === text.length) {
+        break;
+      }
+    }
+
+    return chunks;
+  }
+
+  /**
+   * Semantic search with automatic embedding generation
+   *
+   * @param query - Search query text
+   * @param options - Search options
+   * @returns Array of search results
+   */
+  async semanticSearchWithQuery(
+    query: string,
+    options: SemanticSearchOptions,
+  ): Promise<VectorSearchResult[]> {
+    try {
+      const startTime = Date.now();
+
+      // Generate embedding for query
+      const queryEmbedding = await this.generateEmbedding(query);
+
+      // Perform semantic search
+      const results = await this.semanticSearch(queryEmbedding, {
+        query,
+        limit: options.limit,
+        threshold: options.threshold,
+        filters: {
+          organizationId: options.orgId,
+          caseId: options.caseId,
+        },
+      });
+
+      const executionTime = Date.now() - startTime;
+
+      // Log search query
+      await this.logSearchQuery(
+        query,
+        queryEmbedding,
+        results.length,
+        results.map((r) => r.document_id),
+        undefined,
+        options.orgId,
+        executionTime,
+      );
+
+      return results;
+    } catch (error) {
+      this.logger.error('Semantic search failed', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Hybrid search with automatic embedding generation
+   *
+   * @param query - Search query text
+   * @param options - Hybrid search options
+   * @returns Array of search results
+   */
+  async hybridSearchWithQuery(
+    query: string,
+    options: HybridSearchOptions,
+  ): Promise<VectorSearchResult[]> {
+    try {
+      const startTime = Date.now();
+
+      // Generate embedding for query
+      const queryEmbedding = await this.generateEmbedding(query);
+
+      // Perform hybrid search
+      const results = await this.hybridSearch(query, queryEmbedding, {
+        query,
+        limit: options.limit,
+        filters: {
+          organizationId: options.orgId,
+          caseId: options.caseId,
+        },
+      });
+
+      const executionTime = Date.now() - startTime;
+
+      // Log search query
+      await this.logSearchQuery(
+        query,
+        queryEmbedding,
+        results.length,
+        results.map((r) => r.document_id),
+        undefined,
+        options.orgId,
+        executionTime,
+      );
+
+      return results;
+    } catch (error) {
+      this.logger.error('Hybrid search failed', error);
+      throw error;
+    }
   }
 }

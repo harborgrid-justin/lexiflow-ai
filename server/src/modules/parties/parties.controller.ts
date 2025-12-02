@@ -63,4 +63,15 @@ export class PartiesController {
   findByCaseId(@Param('caseId') caseId: string) {
     return this.partiesService.findByCaseId(caseId);
   }
+
+  @Delete('case/:caseId/user/:userId')
+  @ApiOperation({ summary: 'Remove party from case' })
+  @ApiResponse({ status: 200, description: 'Party removed from case successfully' })
+  @ApiResponse({ status: 404, description: 'Party not found in case' })
+  removeFromCase(
+    @Param('caseId') caseId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.partiesService.removeFromCase(caseId, userId);
+  }
 }

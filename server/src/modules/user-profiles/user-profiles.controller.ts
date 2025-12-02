@@ -64,7 +64,7 @@ export class UserProfilesController {
     return this.userProfilesService.updateByUserId(userId, updateUserProfileDto);
   }
 
-  @Put('user/:userId/last-active')
+  @Patch('user/:userId/last-active')
   @ApiOperation({ summary: 'Update user last active timestamp' })
   @ApiResponse({ status: 200, description: 'Last active updated successfully' })
   updateLastActive(@Param('userId') userId: string) {

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Clause } from '../../models/clause.model';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class ClausesService {
@@ -9,18 +10,15 @@ export class ClausesService {
     private clauseModel: typeof Clause,
   ) {}
 
-  async create(createClauseData: Partial<Clause>): Promise<Clause> {
-    return this.clauseModel.create(createClauseData);
-  }
-
   async findAll(category?: string, type?: string): Promise<Clause[]> {
-    const whereClause: Record<string, string> = {};
-    if (category) {whereClause.category = category;}
-    if (type) {whereClause.type = type;}
+    const whereClause: any = {};
+    if (category) whereClause.category = category;
+    if (type) whereClause.type = type;
 
     return this.clauseModel.findAll({
       where: whereClause,
       include: ['author', 'modifier', 'organization'],
+      order: [['created_at', 'DESC']],
     });
   }
 
@@ -30,38 +28,59 @@ export class ClausesService {
     });
 
     if (!clause) {
-      throw new NotFoundException(`Clause with ID ${id} not found`);
+      throw new NotFoundException(\`Clause with ID \${id} not found\`);
     }
+
+    // Increment usage count
+    await clause.increment('usage_count');
 
     return clause;
-  }
-
-  async update(id: string, updateData: Partial<Clause>): Promise<Clause> {
-    const [affectedCount, affectedRows] = await this.clauseModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
-    );
-
-    if (affectedCount === 0) {
-      throw new NotFoundException(`Clause with ID ${id} not found`);
-    }
-
-    return affectedRows[0];
   }
 
   async search(query: string): Promise<Clause[]> {
     return this.clauseModel.findAll({
       where: {
-        $or: [
-          { title: { $iLike: `%${query}%` } },
-          { content: { $iLike: `%${query}%` } },
-          { tags: { $iLike: `%${query}%` } },
+        [Op.or]: [
+          { title: { [Op.like]: \`%\${query}%\` } },
+          { content: { [Op.like]: \`%\${query}%\` } },
+          { tags: { [Op.like]: \`%\${query}%\` } },
         ],
       },
-      include: ['author', 'modifier', 'organization'],
+      include: ['author', 'organization'],
+      order: [['usage_count', 'DESC']],
     });
+  }
+
+  async create(createData: Partial<Clause>): Promise<Clause> {
+    const clause = await this.clauseModel.create({
+      ...createData,
+      status: createData.status || 'active',
+      version: createData.version || 1,
+      usage_count: 0,
+      visibility: createData.visibility || 'internal',
+    });
+
+    return this.findOne(clause.id);
+  }
+
+  async update(id: string, updateData: Partial<Clause>): Promise<Clause> {
+    const clause = await this.clauseModel.findByPk(id);
+    
+    if (!clause) {
+      throw new NotFoundException(\`Clause with ID \${id} not found\`);
+    }
+
+    await clause.update(updateData);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    const clause = await this.clauseModel.findByPk(id);
+    
+    if (!clause) {
+      throw new NotFoundException(\`Clause with ID \${id} not found\`);
+    }
+
+    await clause.destroy();
   }
 }

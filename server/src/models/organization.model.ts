@@ -5,6 +5,7 @@ import {
   DataType,
   PrimaryKey,
   Default,
+  HasMany,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -91,4 +92,44 @@ export class Organization extends Model {
   @ApiProperty({ example: '2024-01-15T10:30:00Z', description: 'Last update timestamp' })
   @Column(DataType.DATE)
   updated_at: Date;
+
+  // HasMany relationships - loaded when including related models
+  // Note: Actual imports are avoided to prevent circular dependencies
+  // These will be properly typed when eager loading with Sequelize
+
+  // Core relationships
+  users?: any[]; // User[]
+  cases?: any[]; // Case[]
+  documents?: any[]; // Document[]
+  evidence?: any[]; // Evidence[]
+
+  // AI & Search
+  documentEmbeddings?: any[]; // DocumentEmbedding[]
+  documentAnalyses?: any[]; // DocumentAnalysis[]
+  legalCitations?: any[]; // LegalCitation[]
+  searchQueries?: any[]; // SearchQuery[]
+
+  // Workflow & Tasks
+  tasks?: any[]; // Task[]
+  workflowStages?: any[]; // WorkflowStage[]
+  workflowTasks?: any[]; // WorkflowTask[]
+  calendarEvents?: any[]; // CalendarEvent[]
+
+  // Legal & Compliance
+  motions?: any[]; // Motion[]
+  discoveryRequests?: any[]; // DiscoveryRequest[]
+  timeEntries?: any[]; // TimeEntry[]
+  analytics?: any[]; // Analytics[]
+  complianceRecords?: any[]; // ComplianceRecord[]
+  clauses?: any[]; // Clause[]
+  jurisdictions?: any[]; // Jurisdiction[]
+
+  // Messaging
+  conversations?: any[]; // Conversation[]
+  messages?: any[]; // Message[]
+
+  // Case-related
+  parties?: any[]; // Party[]
+  caseMembers?: any[]; // CaseMember[]
+  docketEntries?: any[]; // DocketEntry[]
 }

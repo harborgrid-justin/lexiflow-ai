@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Message, Conversation } from '../../models/message.model';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { UpdateConversationDto } from './dto/update-conversation.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
@@ -13,13 +17,99 @@ export class MessagesService {
     private redisService: RedisService,
   ) {}
 
-  async createConversation(createConversationData: Partial<Conversation>): Promise<Conversation> {
-    return this.conversationModel.create(createConversationData);
+  async findAllConversations(caseId?: string, userId?: string): Promise<Conversation[]> {
+    const whereClause: any = {};
+    if (caseId) {whereClause.case_id = caseId;}
+    if (userId) {whereClause.created_by = userId;}
+
+    return this.conversationModel.findAll({
+      where: whereClause,
+      include: ['case', 'creator'],
+      order: [['last_message_at', 'DESC']],
+    });
   }
 
-  async createMessage(createMessageData: Partial<Message>): Promise<Message> {
+  async findConversation(id: string): Promise<Conversation> {
+    const conversation = await this.conversationModel.findByPk(id, {
+      include: ['case', 'creator', 'messages'],
+    });
+
+    if (!conversation) {
+      throw new NotFoundException(`Conversation with ID ${id} not found`);
+    }
+
+    return conversation;
+  }
+
+  async createConversation(createDto: CreateConversationDto): Promise<Conversation> {
+    const conversation = await this.conversationModel.create({
+      ...createDto,
+      status: createDto.status || 'active',
+    });
+
+    return this.findConversation(conversation.id);
+  }
+
+  async updateConversation(id: string, updateDto: UpdateConversationDto): Promise<Conversation> {
+    const conversation = await this.findConversation(id);
+    await conversation.update(updateDto);
+    return this.findConversation(id);
+  }
+
+  async findMessages(conversationId: string): Promise<Message[]> {
+    // Try to get from Redis cache first
+    const cachedMessages = await this.redisService.getConversationMessages(conversationId, 100);
+
+    if (cachedMessages && cachedMessages.length > 0) {
+      return cachedMessages;
+    }
+
+    // Otherwise fetch from database and cache
+    const messages = await this.messageModel.findAll({
+      where: { conversation_id: conversationId },
+      include: ['sender', 'conversation'],
+      order: [['created_at', 'ASC']],
+    });
+
+    // Cache the messages in Redis
+    for (const msg of messages) {
+      await this.redisService.addMessageToConversation(conversationId, {
+        id: msg.id,
+        content: msg.content,
+        sender_id: msg.sender_id,
+        created_at: msg.created_at,
+      });
+    }
+
+    return messages;
+  }
+
+  async findMessage(id: string): Promise<Message> {
+    const message = await this.messageModel.findByPk(id, {
+      include: ['sender', 'conversation'],
+    });
+
+    if (!message) {
+      throw new NotFoundException(`Message with ID ${id} not found`);
+    }
+
+    return message;
+  }
+
+  async sendMessage(conversationId: string, createDto: CreateMessageDto): Promise<Message> {
+    return this.createMessage({
+      ...createDto,
+      conversation_id: conversationId,
+    });
+  }
+
+  async createMessage(createDto: CreateMessageDto): Promise<Message> {
     // Save to database
-    const message = await this.messageModel.create(createMessageData);
+    const message = await this.messageModel.create({
+      ...createDto,
+      message_type: createDto.message_type || 'text',
+      status: createDto.status || 'sent',
+    });
     
     // Cache in Redis for real-time access
     if (message.conversation_id) {
@@ -48,97 +138,19 @@ export class MessagesService {
       );
     }
     
-    return message;
-  }
-
-  async findConversations(caseId?: string, userId?: string): Promise<Conversation[]> {
-    const whereClause: Record<string, string> = {};
-    if (caseId) {whereClause.case_id = caseId;}
-    if (userId) {whereClause.created_by = userId;}
-
-    return this.conversationModel.findAll({
-      where: whereClause,
-    });
-  }
-
-  async findMessages(conversationId: string): Promise<Message[]> {
-    // Try to get from Redis cache first
-    const cachedMessages = await this.redisService.getConversationMessages(conversationId, 100);
-    
-    if (cachedMessages && cachedMessages.length > 0) {
-      // Return cached messages if available
-      return cachedMessages;
-    }
-    
-    // Otherwise fetch from database and cache
-    const messages = await this.messageModel.findAll({
-      where: { conversation_id: conversationId },
-      order: [['created_at', 'ASC']],
-    });
-    
-    // Cache the messages in Redis
-    for (const msg of messages) {
-      await this.redisService.addMessageToConversation(conversationId, {
-        id: msg.id,
-        content: msg.content,
-        sender_id: msg.sender_id,
-        created_at: msg.created_at,
-      });
-    }
-    
-    return messages;
-  }
-
-  async findConversation(id: string): Promise<Conversation> {
-    const conversation = await this.conversationModel.findByPk(id);
-
-    if (!conversation) {
-      throw new NotFoundException(`Conversation with ID ${id} not found`);
-    }
-
-    return conversation;
-  }
-
-  async findMessage(id: string): Promise<Message> {
-    const message = await this.messageModel.findByPk(id);
-
-    if (!message) {
-      throw new NotFoundException(`Message with ID ${id} not found`);
-    }
-
-    return message;
-  }
-
-  async updateConversation(id: string, updateData: Partial<Conversation>): Promise<Conversation> {
-    const [affectedCount, affectedRows] = await this.conversationModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
+    // Update last message timestamp
+    await this.conversationModel.update(
+      { last_message_at: new Date() },
+      { where: { id: message.conversation_id } },
     );
 
-    if (affectedCount === 0) {
-      throw new NotFoundException(`Conversation with ID ${id} not found`);
-    }
-
-    return affectedRows[0];
+    return this.findMessage(message.id);
   }
 
-  async updateMessage(id: string, updateData: Partial<Message>): Promise<Message> {
-    const [affectedCount, affectedRows] = await this.messageModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
-    );
-
-    if (affectedCount === 0) {
-      throw new NotFoundException(`Message with ID ${id} not found`);
-    }
-
-    return affectedRows[0];
+  async updateMessage(id: string, updateDto: UpdateMessageDto): Promise<Message> {
+    const message = await this.findMessage(id);
+    await message.update(updateDto);
+    return this.findMessage(id);
   }
 
   // ==================== REAL-TIME FEATURES ====================

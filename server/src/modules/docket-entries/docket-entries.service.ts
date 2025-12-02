@@ -15,8 +15,11 @@ export class DocketEntriesService {
     return this.docketEntryModel.create(createDocketEntryDto as any);
   }
 
-  async findAll(): Promise<DocketEntry[]> {
+  async findAll(caseId?: string): Promise<DocketEntry[]> {
+    const whereClause = caseId ? { case_id: caseId } : {};
     return this.docketEntryModel.findAll({
+      where: whereClause,
+      include: ['case'],
       order: [['date_filed', 'DESC'], ['entry_number', 'DESC']],
     });
   }

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { KnowledgeArticle } from '../../models/knowledge.model';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class KnowledgeService {
@@ -9,15 +10,12 @@ export class KnowledgeService {
     private knowledgeModel: typeof KnowledgeArticle,
   ) {}
 
-  async create(createKnowledgeData: Partial<KnowledgeArticle>): Promise<KnowledgeArticle> {
-    return this.knowledgeModel.create(createKnowledgeData);
-  }
-
   async findAll(category?: string): Promise<KnowledgeArticle[]> {
     const whereClause = category ? { category } : {};
     return this.knowledgeModel.findAll({
       where: whereClause,
       include: ['author', 'modifier', 'organization'],
+      order: [['created_at', 'DESC']],
     });
   }
 
@@ -27,8 +25,11 @@ export class KnowledgeService {
     });
 
     if (!article) {
-      throw new NotFoundException(`Knowledge article with ID ${id} not found`);
+      throw new NotFoundException(\`Knowledge article with ID \${id} not found\`);
     }
+
+    // Increment view count
+    await article.increment('view_count');
 
     return article;
   }
@@ -36,29 +37,36 @@ export class KnowledgeService {
   async search(query: string): Promise<KnowledgeArticle[]> {
     return this.knowledgeModel.findAll({
       where: {
-        $or: [
-          { title: { $iLike: `%${query}%` } },
-          { content: { $iLike: `%${query}%` } },
-          { tags: { $iLike: `%${query}%` } },
+        [Op.or]: [
+          { title: { [Op.like]: \`%\${query}%\` } },
+          { content: { [Op.like]: \`%\${query}%\` } },
+          { tags: { [Op.like]: \`%\${query}%\` } },
         ],
       },
-      include: ['author', 'modifier', 'organization'],
+      include: ['author', 'organization'],
+      order: [['view_count', 'DESC']],
     });
   }
 
-  async update(id: string, updateData: Partial<KnowledgeArticle>): Promise<KnowledgeArticle> {
-    const [affectedCount, affectedRows] = await this.knowledgeModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
-    );
+  async create(createData: Partial<KnowledgeArticle>): Promise<KnowledgeArticle> {
+    const article = await this.knowledgeModel.create({
+      ...createData,
+      status: createData.status || 'draft',
+      visibility: createData.visibility || 'internal',
+      view_count: 0,
+    });
 
-    if (affectedCount === 0) {
-      throw new NotFoundException(`Knowledge article with ID ${id} not found`);
+    return this.findOne(article.id);
+  }
+
+  async update(id: string, updateData: Partial<KnowledgeArticle>): Promise<KnowledgeArticle> {
+    const article = await this.knowledgeModel.findByPk(id);
+    
+    if (!article) {
+      throw new NotFoundException(\`Knowledge article with ID \${id} not found\`);
     }
 
-    return affectedRows[0];
+    await article.update(updateData);
+    return this.findOne(id);
   }
 }
