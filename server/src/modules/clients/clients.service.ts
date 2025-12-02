@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
 import { Client } from '../../models/client.model';
+import { Case } from '../../models/case.model';
+import { CreateClientDto } from './dto/create-client.dto';
+import { UpdateClientDto } from './dto/update-client.dto';
 
 @Injectable()
 export class ClientsService {
@@ -9,21 +13,22 @@ export class ClientsService {
     private clientModel: typeof Client,
   ) {}
 
-  async create(createClientData: Partial<Client>): Promise<Client> {
-    return this.clientModel.create(createClientData);
-  }
-
   async findAll(orgId?: string): Promise<Client[]> {
     const whereClause = orgId ? { owner_org_id: orgId } : {};
     return this.clientModel.findAll({
       where: whereClause,
-      include: ['organization'],
+      order: [['name', 'ASC']],
     });
   }
 
   async findOne(id: string): Promise<Client> {
     const client = await this.clientModel.findByPk(id, {
-      include: ['organization'],
+      include: [
+        {
+          model: Case,
+          as: 'cases',
+        }
+      ],
     });
 
     if (!client) {
@@ -33,20 +38,32 @@ export class ClientsService {
     return client;
   }
 
-  async update(id: string, updateData: Partial<Client>): Promise<Client> {
-    const [affectedCount, affectedRows] = await this.clientModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
+  async findByName(name: string): Promise<Client[]> {
+    return this.clientModel.findAll({
+      where: {
+        name: {
+          [Op.iLike]: `%${name}%`,
+        },
       },
+      order: [['name', 'ASC']],
+    });
+  }
+
+  async create(createClientDto: CreateClientDto): Promise<Client> {
+    return this.clientModel.create(createClientDto);
+  }
+
+  async update(id: string, updateClientDto: UpdateClientDto): Promise<Client> {
+    const [affectedCount] = await this.clientModel.update(
+      updateClientDto,
+      { where: { id } }
     );
 
     if (affectedCount === 0) {
       throw new NotFoundException(`Client with ID ${id} not found`);
     }
 
-    return affectedRows[0];
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
@@ -57,12 +74,5 @@ export class ClientsService {
     if (deletedCount === 0) {
       throw new NotFoundException(`Client with ID ${id} not found`);
     }
-  }
-
-  async findByName(name: string): Promise<Client[]> {
-    return this.clientModel.findAll({
-      where: { name },
-      include: ['organization'],
-    });
   }
 }

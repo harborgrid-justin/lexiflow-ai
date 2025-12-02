@@ -11,6 +11,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { MotionsService } from './motions.service';
 import { Motion } from '../../models/motion.model';
+import { CreateMotionDto } from './dto/create-motion.dto';
+import { UpdateMotionDto } from './dto/update-motion.dto';
 
 @ApiTags('motions')
 @Controller('motions')
@@ -20,8 +22,9 @@ export class MotionsController {
   @Post()
   @ApiOperation({ summary: 'Create a new motion' })
   @ApiResponse({ status: 201, description: 'Motion created successfully', type: Motion })
-  create(@Body() createMotionData: Partial<Motion>): Promise<Motion> {
-    return this.motionsService.create(createMotionData);
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  create(@Body() createMotionDto: CreateMotionDto): Promise<Motion> {
+    return this.motionsService.create(createMotionDto);
   }
 
   @Get()
@@ -51,11 +54,12 @@ export class MotionsController {
   @ApiOperation({ summary: 'Update motion' })
   @ApiResponse({ status: 200, description: 'Motion updated successfully', type: Motion })
   @ApiResponse({ status: 404, description: 'Motion not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<Motion>,
+    @Body() updateMotionDto: UpdateMotionDto,
   ): Promise<Motion> {
-    return this.motionsService.update(id, updateData);
+    return this.motionsService.update(id, updateMotionDto);
   }
 
   @Delete(':id')

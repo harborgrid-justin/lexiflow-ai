@@ -13,8 +13,6 @@ import { GoogleCustomSearchService } from '../../services/google-custom-search.s
 
 @Injectable()
 export class SearchService {
-  private googleSearchService: GoogleCustomSearchService;
-
   constructor(
     @InjectModel(DocumentEmbedding)
     private readonly documentEmbeddingModel: typeof DocumentEmbedding,
@@ -27,9 +25,8 @@ export class SearchService {
     @InjectModel(Document)
     private readonly documentModel: typeof Document,
     private readonly vectorSearchService: VectorSearchService,
-  ) {
-    this.googleSearchService = new GoogleCustomSearchService();
-  }
+    private readonly googleSearchService: GoogleCustomSearchService,
+  ) {}
 
   /**
    * Perform legal research using Google Custom Search API
@@ -280,6 +277,214 @@ export class SearchService {
         },
       ],
       order: [['created_at', 'DESC']],
+    });
+  }
+
+  /**
+   * Semantic search using vector embeddings
+   */
+  async semanticSearch(
+    query: string,
+    options: {
+      limit?: number;
+      threshold?: number;
+      caseId?: string;
+      documentType?: string;
+      orgId?: string;
+    },
+    user: User,
+  ) {
+    const results = await this.vectorSearchService.semanticSearchWithQuery(query, {
+      limit: options.limit || 10,
+      threshold: options.threshold || 0.7,
+      caseId: options.caseId,
+      orgId: user.organization_id,
+    });
+
+    return {
+      query,
+      results,
+      total: results.length,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Hybrid search combining semantic and keyword search
+   */
+  async hybridSearch(
+    query: string,
+    options: {
+      limit?: number;
+      keywordWeight?: number;
+      semanticWeight?: number;
+      caseId?: string;
+      orgId?: string;
+    },
+    user: User,
+  ) {
+    const results = await this.vectorSearchService.hybridSearchWithQuery(query, {
+      limit: options.limit || 10,
+      keywordWeight: options.keywordWeight || 0.3,
+      semanticWeight: options.semanticWeight || 0.7,
+      caseId: options.caseId,
+      orgId: user.organization_id,
+    });
+
+    return {
+      query,
+      results,
+      total: results.length,
+      weights: {
+        keyword: options.keywordWeight || 0.3,
+        semantic: options.semanticWeight || 0.7,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Find similar documents based on document ID
+   */
+  async findSimilarDocuments(documentId: string, limit?: number, user?: User) {
+    const results = await this.vectorSearchService.findSimilarDocuments(
+      documentId,
+      limit || 5,
+    );
+
+    return {
+      sourceDocumentId: documentId,
+      similarDocuments: results,
+      total: results.length,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Analyze document using AI
+   */
+  async analyzeDocument(
+    documentId: string,
+    user: User,
+  ): Promise<DocumentAnalysis> {
+    // Get document
+    const document = await this.documentModel.findByPk(documentId);
+    if (!document) {
+      throw new Error(`Document ${documentId} not found`);
+    }
+
+    // For now, create a basic analysis
+    // In a real implementation, this would use AI to analyze the document
+    const analysisResults = {
+      documentType: document.type || 'Unknown',
+      summary: `Analysis of ${document.title}`,
+      keyTerms: [],
+      entities: [],
+      riskScore: 0.5,
+      confidence: 0.85,
+    };
+
+    return this.createDocumentAnalysis(
+      documentId,
+      'general_analysis',
+      analysisResults,
+      user,
+    );
+  }
+
+  /**
+   * Create a legal citation
+   */
+  async createCitation(
+    documentId: string,
+    citation: string,
+    user: User,
+    additionalData?: {
+      caseName?: string;
+      year?: number;
+      court?: string;
+      jurisdiction?: string;
+    },
+  ): Promise<LegalCitation> {
+    return this.legalCitationModel.create({
+      document_id: documentId,
+      citation,
+      case_name: additionalData?.caseName || citation,
+      year: additionalData?.year,
+      court: additionalData?.court,
+      jurisdiction: additionalData?.jurisdiction,
+      added_by: user.id,
+      owner_org_id: user.organization_id,
+      verified: false,
+    });
+  }
+
+  /**
+   * Save research session
+   */
+  async saveResearchSession(sessionData: {
+    query: string;
+    results: any;
+    userId: string;
+    organizationId: string;
+    caseId?: string;
+  }) {
+    return this.searchQueryModel.create({
+      query_text: sessionData.query,
+      search_type: 'research_session',
+      user_id: sessionData.userId,
+      organization_id: sessionData.organizationId,
+      case_context: sessionData.caseId,
+      result_count: sessionData.results?.length || 0,
+    });
+  }
+
+  /**
+   * Update feedback on search/research session
+   */
+  async updateFeedback(
+    sessionId: string,
+    feedback: 'positive' | 'negative',
+  ): Promise<void> {
+    const session = await this.searchQueryModel.findByPk(sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+
+    // Store feedback in filters field as JSONB
+    const currentFilters = session.filters || {};
+    await session.update({
+      filters: {
+        ...currentFilters,
+        feedback,
+        feedbackTimestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * Get search history for user/organization
+   */
+  async getSearchHistory(
+    organizationId: string,
+    userId?: string,
+    limit: number = 50,
+  ) {
+    const whereClause: Record<string, string> = { organization_id: organizationId };
+    if (userId) {
+      whereClause.user_id = userId;
+    }
+
+    return this.searchQueryModel.findAll({
+      where: whereClause,
+      order: [['created_at', 'DESC']],
+      limit,
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'name', 'email'],
+        },
+      ],
     });
   }
 }

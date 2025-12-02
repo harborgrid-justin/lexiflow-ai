@@ -1,91 +1,50 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Put,
-  Param,
-  Delete,
-  Query,
-  UseGuards,
-  Request,
-  ParseIntPipe,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EthicalWallService } from './ethical-wall.service';
-import { CreateEthicalWallDto, UpdateEthicalWallDto } from './dto/ethical-wall.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { EthicalWall } from '../../models/ethical-wall.model';
 
 @ApiTags('ethical-wall')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('ethical-wall')
 export class EthicalWallController {
   constructor(private readonly ethicalWallService: EthicalWallService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new ethical wall' })
-  @ApiResponse({ status: 201, description: 'Ethical wall created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  create(@Body() createEthicalWallDto: CreateEthicalWallDto, @Request() req: { user: { id: number } }) {
-    return this.ethicalWallService.create(createEthicalWallDto, req.user.id);
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get all ethical walls' })
-  @ApiQuery({ name: 'organizationId', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiQuery({ name: 'activeOnly', required: false, type: Boolean })
-  @ApiResponse({ status: 200, description: 'Ethical walls retrieved successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findAll(
-    @Query('organizationId', new ParseIntPipe({ optional: true })) organizationId?: number,
-    @Query('search') search?: string,
-    @Query('activeOnly') activeOnly?: boolean,
-  ) {
-    if (search) {
-      return this.ethicalWallService.search(search, organizationId);
-    }
-    if (activeOnly) {
-      return this.ethicalWallService.findActive(organizationId);
-    }
-    return this.ethicalWallService.findAll(organizationId);
+  @ApiResponse({ status: 200, description: 'Ethical walls retrieved successfully', type: [EthicalWall] })
+  findAll(): Promise<EthicalWall[]> {
+    return this.ethicalWallService.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an ethical wall by ID' })
-  @ApiResponse({ status: 200, description: 'Ethical wall retrieved successfully' })
+  @ApiOperation({ summary: 'Get ethical wall by ID' })
+  @ApiResponse({ status: 200, description: 'Ethical wall retrieved successfully', type: EthicalWall })
   @ApiResponse({ status: 404, description: 'Ethical wall not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id') id: string): Promise<EthicalWall> {
     return this.ethicalWallService.findOne(id);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update an ethical wall' })
-  @ApiResponse({ status: 200, description: 'Ethical wall updated successfully' })
-  @ApiResponse({ status: 404, description: 'Ethical wall not found' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateEthicalWallDto: UpdateEthicalWallDto) {
-    return this.ethicalWallService.update(id, updateEthicalWallDto);
+  @Post()
+  @ApiOperation({ summary: 'Create ethical wall' })
+  @ApiResponse({ status: 201, description: 'Ethical wall created successfully', type: EthicalWall })
+  create(@Body() createDto: any): Promise<EthicalWall> {
+    return this.ethicalWallService.create(createDto);
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete an ethical wall' })
-  @ApiResponse({ status: 200, description: 'Ethical wall deleted successfully' })
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update ethical wall' })
+  @ApiResponse({ status: 200, description: 'Ethical wall updated successfully', type: EthicalWall })
   @ApiResponse({ status: 404, description: 'Ethical wall not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.ethicalWallService.remove(id);
+  update(@Param('id') id: string, @Body() updateDto: any): Promise<EthicalWall> {
+    return this.ethicalWallService.update(id, updateDto);
   }
 
-  @Get('user/:userId')
-  @ApiOperation({ summary: 'Get ethical walls affecting a user' })
-  @ApiResponse({ status: 200, description: 'Ethical walls retrieved successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findByUser(@Param('userId', ParseIntPipe) userId: number) {
-    return this.ethicalWallService.findByUser(userId);
+  @Get('check/:userId/:caseId')
+  @ApiOperation({ summary: 'Check user access to case' })
+  @ApiResponse({ status: 200, description: 'Access check completed' })
+  checkAccess(
+    @Param('userId') userId: string,
+    @Param('caseId') caseId: string,
+  ): Promise<{ hasAccess: boolean }> {
+    return this.ethicalWallService.checkAccess(userId, caseId).then(hasAccess => ({ hasAccess }));
   }
 }

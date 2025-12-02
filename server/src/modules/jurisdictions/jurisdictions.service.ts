@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Jurisdiction } from '../../models/jurisdiction.model';
+import { CreateJurisdictionDto } from './dto/create-jurisdiction.dto';
+import { UpdateJurisdictionDto } from './dto/update-jurisdiction.dto';
 
 @Injectable()
 export class JurisdictionsService {
@@ -9,15 +11,12 @@ export class JurisdictionsService {
     private jurisdictionModel: typeof Jurisdiction,
   ) {}
 
-  async create(createJurisdictionData: Partial<Jurisdiction>): Promise<Jurisdiction> {
-    return this.jurisdictionModel.create(createJurisdictionData);
-  }
-
   async findAll(country?: string): Promise<Jurisdiction[]> {
     const whereClause = country ? { country } : {};
     return this.jurisdictionModel.findAll({
       where: whereClause,
       include: ['parent', 'organization'],
+      order: [['name', 'ASC']],
     });
   }
 
@@ -46,19 +45,20 @@ export class JurisdictionsService {
     return jurisdiction;
   }
 
-  async update(id: string, updateData: Partial<Jurisdiction>): Promise<Jurisdiction> {
-    const [affectedCount, affectedRows] = await this.jurisdictionModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
+  async create(createJurisdictionDto: CreateJurisdictionDto): Promise<Jurisdiction> {
+    return this.jurisdictionModel.create(createJurisdictionDto);
+  }
+
+  async update(id: string, updateJurisdictionDto: UpdateJurisdictionDto): Promise<Jurisdiction> {
+    const [affectedCount] = await this.jurisdictionModel.update(
+      updateJurisdictionDto,
+      { where: { id } }
     );
 
     if (affectedCount === 0) {
       throw new NotFoundException(`Jurisdiction with ID ${id} not found`);
     }
 
-    return affectedRows[0];
+    return this.findOne(id);
   }
 }

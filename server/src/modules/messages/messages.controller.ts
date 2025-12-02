@@ -2,13 +2,17 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Patch,
   Param,
   Query,
+  Body,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { MessagesService } from './messages.service';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { UpdateConversationDto } from './dto/update-conversation.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
 import { Message, Conversation } from '../../models/message.model';
 
 @ApiTags('messages')
@@ -16,27 +20,22 @@ import { Message, Conversation } from '../../models/message.model';
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
-  @Post('conversations')
-  @ApiOperation({ summary: 'Create a new conversation' })
-  @ApiResponse({ status: 201, description: 'Conversation created successfully', type: Conversation })
-  createConversation(@Body() createConversationData: Partial<Conversation>): Promise<Conversation> {
-    return this.messagesService.createConversation(createConversationData);
-  }
-
-  @Post()
-  @ApiOperation({ summary: 'Create a new message' })
-  @ApiResponse({ status: 201, description: 'Message created successfully', type: Message })
-  createMessage(@Body() createMessageData: Partial<Message>): Promise<Message> {
-    return this.messagesService.createMessage(createMessageData);
+  @Get()
+  @ApiOperation({ summary: 'Alias for GET /messages/conversations' })
+  @ApiQuery({ name: 'caseId', required: false, description: 'Filter by case ID' })
+  @ApiQuery({ name: 'userId', required: false, description: 'Filter by user ID' })
+  @ApiResponse({ status: 200, description: 'Conversations retrieved successfully', type: [Conversation] })
+  findAll(@Query('caseId') caseId?: string, @Query('userId') userId?: string): Promise<Conversation[]> {
+    return this.messagesService.findAllConversations(caseId, userId);
   }
 
   @Get('conversations')
   @ApiOperation({ summary: 'Get all conversations' })
-  @ApiQuery({ name: 'caseId', required: false, description: 'Case ID filter' })
-  @ApiQuery({ name: 'userId', required: false, description: 'User ID filter' })
+  @ApiQuery({ name: 'caseId', required: false, description: 'Filter by case ID' })
+  @ApiQuery({ name: 'userId', required: false, description: 'Filter by user ID' })
   @ApiResponse({ status: 200, description: 'Conversations retrieved successfully', type: [Conversation] })
   findConversations(@Query('caseId') caseId?: string, @Query('userId') userId?: string): Promise<Conversation[]> {
-    return this.messagesService.findConversations(caseId, userId);
+    return this.messagesService.findAllConversations(caseId, userId);
   }
 
   @Get('conversations/:id')
@@ -47,11 +46,39 @@ export class MessagesController {
     return this.messagesService.findConversation(id);
   }
 
+  @Post('conversations')
+  @ApiOperation({ summary: 'Create a new conversation' })
+  @ApiResponse({ status: 201, description: 'Conversation created successfully', type: Conversation })
+  createConversation(@Body() createDto: CreateConversationDto): Promise<Conversation> {
+    return this.messagesService.createConversation(createDto);
+  }
+
+  @Patch('conversations/:id')
+  @ApiOperation({ summary: 'Update conversation' })
+  @ApiResponse({ status: 200, description: 'Conversation updated successfully', type: Conversation })
+  @ApiResponse({ status: 404, description: 'Conversation not found' })
+  updateConversation(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateConversationDto,
+  ): Promise<Conversation> {
+    return this.messagesService.updateConversation(id, updateDto);
+  }
+
   @Get('conversations/:id/messages')
   @ApiOperation({ summary: 'Get messages in a conversation' })
   @ApiResponse({ status: 200, description: 'Messages retrieved successfully', type: [Message] })
   findMessages(@Param('id') conversationId: string): Promise<Message[]> {
     return this.messagesService.findMessages(conversationId);
+  }
+
+  @Post(':conversationId/send')
+  @ApiOperation({ summary: 'Send a message to a conversation' })
+  @ApiResponse({ status: 201, description: 'Message sent successfully', type: Message })
+  sendMessage(
+    @Param('conversationId') conversationId: string,
+    @Body() createDto: CreateMessageDto,
+  ): Promise<Message> {
+    return this.messagesService.sendMessage(conversationId, createDto);
   }
 
   @Get(':id')
@@ -62,15 +89,11 @@ export class MessagesController {
     return this.messagesService.findMessage(id);
   }
 
-  @Patch('conversations/:id')
-  @ApiOperation({ summary: 'Update conversation' })
-  @ApiResponse({ status: 200, description: 'Conversation updated successfully', type: Conversation })
-  @ApiResponse({ status: 404, description: 'Conversation not found' })
-  updateConversation(
-    @Param('id') id: string,
-    @Body() updateData: Partial<Conversation>,
-  ): Promise<Conversation> {
-    return this.messagesService.updateConversation(id, updateData);
+  @Post()
+  @ApiOperation({ summary: 'Create a new message' })
+  @ApiResponse({ status: 201, description: 'Message created successfully', type: Message })
+  createMessage(@Body() createDto: CreateMessageDto): Promise<Message> {
+    return this.messagesService.createMessage(createDto);
   }
 
   @Patch(':id')
@@ -79,9 +102,9 @@ export class MessagesController {
   @ApiResponse({ status: 404, description: 'Message not found' })
   updateMessage(
     @Param('id') id: string,
-    @Body() updateData: Partial<Message>,
+    @Body() updateDto: UpdateMessageDto,
   ): Promise<Message> {
-    return this.messagesService.updateMessage(id, updateData);
+    return this.messagesService.updateMessage(id, updateDto);
   }
 
   // ==================== REAL-TIME ENDPOINTS ====================

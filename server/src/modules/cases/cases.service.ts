@@ -24,13 +24,28 @@ export class CasesService {
     const whereClause = orgId ? { owner_org_id: orgId } : {};
     return this.caseModel.findAll({
       where: whereClause,
-      include: ['organization', 'parties', 'caseMembers'],
+      include: [
+        'organization',
+        'parties',
+        'caseMembers',
+        'docketEntries',
+        'consolidatedCases',
+        'memberOfCases',
+      ],
+      order: [['created_at', 'DESC']],
     });
   }
 
   async findOne(id: string): Promise<Case> {
     const caseRecord = await this.caseModel.findByPk(id, {
-      include: ['organization', 'parties', 'caseMembers'],
+      include: [
+        'organization',
+        'parties',
+        'caseMembers',
+        'docketEntries',
+        'consolidatedCases',
+        'memberOfCases',
+      ],
     });
 
     if (!caseRecord) {

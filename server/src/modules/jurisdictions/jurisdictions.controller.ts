@@ -10,21 +10,15 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { JurisdictionsService } from './jurisdictions.service';
 import { Jurisdiction } from '../../models/jurisdiction.model';
+import { CreateJurisdictionDto, UpdateJurisdictionDto } from './dto';
 
 @ApiTags('jurisdictions')
 @Controller('jurisdictions')
 export class JurisdictionsController {
   constructor(private readonly jurisdictionsService: JurisdictionsService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new jurisdiction' })
-  @ApiResponse({ status: 201, description: 'Jurisdiction created successfully', type: Jurisdiction })
-  create(@Body() createJurisdictionData: Partial<Jurisdiction>): Promise<Jurisdiction> {
-    return this.jurisdictionsService.create(createJurisdictionData);
-  }
-
   @Get()
-  @ApiOperation({ summary: 'Get all jurisdictions' })
+  @ApiOperation({ summary: 'List jurisdictions' })
   @ApiQuery({ name: 'country', required: false, description: 'Country filter' })
   @ApiResponse({ status: 200, description: 'Jurisdictions retrieved successfully', type: [Jurisdiction] })
   findAll(@Query('country') country?: string): Promise<Jurisdiction[]> {
@@ -47,14 +41,22 @@ export class JurisdictionsController {
     return this.jurisdictionsService.findOne(id);
   }
 
+  @Post()
+  @ApiOperation({ summary: 'Create jurisdiction' })
+  @ApiResponse({ status: 201, description: 'Jurisdiction created successfully', type: Jurisdiction })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  create(@Body() createJurisdictionDto: CreateJurisdictionDto): Promise<Jurisdiction> {
+    return this.jurisdictionsService.create(createJurisdictionDto);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update jurisdiction' })
   @ApiResponse({ status: 200, description: 'Jurisdiction updated successfully', type: Jurisdiction })
   @ApiResponse({ status: 404, description: 'Jurisdiction not found' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<Jurisdiction>,
+    @Body() updateJurisdictionDto: UpdateJurisdictionDto,
   ): Promise<Jurisdiction> {
-    return this.jurisdictionsService.update(id, updateData);
+    return this.jurisdictionsService.update(id, updateJurisdictionDto);
   }
 }

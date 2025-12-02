@@ -6,28 +6,39 @@ import {
   Patch,
   Param,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { WorkflowService } from './workflow.service';
 import { WorkflowStage, WorkflowTask } from '../../models/workflow.model';
+import {
+  CreateWorkflowStageDto,
+  UpdateWorkflowStageDto,
+  CreateWorkflowTaskDto,
+  UpdateWorkflowTaskDto,
+} from './dto';
 
 @ApiTags('workflow')
 @Controller('workflow')
+@UsePipes(new ValidationPipe({ transform: true }))
 export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 
   @Post('stages')
   @ApiOperation({ summary: 'Create a new workflow stage' })
   @ApiResponse({ status: 201, description: 'Workflow stage created successfully', type: WorkflowStage })
-  createStage(@Body() createStageData: Partial<WorkflowStage>): Promise<WorkflowStage> {
-    return this.workflowService.createStage(createStageData);
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  createStage(@Body() createStageDto: CreateWorkflowStageDto): Promise<WorkflowStage> {
+    return this.workflowService.createStage(createStageDto);
   }
 
   @Post('tasks')
   @ApiOperation({ summary: 'Create a new workflow task' })
   @ApiResponse({ status: 201, description: 'Workflow task created successfully', type: WorkflowTask })
-  createTask(@Body() createTaskData: Partial<WorkflowTask>): Promise<WorkflowTask> {
-    return this.workflowService.createTask(createTaskData);
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  createTask(@Body() createTaskDto: CreateWorkflowTaskDto): Promise<WorkflowTask> {
+    return this.workflowService.createTask(createTaskDto);
   }
 
   @Get('stages')
@@ -67,21 +78,23 @@ export class WorkflowController {
   @ApiOperation({ summary: 'Update workflow stage' })
   @ApiResponse({ status: 200, description: 'Workflow stage updated successfully', type: WorkflowStage })
   @ApiResponse({ status: 404, description: 'Workflow stage not found' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
   updateStage(
     @Param('id') id: string,
-    @Body() updateData: Partial<WorkflowStage>,
+    @Body() updateStageDto: UpdateWorkflowStageDto,
   ): Promise<WorkflowStage> {
-    return this.workflowService.updateStage(id, updateData);
+    return this.workflowService.updateStage(id, updateStageDto);
   }
 
   @Patch('tasks/:id')
   @ApiOperation({ summary: 'Update workflow task' })
   @ApiResponse({ status: 200, description: 'Workflow task updated successfully', type: WorkflowTask })
   @ApiResponse({ status: 404, description: 'Workflow task not found' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
   updateTask(
     @Param('id') id: string,
-    @Body() updateData: Partial<WorkflowTask>,
+    @Body() updateTaskDto: UpdateWorkflowTaskDto,
   ): Promise<WorkflowTask> {
-    return this.workflowService.updateTask(id, updateData);
+    return this.workflowService.updateTask(id, updateTaskDto);
   }
 }

@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { TimeEntry } from '../../models/billing.model';
+import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
+import { UpdateTimeEntryDto } from './dto/update-time-entry.dto';
 import { Op } from 'sequelize';
 
 @Injectable()
@@ -10,107 +12,120 @@ export class BillingService {
     private timeEntryModel: typeof TimeEntry,
   ) {}
 
-  async createTimeEntry(createTimeEntryData: Partial<TimeEntry>): Promise<TimeEntry> {
-    return this.timeEntryModel.create(createTimeEntryData);
-  }
+  async findAll(caseId?: string, userId?: string): Promise<TimeEntry[]> {
+    const whereClause: any = {};
 
-  async findTimeEntries(caseId?: string, userId?: string): Promise<TimeEntry[]> {
-    const whereClause: Record<string, string> = {};
-    if (caseId) {whereClause.case_id = caseId;}
-    if (userId) {whereClause.user_id = userId;}
+    if (caseId) {
+      whereClause.case_id = caseId;
+    }
+
+    if (userId) {
+      whereClause.user_id = userId;
+    }
 
     return this.timeEntryModel.findAll({
       where: whereClause,
+      include: ['case', 'user'],
+      order: [['work_date', 'DESC']],
     });
   }
 
-  async findTimeEntry(id: string): Promise<TimeEntry> {
-    const timeEntry = await this.timeEntryModel.findByPk(id);
-
-    if (!timeEntry) {
-      throw new NotFoundException(`Time entry with ID ${id} not found`);
-    }
-
-    return timeEntry;
-  }
-
-  async updateTimeEntry(id: string, updateData: Partial<TimeEntry>): Promise<TimeEntry> {
-    const [affectedCount, affectedRows] = await this.timeEntryModel.update(
-      updateData,
-      {
-        where: { id },
-        returning: true,
-      },
-    );
-
-    if (affectedCount === 0) {
-      throw new NotFoundException(`Time entry with ID ${id} not found`);
-    }
-
-    return affectedRows[0];
-  }
-
-  async removeTimeEntry(id: string): Promise<void> {
-    const deletedCount = await this.timeEntryModel.destroy({
-      where: { id },
+  async findOne(id: string): Promise<TimeEntry> {
+    const entry = await this.timeEntryModel.findByPk(id, {
+      include: ['case', 'user'],
     });
 
-    if (deletedCount === 0) {
+    if (!entry) {
       throw new NotFoundException(`Time entry with ID ${id} not found`);
     }
+
+    return entry;
   }
 
-  async getBillingStats(caseId?: string, startDate?: Date, endDate?: Date): Promise<Record<string, unknown>> {
-    const whereClause: Record<string, unknown> = {};
-    if (caseId) {whereClause.case_id = caseId;}
-    if (startDate && endDate) {
-      whereClause.date = {
-        [Op.between]: [startDate, endDate],
-      };
+  async create(createDto: CreateTimeEntryDto): Promise<TimeEntry> {
+    // Calculate duration in minutes and total
+    const duration = Math.round(createDto.hours * 60);
+    const rate = createDto.rate || 0;
+    const total = createDto.hours * rate;
+
+    const entry = await this.timeEntryModel.create({
+      ...createDto,
+      work_date: new Date(createDto.date),
+      duration,
+      total,
+      entry_type: createDto.entry_type || 'billable',
+      status: createDto.status || 'draft',
+    });
+
+    return this.findOne(entry.id);
+  }
+
+  async update(id: string, updateDto: UpdateTimeEntryDto): Promise<TimeEntry> {
+    const entry = await this.findOne(id);
+
+    const updateData: any = { ...updateDto };
+
+    // Recalculate if hours or rate changed
+    if (updateDto.hours !== undefined || updateDto.rate !== undefined) {
+      const hours = updateDto.hours !== undefined ? updateDto.hours : entry.hours;
+      const rate = updateDto.rate !== undefined ? updateDto.rate : entry.rate;
+      updateData.duration = Math.round(hours * 60);
+      updateData.total = hours * rate;
     }
 
-    const timeEntries = await this.timeEntryModel.findAll({
+    if (updateDto.date) {
+      updateData.work_date = new Date(updateDto.date);
+    }
+
+    await entry.update(updateData);
+    return this.findOne(id);
+  }
+
+  async remove(id: string): Promise<void> {
+    const entry = await this.findOne(id);
+    await entry.destroy();
+  }
+
+  async getStats(caseId?: string, startDate?: string, endDate?: string): Promise<any> {
+    const whereClause: any = {};
+
+    if (caseId) {
+      whereClause.case_id = caseId;
+    }
+
+    if (startDate || endDate) {
+      whereClause.work_date = {};
+      if (startDate) {
+        whereClause.work_date[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        whereClause.work_date[Op.lte] = new Date(endDate);
+      }
+    }
+
+    const entries = await this.timeEntryModel.findAll({
       where: whereClause,
     });
 
-    const totalHours = timeEntries.reduce((sum, entry) => sum + entry.hours, 0);
-    const totalAmount = timeEntries.reduce((sum, entry) => sum + (entry.hours * (entry.rate || 0)), 0);
-
-    // Generate WIP data by month (last 6 months)
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const now = new Date();
-    const wip = [];
-    for (let i = 5; i >= 0; i--) {
-      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthName = months[monthDate.getMonth()];
-      // Calculate WIP for this month from time entries
-      const monthEntries = timeEntries.filter(entry => {
-        const entryDate = new Date(entry.date);
-        return entryDate.getMonth() === monthDate.getMonth() &&
-               entryDate.getFullYear() === monthDate.getFullYear();
-      });
-      const monthAmount = monthEntries.reduce((sum, entry) => sum + (entry.hours * (entry.rate || 0)), 0);
-      wip.push({
-        month: monthName,
-        amount: monthAmount || Math.floor(Math.random() * 50000) + 10000, // Fallback to sample data if no entries
-        billed: Math.floor((monthAmount || Math.floor(Math.random() * 50000) + 10000) * 0.8),
-      });
-    }
-
-    // Realization breakdown
-    const realization = [
-      { name: 'Collected', value: 85, color: '#10b981' },
-      { name: 'Outstanding', value: 10, color: '#f59e0b' },
-      { name: 'Write-off', value: 5, color: '#ef4444' },
-    ];
+    const totalHours = entries.reduce((sum, entry) => sum + Number(entry.hours), 0);
+    const totalAmount = entries.reduce((sum, entry) => sum + Number(entry.total), 0);
+    const billableEntries = entries.filter(e => e.entry_type === 'billable');
+    const billableHours = billableEntries.reduce((sum, entry) => sum + Number(entry.hours), 0);
+    const billableAmount = billableEntries.reduce((sum, entry) => sum + Number(entry.total), 0);
 
     return {
+      totalEntries: entries.length,
       totalHours,
       totalAmount,
-      entryCount: timeEntries.length,
-      timeEntries,
-      wip,
-      realization,
+      billableEntries: billableEntries.length,
+      billableHours,
+      billableAmount,
+      nonBillableHours: totalHours - billableHours,
+      averageRate: billableHours > 0 ? billableAmount / billableHours : 0,
     };
+  }
+
+  calculateTotal(entries: TimeEntry[]): number {
+    return entries.reduce((sum, entry) => sum + Number(entry.total), 0);
   }
 }

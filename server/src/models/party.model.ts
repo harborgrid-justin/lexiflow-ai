@@ -34,6 +34,10 @@ import { Organization } from './organization.model';
       fields: ['linked_org_id'],
       name: 'idx_parties_linked_org_id',
     },
+    {
+      fields: ['owner_org_id'],
+      name: 'idx_parties_owner_org_id',
+    },
   ],
 })
 export class Party extends Model {
@@ -73,6 +77,11 @@ export class Party extends Model {
   @Column(DataType.UUID)
   linked_org_id?: string;
 
+  @ApiProperty({ example: 'org-123', description: 'Owner organization ID (law firm managing this case)' })
+  @ForeignKey(() => Organization)
+  @Column(DataType.UUID)
+  owner_org_id?: string;
+
   @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -86,6 +95,9 @@ export class Party extends Model {
 
   @BelongsTo(() => Organization, 'linked_org_id')
   linkedOrganization?: Organization;
+
+  @BelongsTo(() => Organization, 'owner_org_id')
+  organization?: Organization;
 
   // HasMany relationship for attorneys representing this party
   attorneys?: any[]; // Will be properly typed when Attorney model is imported

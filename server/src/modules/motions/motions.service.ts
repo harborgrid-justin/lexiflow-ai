@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Motion } from '../../models/motion.model';
+import { CreateMotionDto } from './dto/create-motion.dto';
+import { UpdateMotionDto } from './dto/update-motion.dto';
 
 @Injectable()
 export class MotionsService {
@@ -9,19 +11,22 @@ export class MotionsService {
     private motionModel: typeof Motion,
   ) {}
 
-  async create(createMotionData: Partial<Motion>): Promise<Motion> {
-    return this.motionModel.create(createMotionData);
+  async create(createMotionDto: CreateMotionDto): Promise<Motion> {
+    return this.motionModel.create(createMotionDto as any);
   }
 
   async findAll(caseId?: string): Promise<Motion[]> {
     const whereClause = caseId ? { case_id: caseId } : {};
     return this.motionModel.findAll({
       where: whereClause,
+      include: ['case'],
     });
   }
 
   async findOne(id: string): Promise<Motion> {
-    const motion = await this.motionModel.findByPk(id);
+    const motion = await this.motionModel.findByPk(id, {
+      include: ['case'],
+    });
 
     if (!motion) {
       throw new NotFoundException(`Motion with ID ${id} not found`);
@@ -30,9 +35,16 @@ export class MotionsService {
     return motion;
   }
 
-  async update(id: string, updateData: Partial<Motion>): Promise<Motion> {
+  async findByStatus(status: string): Promise<Motion[]> {
+    return this.motionModel.findAll({
+      where: { status },
+      include: ['case'],
+    });
+  }
+
+  async update(id: string, updateMotionDto: UpdateMotionDto): Promise<Motion> {
     const [affectedCount, affectedRows] = await this.motionModel.update(
-      updateData,
+      updateMotionDto as any,
       {
         where: { id },
         returning: true,
@@ -54,11 +66,5 @@ export class MotionsService {
     if (deletedCount === 0) {
       throw new NotFoundException(`Motion with ID ${id} not found`);
     }
-  }
-
-  async findByStatus(status: string): Promise<Motion[]> {
-    return this.motionModel.findAll({
-      where: { status },
-    });
   }
 }

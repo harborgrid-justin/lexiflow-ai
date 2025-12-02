@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ClausesService } from './clauses.service';
 import { Clause } from '../../models/clause.model';
@@ -16,28 +8,24 @@ import { Clause } from '../../models/clause.model';
 export class ClausesController {
   constructor(private readonly clausesService: ClausesService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new clause' })
-  @ApiResponse({ status: 201, description: 'Clause created successfully', type: Clause })
-  create(@Body() createClauseData: Partial<Clause>): Promise<Clause> {
-    return this.clausesService.create(createClauseData);
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get all clauses' })
-  @ApiQuery({ name: 'category', required: false, description: 'Category filter' })
-  @ApiQuery({ name: 'type', required: false, description: 'Type filter' })
+  @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
+  @ApiQuery({ name: 'type', required: false, description: 'Filter by type' })
   @ApiResponse({ status: 200, description: 'Clauses retrieved successfully', type: [Clause] })
-  findAll(@Query('category') category?: string, @Query('type') type?: string): Promise<Clause[]> {
+  findAll(
+    @Query('category') category?: string,
+    @Query('type') type?: string,
+  ): Promise<Clause[]> {
     return this.clausesService.findAll(category, type);
   }
 
   @Get('search')
   @ApiOperation({ summary: 'Search clauses' })
-  @ApiQuery({ name: 'q', required: true, description: 'Search query' })
+  @ApiQuery({ name: 'q', required: false, description: 'Search query' })
   @ApiResponse({ status: 200, description: 'Search results retrieved successfully', type: [Clause] })
-  search(@Query('q') query: string): Promise<Clause[]> {
-    return this.clausesService.search(query);
+  search(@Query('q') query?: string): Promise<Clause[]> {
+    return this.clausesService.search(query || '');
   }
 
   @Get(':id')
@@ -48,14 +36,26 @@ export class ClausesController {
     return this.clausesService.findOne(id);
   }
 
+  @Post()
+  @ApiOperation({ summary: 'Create clause' })
+  @ApiResponse({ status: 201, description: 'Clause created successfully', type: Clause })
+  create(@Body() createData: Partial<Clause>): Promise<Clause> {
+    return this.clausesService.create(createData);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update clause' })
   @ApiResponse({ status: 200, description: 'Clause updated successfully', type: Clause })
   @ApiResponse({ status: 404, description: 'Clause not found' })
-  update(
-    @Param('id') id: string,
-    @Body() updateData: Partial<Clause>,
-  ): Promise<Clause> {
+  update(@Param('id') id: string, @Body() updateData: Partial<Clause>): Promise<Clause> {
     return this.clausesService.update(id, updateData);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete clause' })
+  @ApiResponse({ status: 200, description: 'Clause deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Clause not found' })
+  remove(@Param('id') id: string): Promise<void> {
+    return this.clausesService.remove(id);
   }
 }

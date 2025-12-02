@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../models/user.model';
 import { LoginDto, RegisterDto } from './dto';
@@ -16,8 +17,9 @@ import { LoginDto, RegisterDto } from './dto';
  * @implements User authentication and session management
  * 
  * @security
- * - Passwords are hashed with bcrypt (10 rounds)
- * - JWT tokens expire based on environment configuration
+ * - Passwords are hashed with bcrypt (configurable rounds, default 10)
+ * - JWT tokens include user ID, email, organization_id, and role
+ * - JWT tokens expire in 24 hours (1 day)
  * - Email uniqueness is enforced at database level
  * 
  * @example
@@ -28,14 +30,16 @@ import { LoginDto, RegisterDto } from './dto';
 export class AuthService {
   /**
    * Creates an instance of AuthService
-   * 
+   *
    * @param {typeof User} userModel - Sequelize User model for database operations
    * @param {JwtService} jwtService - NestJS JWT service for token operations
+   * @param {ConfigService} configService - Configuration service for environment variables
    */
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -78,16 +82,50 @@ export class AuthService {
   }
 
   /**
+   * Generates JWT token from user object
+   *
+   * Creates a signed JWT token containing user identification and authorization data.
+   * Used after successful authentication to provide access credentials.
+   *
+   * @param {User} user - Authenticated user object
+   * @returns {{ access_token: string, user: Object }} JWT token and user data
+   *
+   * @example
+   * const tokens = this.generateTokens(user);
+   * // Returns: { access_token: "eyJhbGc...", user: {...} }
+   */
+  generateTokens(user: User) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      organization_id: user.organization_id,
+      role: user.role,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+        organization_id: user.organization_id,
+      },
+    };
+  }
+
+  /**
    * Authenticates user and generates JWT token
-   * 
+   *
    * Validates credentials and generates a signed JWT access token.
-   * The token includes user ID, email, and organization ID in the payload.
-   * 
+   * The token includes user ID, email, organization ID, and role in the payload.
+   *
    * @param {LoginDto} loginDto - Login credentials (email and password)
    * @returns {Promise<{access_token: string, user: Object}>} JWT token and user data
-   * 
+   *
    * @throws {UnauthorizedException} When credentials are invalid
-   * 
+   *
    * @example
    * const result = await authService.login({
    *   email: "attorney@firm.com",
@@ -102,30 +140,14 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     console.log('Login attempt with:', loginDto);
     const user = await this.validateUser(loginDto.email, loginDto.password);
-    
+
     console.log('Validated user:', user ? `User ID: ${user.id}` : 'null');
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { 
-      email: user.email, 
-      sub: user.id, 
-      orgId: user.organization_id, 
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        role: user.role,
-        organization_id: user.organization_id,
-      },
-    };
+    return this.generateTokens(user);
   }
 
   /**
@@ -164,7 +186,9 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    // Get bcrypt rounds from environment, default to 10
+    const saltRounds = this.configService.get<number>('BCRYPT_ROUNDS') || 10;
+    const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
     // Auto-generate name from first and last name
     const name = `${registerDto.first_name} ${registerDto.last_name}`;

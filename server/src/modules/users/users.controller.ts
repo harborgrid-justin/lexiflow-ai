@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Param,
   Delete,
@@ -10,6 +11,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { User } from '../../models/user.model';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -40,15 +43,23 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  @Post()
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({ status: 201, description: 'User created successfully', type: User })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.create(createUserDto);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a user' })
   @ApiResponse({ status: 200, description: 'User updated successfully', type: User })
   @ApiResponse({ status: 404, description: 'User not found' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<User>,
+    @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.usersService.update(id, updateData);
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')

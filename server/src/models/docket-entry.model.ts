@@ -7,9 +7,11 @@ import {
   Default,
   ForeignKey,
   BelongsTo,
+  Index,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { Case } from './case.model';
+import { Organization } from './organization.model';
 
 @Table({
   tableName: 'docket_entries',
@@ -79,6 +81,12 @@ export class DocketEntry extends Model {
   @Column(DataType.STRING)
   clerk_initials?: string;
 
+  @ApiProperty({ example: 'org-123', description: 'Owner organization ID' })
+  @ForeignKey(() => Organization)
+  @Index
+  @Column(DataType.UUID)
+  owner_org_id?: string;
+
   @ApiProperty({ example: '2025-03-12T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -89,4 +97,7 @@ export class DocketEntry extends Model {
 
   @BelongsTo(() => Case, 'case_id')
   case?: Case;
+
+  @BelongsTo(() => Organization, 'owner_org_id')
+  organization?: Organization;
 }

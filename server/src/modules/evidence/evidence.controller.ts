@@ -11,6 +11,10 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { EvidenceService } from './evidence.service';
 import { Evidence } from '../../models/evidence.model';
+import { ChainOfCustodyEvent } from '../../models/chain-of-custody-event.model';
+import { CreateEvidenceDto } from './dto/create-evidence.dto';
+import { UpdateEvidenceDto } from './dto/update-evidence.dto';
+import { CreateChainOfCustodyEventDto } from './dto/create-chain-of-custody-event.dto';
 
 @ApiTags('evidence')
 @Controller('evidence')
@@ -20,8 +24,9 @@ export class EvidenceController {
   @Post()
   @ApiOperation({ summary: 'Create a new evidence record' })
   @ApiResponse({ status: 201, description: 'Evidence created successfully', type: Evidence })
-  create(@Body() createEvidenceData: Partial<Evidence>): Promise<Evidence> {
-    return this.evidenceService.create(createEvidenceData);
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  create(@Body() createEvidenceDto: CreateEvidenceDto): Promise<Evidence> {
+    return this.evidenceService.create(createEvidenceDto);
   }
 
   @Get()
@@ -44,11 +49,12 @@ export class EvidenceController {
   @ApiOperation({ summary: 'Update evidence' })
   @ApiResponse({ status: 200, description: 'Evidence updated successfully', type: Evidence })
   @ApiResponse({ status: 404, description: 'Evidence not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<Evidence>,
+    @Body() updateEvidenceDto: UpdateEvidenceDto,
   ): Promise<Evidence> {
-    return this.evidenceService.update(id, updateData);
+    return this.evidenceService.update(id, updateEvidenceDto);
   }
 
   @Delete(':id')
@@ -57,5 +63,17 @@ export class EvidenceController {
   @ApiResponse({ status: 404, description: 'Evidence not found' })
   remove(@Param('id') id: string): Promise<void> {
     return this.evidenceService.remove(id);
+  }
+
+  @Post(':id/custody')
+  @ApiOperation({ summary: 'Add chain of custody event to evidence' })
+  @ApiResponse({ status: 201, description: 'Chain of custody event created successfully', type: ChainOfCustodyEvent })
+  @ApiResponse({ status: 404, description: 'Evidence not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  addChainOfCustodyEvent(
+    @Param('id') evidenceId: string,
+    @Body() createEventDto: CreateChainOfCustodyEventDto,
+  ): Promise<ChainOfCustodyEvent> {
+    return this.evidenceService.addChainOfCustodyEvent(evidenceId, createEventDto);
   }
 }

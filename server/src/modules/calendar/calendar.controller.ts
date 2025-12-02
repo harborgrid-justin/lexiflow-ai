@@ -2,13 +2,16 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Patch,
+  Delete,
   Param,
   Query,
+  Body,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { CalendarService } from './calendar.service';
+import { CreateCalendarEventDto } from './dto/create-calendar-event.dto';
+import { UpdateCalendarEventDto } from './dto/update-calendar-event.dto';
 import { CalendarEvent } from '../../models/calendar.model';
 
 @ApiTags('calendar')
@@ -16,32 +19,23 @@ import { CalendarEvent } from '../../models/calendar.model';
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new calendar event' })
-  @ApiResponse({ status: 201, description: 'Calendar event created successfully', type: CalendarEvent })
-  create(@Body() createEventData: Partial<CalendarEvent>): Promise<CalendarEvent> {
-    return this.calendarService.create(createEventData);
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get calendar events' })
-  @ApiQuery({ name: 'caseId', required: false, description: 'Case ID filter' })
-  @ApiQuery({ name: 'startDate', required: false, description: 'Start date filter' })
-  @ApiQuery({ name: 'endDate', required: false, description: 'End date filter' })
+  @ApiQuery({ name: 'caseId', required: false, description: 'Filter by case ID' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Start date (ISO string)' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO string)' })
   @ApiResponse({ status: 200, description: 'Calendar events retrieved successfully', type: [CalendarEvent] })
   findAll(
     @Query('caseId') caseId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ): Promise<CalendarEvent[]> {
-    const start = startDate ? new Date(startDate) : undefined;
-    const end = endDate ? new Date(endDate) : undefined;
-    return this.calendarService.findAll(caseId, start, end);
+    return this.calendarService.findAll(caseId, startDate, endDate);
   }
 
   @Get('upcoming')
   @ApiOperation({ summary: 'Get upcoming events' })
-  @ApiQuery({ name: 'days', required: false, description: 'Number of days ahead to look' })
+  @ApiQuery({ name: 'days', required: false, description: 'Number of days ahead to look (default: 7)' })
   @ApiResponse({ status: 200, description: 'Upcoming events retrieved successfully', type: [CalendarEvent] })
   findUpcoming(@Query('days') days?: string): Promise<CalendarEvent[]> {
     const numDays = days ? parseInt(days) : 7;
@@ -49,7 +43,7 @@ export class CalendarController {
   }
 
   @Get('type/:type')
-  @ApiOperation({ summary: 'Get events by type' })
+  @ApiOperation({ summary: 'Get events by type (deadline, hearing, statute-of-limitations, team)' })
   @ApiResponse({ status: 200, description: 'Calendar events retrieved successfully', type: [CalendarEvent] })
   findByType(@Param('type') type: string): Promise<CalendarEvent[]> {
     return this.calendarService.findByType(type);
@@ -63,14 +57,29 @@ export class CalendarController {
     return this.calendarService.findOne(id);
   }
 
+  @Post()
+  @ApiOperation({ summary: 'Create a new calendar event' })
+  @ApiResponse({ status: 201, description: 'Calendar event created successfully', type: CalendarEvent })
+  create(@Body() createDto: CreateCalendarEventDto): Promise<CalendarEvent> {
+    return this.calendarService.create(createDto);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update calendar event' })
   @ApiResponse({ status: 200, description: 'Calendar event updated successfully', type: CalendarEvent })
   @ApiResponse({ status: 404, description: 'Calendar event not found' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<CalendarEvent>,
+    @Body() updateDto: UpdateCalendarEventDto,
   ): Promise<CalendarEvent> {
-    return this.calendarService.update(id, updateData);
+    return this.calendarService.update(id, updateDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete calendar event' })
+  @ApiResponse({ status: 200, description: 'Calendar event deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Calendar event not found' })
+  remove(@Param('id') id: string): Promise<void> {
+    return this.calendarService.remove(id);
   }
 }

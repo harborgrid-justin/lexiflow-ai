@@ -11,6 +11,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { DiscoveryService } from './discovery.service';
 import { DiscoveryRequest } from '../../models/discovery.model';
+import { CreateDiscoveryDto } from './dto/create-discovery.dto';
+import { UpdateDiscoveryDto } from './dto/update-discovery.dto';
 
 @ApiTags('discovery')
 @Controller('discovery')
@@ -20,8 +22,9 @@ export class DiscoveryController {
   @Post()
   @ApiOperation({ summary: 'Create a new discovery request' })
   @ApiResponse({ status: 201, description: 'Discovery request created successfully', type: DiscoveryRequest })
-  create(@Body() createDiscoveryData: Partial<DiscoveryRequest>): Promise<DiscoveryRequest> {
-    return this.discoveryService.create(createDiscoveryData);
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  create(@Body() createDiscoveryDto: CreateDiscoveryDto): Promise<DiscoveryRequest> {
+    return this.discoveryService.create(createDiscoveryDto);
   }
 
   @Get()
@@ -44,11 +47,12 @@ export class DiscoveryController {
   @ApiOperation({ summary: 'Update discovery request' })
   @ApiResponse({ status: 200, description: 'Discovery request updated successfully', type: DiscoveryRequest })
   @ApiResponse({ status: 404, description: 'Discovery request not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<DiscoveryRequest>,
+    @Body() updateDiscoveryDto: UpdateDiscoveryDto,
   ): Promise<DiscoveryRequest> {
-    return this.discoveryService.update(id, updateData);
+    return this.discoveryService.update(id, updateDiscoveryDto);
   }
 
   @Delete(':id')

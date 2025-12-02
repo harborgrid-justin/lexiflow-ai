@@ -8,10 +8,12 @@ import {
   ForeignKey,
   BelongsTo,
   HasMany,
+  Index,
 } from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { Case } from './case.model';
 import { User } from './user.model';
+import { Organization } from './organization.model';
 
 @Table({
   tableName: 'workflow_stages',
@@ -70,6 +72,12 @@ export class WorkflowStage extends Model {
   @Column(DataType.INTEGER)
   progress: number;
 
+  @ApiProperty({ example: 'org-123', description: 'Owner organization ID' })
+  @ForeignKey(() => Organization)
+  @Index
+  @Column(DataType.UUID)
+  owner_org_id?: string;
+
   @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -83,6 +91,9 @@ export class WorkflowStage extends Model {
 
   @BelongsTo(() => User, 'assigned_to')
   assignee?: User;
+
+  @BelongsTo(() => Organization, 'owner_org_id')
+  organization?: Organization;
 
   // Forward reference - WorkflowTask is defined below
   @HasMany(() => WorkflowTask, 'stage_id')
@@ -172,6 +183,12 @@ export class WorkflowTask extends Model {
   @Column(DataType.UUID)
   created_by?: string;
 
+  @ApiProperty({ example: 'org-123', description: 'Owner organization ID' })
+  @ForeignKey(() => Organization)
+  @Index
+  @Column(DataType.UUID)
+  owner_org_id?: string;
+
   @ApiProperty({ example: '2024-01-15T10:00:00Z', description: 'Creation timestamp' })
   @Column(DataType.DATE)
   created_at: Date;
@@ -188,4 +205,7 @@ export class WorkflowTask extends Model {
 
   @BelongsTo(() => User, 'assigned_to')
   assignee?: User;
+
+  @BelongsTo(() => Organization, 'owner_org_id')
+  organization?: Organization;
 }

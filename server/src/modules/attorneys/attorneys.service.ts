@@ -15,8 +15,11 @@ export class AttorneysService {
     return this.attorneyModel.create(createAttorneyDto as any);
   }
 
-  async findAll(): Promise<Attorney[]> {
+  async findAll(partyId?: string): Promise<Attorney[]> {
+    const whereClause = partyId ? { party_id: partyId } : {};
     return this.attorneyModel.findAll({
+      where: whereClause,
+      include: ['party'],
       order: [['last_name', 'ASC'], ['first_name', 'ASC']],
     });
   }

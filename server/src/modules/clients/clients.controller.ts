@@ -11,21 +11,15 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
 import { Client } from '../../models/client.model';
+import { CreateClientDto, UpdateClientDto } from './dto';
 
 @ApiTags('clients')
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create a new client' })
-  @ApiResponse({ status: 201, description: 'Client created successfully', type: Client })
-  create(@Body() createClientData: Partial<Client>): Promise<Client> {
-    return this.clientsService.create(createClientData);
-  }
-
   @Get()
-  @ApiOperation({ summary: 'Get all clients' })
+  @ApiOperation({ summary: 'List clients' })
   @ApiQuery({ name: 'orgId', required: false, description: 'Organization ID filter' })
   @ApiResponse({ status: 200, description: 'Clients retrieved successfully', type: [Client] })
   findAll(@Query('orgId') orgId?: string): Promise<Client[]> {
@@ -47,15 +41,23 @@ export class ClientsController {
     return this.clientsService.findOne(id);
   }
 
+  @Post()
+  @ApiOperation({ summary: 'Create client' })
+  @ApiResponse({ status: 201, description: 'Client created successfully', type: Client })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  create(@Body() createClientDto: CreateClientDto): Promise<Client> {
+    return this.clientsService.create(createClientDto);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update client' })
   @ApiResponse({ status: 200, description: 'Client updated successfully', type: Client })
   @ApiResponse({ status: 404, description: 'Client not found' })
   update(
     @Param('id') id: string,
-    @Body() updateData: Partial<Client>,
+    @Body() updateClientDto: UpdateClientDto,
   ): Promise<Client> {
-    return this.clientsService.update(id, updateData);
+    return this.clientsService.update(id, updateClientDto);
   }
 
   @Delete(':id')

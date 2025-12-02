@@ -185,4 +185,146 @@ export class SearchController {
   ) {
     return this.searchService.searchLegalNews(body.query, body.daysBack, user);
   }
+
+  @Get('history')
+  @ApiOperation({ summary: 'Get search history for analytics' })
+  @ApiResponse({ status: 200, description: 'Search history retrieved successfully' })
+  async getSearchHistory(
+    @CurrentUser() user: User,
+    @Query('userId') userId?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.searchService.getSearchHistory(
+      user.organization_id,
+      userId || user.id,
+      limit ? Number(limit) : 50,
+    );
+  }
+
+  @Post('sessions')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Save research session' })
+  @ApiResponse({ status: 201, description: 'Research session saved successfully' })
+  async saveResearchSession(
+    @Body() body: {
+      query: string;
+      results: any;
+      caseId?: string;
+    },
+    @CurrentUser() user: User,
+  ) {
+    return this.searchService.saveResearchSession({
+      query: body.query,
+      results: body.results,
+      userId: user.id,
+      organizationId: user.organization_id,
+      caseId: body.caseId,
+    });
+  }
+
+  @Patch('sessions/:id/feedback')
+  @ApiOperation({ summary: 'Update feedback on research session' })
+  @ApiResponse({ status: 200, description: 'Feedback updated successfully' })
+  async updateFeedback(
+    @Param('id') sessionId: string,
+    @Body() body: { feedback: 'positive' | 'negative' },
+    @CurrentUser() _user: User,
+  ) {
+    await this.searchService.updateFeedback(sessionId, body.feedback);
+    return { message: 'Feedback updated successfully' };
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'General search endpoint (supports semantic, hybrid, and keyword)' })
+  @ApiResponse({ status: 200, description: 'Search results returned successfully' })
+  async generalSearch(
+    @Body() body: {
+      query: string;
+      searchType?: 'semantic' | 'hybrid' | 'keyword';
+      limit?: number;
+      threshold?: number;
+      caseId?: string;
+    },
+    @CurrentUser() user: User,
+  ) {
+    const searchType = body.searchType || 'hybrid';
+
+    switch (searchType) {
+      case 'semantic':
+        return this.searchService.semanticSearch(
+          body.query,
+          {
+            limit: body.limit,
+            threshold: body.threshold,
+            caseId: body.caseId,
+          },
+          user,
+        );
+
+      case 'hybrid':
+        return this.searchService.hybridSearch(
+          body.query,
+          {
+            limit: body.limit,
+            caseId: body.caseId,
+          },
+          user,
+        );
+
+      default:
+        // For keyword search, use hybrid with higher keyword weight
+        return this.searchService.hybridSearch(
+          body.query,
+          {
+            limit: body.limit,
+            keywordWeight: 0.8,
+            semanticWeight: 0.2,
+            caseId: body.caseId,
+          },
+          user,
+        );
+    }
+  }
+
+  @Get('citations')
+  @ApiOperation({ summary: 'Get legal citations' })
+  @ApiResponse({ status: 200, description: 'Citations retrieved successfully' })
+  async getCitations(
+    @CurrentUser() user: User,
+    @Query('documentId') documentId?: string,
+  ) {
+    return this.searchService.getLegalCitations(documentId, user.organization_id);
+  }
+
+  @Post('documents/:documentId/analyze')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Analyze document using AI' })
+  @ApiResponse({ status: 200, description: 'Document analysis completed successfully' })
+  async analyzeDocument(
+    @Param('documentId') documentId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.searchService.analyzeDocument(documentId, user);
+  }
+
+  @Get('documents/:documentId/analysis')
+  @ApiOperation({ summary: 'Get document analysis results' })
+  @ApiResponse({ status: 200, description: 'Document analysis retrieved successfully' })
+  async getDocumentAnalysis(
+    @Param('documentId') documentId: string,
+    @CurrentUser() _user: User,
+  ) {
+    return this.searchService.getDocumentAnalysis(documentId);
+  }
+
+  @Get('documents/:documentId/embeddings')
+  @ApiOperation({ summary: 'Get document embeddings' })
+  @ApiResponse({ status: 200, description: 'Document embeddings retrieved successfully' })
+  async getDocumentEmbeddings(
+    @Param('documentId') documentId: string,
+    @CurrentUser() _user: User,
+  ) {
+    return this.searchService.getDocumentEmbeddings(documentId);
+  }
 }

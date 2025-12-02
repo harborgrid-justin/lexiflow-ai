@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { EthicalWall } from '../../models/ethical-wall.model';
-import { CreateEthicalWallDto, UpdateEthicalWallDto } from './dto/ethical-wall.dto';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class EthicalWallService {
@@ -11,91 +9,65 @@ export class EthicalWallService {
     private ethicalWallModel: typeof EthicalWall,
   ) {}
 
-  async create(createEthicalWallDto: CreateEthicalWallDto, userId: number): Promise<EthicalWall> {
-    try {
-      const ethicalWall = await this.ethicalWallModel.create({
-        ...createEthicalWallDto,
-        createdBy: userId,
-      });
-      return ethicalWall;
-    } catch {
-      throw new BadRequestException('Failed to create ethical wall');
-    }
-  }
-
-  async findAll(organizationId?: number): Promise<EthicalWall[]> {
-    const where = organizationId ? { organizationId } : {};
+  async findAll(orgId?: string): Promise<EthicalWall[]> {
+    const whereClause: any = {};
+    // Add org filtering if your schema supports it
     return this.ethicalWallModel.findAll({
-      where,
-      order: [['createdAt', 'DESC']],
+      where: whereClause,
+      include: ['case'],
+      order: [['created_at', 'DESC']],
     });
   }
 
-  async findOne(id: number): Promise<EthicalWall> {
-    const ethicalWall = await this.ethicalWallModel.findByPk(id);
-    if (!ethicalWall) {
-      throw new NotFoundException(`Ethical wall with ID ${id} not found`);
-    }
-    return ethicalWall;
-  }
-
-  async update(id: number, updateEthicalWallDto: UpdateEthicalWallDto): Promise<EthicalWall> {
-    const ethicalWall = await this.findOne(id);
-    
-    try {
-      await ethicalWall.update(updateEthicalWallDto);
-      return ethicalWall;
-    } catch {
-      throw new BadRequestException('Failed to update ethical wall');
-    }
-  }
-
-  async remove(id: number): Promise<void> {
-    const ethicalWall = await this.findOne(id);
-    await ethicalWall.destroy();
-  }
-
-  async search(query: string, organizationId?: number): Promise<EthicalWall[]> {
-    const where: Record<string, unknown> = {
-      [Op.or]: [
-        { name: { [Op.iLike]: `%${query}%` } },
-        { reason: { [Op.iLike]: `%${query}%` } },
-        { description: { [Op.iLike]: `%${query}%` } },
-      ],
-    };
-
-    if (organizationId) {
-      where.organizationId = organizationId;
-    }
-
-    return this.ethicalWallModel.findAll({
-      where,
-      order: [['createdAt', 'DESC']],
+  async findOne(id: string): Promise<EthicalWall> {
+    const wall = await this.ethicalWallModel.findByPk(id, {
+      include: ['case'],
     });
+
+    if (!wall) {
+      throw new NotFoundException(\`Ethical wall with ID \${id} not found\`);
+    }
+
+    return wall;
   }
 
-  async findByUser(userId: number): Promise<EthicalWall[]> {
-    return this.ethicalWallModel.findAll({
+  async create(createDto: any): Promise<EthicalWall> {
+    const wall = await this.ethicalWallModel.create({
+      ...createDto,
+      status: createDto.status || 'Active',
+    });
+
+    return this.findOne(wall.id);
+  }
+
+  async update(id: string, updateDto: any): Promise<EthicalWall> {
+    const wall = await this.findOne(id);
+    await wall.update(updateDto);
+    return this.findOne(id);
+  }
+
+  async checkAccess(userId: string, caseId: string): Promise<boolean> {
+    const walls = await this.ethicalWallModel.findAll({
       where: {
-        [Op.or]: [
-          { affectedUsers: { [Op.contains]: [userId] } },
-          { createdBy: userId },
-        ],
+        case_id: caseId,
+        status: 'Active',
       },
-      order: [['createdAt', 'DESC']],
     });
-  }
 
-  async findActive(organizationId?: number): Promise<EthicalWall[]> {
-    const where: Record<string, unknown> = { isActive: true };
-    
-    if (organizationId) {
-      where.organizationId = organizationId;
+    for (const wall of walls) {
+      const authorizedUsers = wall.authorized_users ? wall.authorized_users.split(',') : [];
+      const restrictedGroups = wall.restricted_groups ? wall.restricted_groups.split(',') : [];
+
+      // Check if user is explicitly authorized
+      if (authorizedUsers.includes(userId)) {
+        return true;
+      }
+
+      // If there are restricted groups, you'd need to check user's group membership
+      // For now, we'll allow access if no restrictions apply
     }
 
-    return this.ethicalWallModel.findAll({
-      where,
-      order: [['createdAt', 'DESC']],
-    });
+    // If no walls exist or user is authorized, grant access
+    return walls.length === 0 || false;
   }
 }

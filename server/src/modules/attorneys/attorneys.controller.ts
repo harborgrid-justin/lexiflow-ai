@@ -30,14 +30,11 @@ export class AttorneysController {
 
   @Get()
   @ApiOperation({ summary: 'Get all attorneys or filter by party' })
-  findAll(@Query('party_id') partyId?: string, @Query('status') status?: string) {
-    if (partyId) {
-      return this.attorneysService.findByPartyId(partyId);
-    }
+  findAll(@Query('partyId') partyId?: string, @Query('status') status?: string) {
     if (status === 'active') {
       return this.attorneysService.findActive();
     }
-    return this.attorneysService.findAll();
+    return this.attorneysService.findAll(partyId);
   }
 
   @Get('party/:partyId')

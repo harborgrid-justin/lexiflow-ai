@@ -31,10 +31,7 @@ export class DocketEntriesController {
   @Get()
   @ApiOperation({ summary: 'Get all docket entries or filter by case' })
   findAll(@Query('case_id') caseId?: string) {
-    if (caseId) {
-      return this.docketEntriesService.findByCaseId(caseId);
-    }
-    return this.docketEntriesService.findAll();
+    return this.docketEntriesService.findAll(caseId);
   }
 
   @Get('case/:caseId')
