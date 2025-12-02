@@ -40,6 +40,7 @@ export const clientsService = {
 };
 
 export const analyticsService = {
+  // Legacy methods
   getAll: (caseId?: string, metricType?: string) =>
     fetchJson<any[]>(`/analytics${buildQueryString({ caseId, metricType })}`),
 
@@ -60,6 +61,135 @@ export const analyticsService = {
 
   create: (data: any) =>
     postJson<any>('/analytics', data),
+
+  // Enhanced Analytics API
+  // Executive Dashboard
+  getExecutiveDashboard: (dateRange?: { start: string; end: string }) =>
+    fetchJson<any>(`/analytics/executive/dashboard${buildQueryString(dateRange)}`),
+
+  getDashboardMetrics: (dateRange?: { start: string; end: string }) =>
+    fetchJson<any>(`/analytics/executive/metrics${buildQueryString(dateRange)}`),
+
+  // Case Analytics
+  getCaseAnalytics: (filters?: any) =>
+    fetchJson<any>(`/analytics/cases${buildQueryString(filters)}`),
+
+  getCasesByStatus: () =>
+    fetchJson<any[]>('/analytics/cases/by-status'),
+
+  getCasesByPracticeArea: () =>
+    fetchJson<any[]>('/analytics/cases/by-practice-area'),
+
+  getCasesByAttorney: () =>
+    fetchJson<any[]>('/analytics/cases/by-attorney'),
+
+  getCasesByCourt: () =>
+    fetchJson<any[]>('/analytics/cases/by-court'),
+
+  getCaseAgeDistribution: () =>
+    fetchJson<any>('/analytics/cases/age-distribution'),
+
+  getWinLossRatio: () =>
+    fetchJson<any>('/analytics/cases/win-loss-ratio'),
+
+  // Financial Analytics
+  getFinancialAnalytics: (filters?: any) =>
+    fetchJson<any>(`/analytics/financial${buildQueryString(filters)}`),
+
+  getRevenueMetrics: (dateRange?: { start: string; end: string }) =>
+    fetchJson<any>(`/analytics/financial/revenue${buildQueryString(dateRange)}`),
+
+  getRevenueByMonth: (year?: number) =>
+    fetchJson<any[]>(`/analytics/financial/revenue/by-month${buildQueryString({ year })}`),
+
+  getRevenueByClient: (topN?: number) =>
+    fetchJson<any[]>(`/analytics/financial/revenue/by-client${buildQueryString({ topN })}`),
+
+  getRevenueByPracticeArea: () =>
+    fetchJson<any[]>('/analytics/financial/revenue/by-practice-area'),
+
+  getRevenueByAttorney: () =>
+    fetchJson<any[]>('/analytics/financial/revenue/by-attorney'),
+
+  getBillingMetrics: () =>
+    fetchJson<any>('/analytics/financial/billing'),
+
+  getARAgingReport: () =>
+    fetchJson<any>('/analytics/financial/ar-aging'),
+
+  getCollectionMetrics: () =>
+    fetchJson<any>('/analytics/financial/collections'),
+
+  // Productivity Analytics
+  getProductivityAnalytics: (filters?: any) =>
+    fetchJson<any>(`/analytics/productivity${buildQueryString(filters)}`),
+
+  getProductivityByAttorney: () =>
+    fetchJson<any[]>('/analytics/productivity/by-attorney'),
+
+  getProductivityByDepartment: () =>
+    fetchJson<any[]>('/analytics/productivity/by-department'),
+
+  getUtilizationRates: () =>
+    fetchJson<any>('/analytics/productivity/utilization'),
+
+  getTaskMetrics: () =>
+    fetchJson<any>('/analytics/productivity/tasks'),
+
+  getDocumentMetrics: () =>
+    fetchJson<any>('/analytics/productivity/documents'),
+
+  // Client Analytics
+  getClientAnalytics: (filters?: any) =>
+    fetchJson<any>(`/analytics/clients${buildQueryString(filters)}`),
+
+  getTopClients: (topN?: number) =>
+    fetchJson<any[]>(`/analytics/clients/top${buildQueryString({ topN })}`),
+
+  getClientsByIndustry: () =>
+    fetchJson<any[]>('/analytics/clients/by-industry'),
+
+  getClientRetention: () =>
+    fetchJson<any>('/analytics/clients/retention'),
+
+  // Team Analytics
+  getTeamAnalytics: (filters?: any) =>
+    fetchJson<any>(`/analytics/team${buildQueryString(filters)}`),
+
+  getTeamPerformance: () =>
+    fetchJson<any>('/analytics/team/performance'),
+
+  getTeamCollaboration: () =>
+    fetchJson<any>('/analytics/team/collaboration'),
+
+  // Reports
+  getReports: () =>
+    fetchJson<any[]>('/analytics/reports'),
+
+  getReport: (id: string) =>
+    fetchJson<any>(`/analytics/reports/${id}`),
+
+  getReportData: (reportType: string, params?: any) =>
+    fetchJson<any>(`/analytics/reports/${reportType}/data${buildQueryString(params)}`),
+
+  createReport: (data: any) =>
+    postJson<any>('/analytics/reports', data),
+
+  updateReport: (id: string, data: any) =>
+    putJson<any>(`/analytics/reports/${id}`, data),
+
+  deleteReport: (id: string) =>
+    deleteJson(`/analytics/reports/${id}`),
+
+  executeReport: (id: string) =>
+    fetchJson<any>(`/analytics/reports/${id}/execute`),
+
+  scheduleReport: (id: string, schedule: any) =>
+    postJson<any>(`/analytics/reports/${id}/schedule`, schedule),
+
+  // Export
+  exportData: (type: string, format: string, params?: any) =>
+    fetchJson<any>(`/analytics/export/${type}${buildQueryString({ format, ...params })}`),
 };
 
 export const complianceService = {

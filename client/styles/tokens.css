@@ -1,0 +1,349 @@
+/* LexiFlow AI Design Tokens - Enterprise Legal Platform */
+/* Premium color system exceeding Bloomberg Terminal */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ===== BRAND COLORS - Deep Blue Enterprise Theme ===== */
+    /* Primary - Deep Blue Scale */
+    --primary-50: 240 249 255;   /* #f0f9ff */
+    --primary-100: 224 242 254;  /* #e0f2fe */
+    --primary-200: 186 230 253;  /* #bae6fd */
+    --primary-300: 125 211 252;  /* #7dd3fc */
+    --primary-400: 56 189 248;   /* #38bdf8 */
+    --primary-500: 14 165 233;   /* #0ea5e9 */
+    --primary-600: 2 132 199;    /* #0284c7 */
+    --primary-700: 3 105 161;    /* #0369a1 */
+    --primary-800: 7 89 133;     /* #075985 */
+    --primary-900: 12 74 110;    /* #0c4a6e */
+    --primary-950: 15 23 42;     /* #0f172a - Deep navy */
+
+    --primary: 217 91% 60%;      /* #3b82f6 - Electric blue */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Slate Grays */
+    --secondary: 215 25% 27%;    /* #374151 */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent - Electric Blue */
+    --accent: 217 91% 60%;       /* #3b82f6 */
+    --accent-foreground: 0 0% 100%;
+
+    /* Success - Emerald */
+    --success: 160 84% 39%;      /* #10b981 */
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Amber */
+    --warning: 38 92% 50%;       /* #f59e0b */
+    --warning-foreground: 0 0% 0%;
+
+    /* Destructive/Error - Rose */
+    --destructive: 348 83% 47%;  /* #e11d48 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Neutral - Background & Surfaces */
+    --background: 0 0% 100%;     /* #ffffff */
+    --foreground: 222 47% 11%;   /* #0f172a */
+
+    --muted: 210 40% 96%;        /* #f8fafc */
+    --muted-foreground: 215 16% 47%; /* #64748b */
+
+    --card: 0 0% 100%;           /* #ffffff */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Borders & Inputs */
+    --border: 214 32% 91%;       /* #e2e8f0 */
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;         /* Focus ring color */
+
+    /* ===== SPACING SCALE (4px base) ===== */
+    --spacing-xs: 0.25rem;       /* 4px */
+    --spacing-sm: 0.5rem;        /* 8px */
+    --spacing-md: 1rem;          /* 16px */
+    --spacing-lg: 1.5rem;        /* 24px */
+    --spacing-xl: 2rem;          /* 32px */
+    --spacing-2xl: 3rem;         /* 48px */
+    --spacing-3xl: 4rem;         /* 64px */
+
+    /* ===== BORDER RADIUS ===== */
+    --radius-sm: 0.25rem;        /* 4px */
+    --radius-md: 0.5rem;         /* 8px */
+    --radius-lg: 0.75rem;        /* 12px */
+    --radius-xl: 1rem;           /* 16px */
+    --radius-2xl: 1.5rem;        /* 24px */
+    --radius-full: 9999px;
+
+    /* ===== SHADOW ELEVATION SYSTEM ===== */
+    /* Premium shadows for depth and sophistication */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+    /* ===== TYPOGRAPHY ===== */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Font sizes */
+    --text-xs: 0.75rem;          /* 12px */
+    --text-sm: 0.875rem;         /* 14px */
+    --text-base: 1rem;           /* 16px */
+    --text-lg: 1.125rem;         /* 18px */
+    --text-xl: 1.25rem;          /* 20px */
+    --text-2xl: 1.5rem;          /* 24px */
+    --text-3xl: 1.875rem;        /* 30px */
+    --text-4xl: 2.25rem;         /* 36px */
+    --text-5xl: 3rem;            /* 48px */
+
+    /* Font weights */
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-extrabold: 800;
+
+    /* Line heights */
+    --leading-none: 1;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    --leading-loose: 2;
+
+    /* ===== Z-INDEX SCALE ===== */
+    --z-base: 0;
+    --z-dropdown: 1000;
+    --z-sticky: 1100;
+    --z-fixed: 1200;
+    --z-modal-backdrop: 1300;
+    --z-modal: 1400;
+    --z-popover: 1500;
+    --z-tooltip: 1600;
+    --z-toast: 1700;
+
+    /* ===== TRANSITIONS ===== */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ===== DARK MODE (Default) ===== */
+  /* Premium dark theme for professional legal work */
+  .dark {
+    /* Primary - Bright blues for dark mode */
+    --primary-50: 12 74 110;     /* Inverted scale for dark mode */
+    --primary-100: 7 89 133;
+    --primary-200: 3 105 161;
+    --primary-300: 2 132 199;
+    --primary-400: 14 165 233;
+    --primary-500: 56 189 248;
+    --primary-600: 125 211 252;
+    --primary-700: 186 230 253;
+    --primary-800: 224 242 254;
+    --primary-900: 240 249 255;
+    --primary-950: 248 250 252;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Dark backgrounds with depth */
+    --background: 222 47% 11%;   /* #0f172a - Deep navy */
+    --foreground: 210 40% 98%;   /* #f8fafc */
+
+    --muted: 217 33% 17%;        /* #1e293b */
+    --muted-foreground: 215 20% 65%; /* #94a3b8 */
+
+    --card: 222 47% 11%;         /* #0f172a */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 17%;      /* #1e293b */
+    --popover-foreground: 210 40% 98%;
+
+    --secondary: 217 33% 17%;    /* #1e293b */
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 217 91% 60%;       /* #3b82f6 */
+    --accent-foreground: 0 0% 100%;
+
+    --success: 160 84% 39%;      /* #10b981 */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;       /* #f59e0b */
+    --warning-foreground: 0 0% 0%;
+
+    --destructive: 350 89% 60%;  /* #f43f5e */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 17%;       /* #1e293b */
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+
+    /* Enhanced shadows for dark mode */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar for premium feel */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-lg;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-primary/20 text-primary-foreground;
+  }
+
+  /* Focus visible */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl lg:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg lg:text-xl;
+  }
+
+  h6 {
+    @apply text-base lg:text-lg;
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+@layer utilities {
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-dark {
+    @apply bg-background/60 backdrop-blur-xl border border-border/30;
+  }
+
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(var(--success)) 0%, #34d399 100%);
+  }
+
+  .gradient-warning {
+    background: linear-gradient(135deg, hsl(var(--warning)) 0%, #fbbf24 100%);
+  }
+
+  .gradient-danger {
+    background: linear-gradient(135deg, hsl(var(--destructive)) 0%, #fb7185 100%);
+  }
+
+  /* Text gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+
+  /* Premium card effect */
+  .card-premium {
+    @apply bg-card rounded-lg border border-border shadow-lg hover:shadow-xl transition-shadow;
+  }
+
+  /* Animated underline */
+  .animated-underline {
+    @apply relative;
+  }
+
+  .animated-underline::after {
+    @apply absolute bottom-0 left-0 h-0.5 w-0 bg-primary transition-all duration-300;
+    content: '';
+  }
+
+  .animated-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Focus ring */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Truncate text utilities */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
