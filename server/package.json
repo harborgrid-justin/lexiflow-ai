@@ -20,7 +20,7 @@
     "db:seed": "node src/database/scripts/sync-database.js --seed-only",
     "db:seed:comprehensive": "ts-node src/database/run-comprehensive-seed.ts",
     "db:seed:evidence": "ts-node src/database/seed-evidence.ts",
-    "db:migrate": "ts-node src/database/run-migration.ts",
+    "db:migrate": "ts-node src/database/run-migration.ts --all",
     "db:seed:all": "ts-node src/database/seed-comprehensive.ts"
   },
   "dependencies": {

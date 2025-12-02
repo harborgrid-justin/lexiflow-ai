@@ -13,6 +13,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from './organization.model';
 import { Party } from './party.model';
 import { CaseMember } from './case-member.model';
+import { DocketEntry } from './docket-entry.model';
 
 @Table({
   tableName: 'cases',
@@ -170,7 +171,8 @@ export class Case extends Model {
   caseMembers?: CaseMember[];
 
   // HasMany relationship for docket entries
-  docketEntries?: any[]; // Will be properly typed when DocketEntry model is imported
+  @HasMany(() => DocketEntry, 'case_id')
+  docketEntries?: DocketEntry[];
 
   // HasMany relationship for consolidated cases (as lead)
   consolidatedCases?: any[]; // Will be properly typed when ConsolidatedCase model is imported

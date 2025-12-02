@@ -201,7 +201,28 @@ CREATE TABLE IF NOT EXISTS workflow_tasks (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create indexes for audit_log_entries
+-- Create docket_entries table
+CREATE TABLE IF NOT EXISTS docket_entries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
+    entry_number INTEGER NOT NULL,
+    date_filed TIMESTAMP NOT NULL,
+    text TEXT NOT NULL,
+    doc_link VARCHAR(255),
+    pages INTEGER,
+    file_size VARCHAR(255),
+    document_type VARCHAR(255),
+    cmecf_id VARCHAR(255),
+    clerk_initials VARCHAR(255),
+    owner_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Add owner_org_id column to docket_entries if it doesn't exist
+ALTER TABLE docket_entries ADD COLUMN IF NOT EXISTS owner_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL;
+
+-- Create indexes for user_profiles
 CREATE INDEX IF NOT EXISTS idx_audit_log_entries_user_id ON audit_log_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_entries_action ON audit_log_entries(action);
 CREATE INDEX IF NOT EXISTS idx_audit_log_entries_resource ON audit_log_entries(resource);

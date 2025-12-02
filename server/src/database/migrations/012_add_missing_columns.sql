@@ -1,5 +1,11 @@
 -- Add missing columns to existing tables to match Sequelize models
 
+-- Add owner_org_id to motions table
+ALTER TABLE motions ADD COLUMN IF NOT EXISTS owner_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL;
+
+-- Create index for the new column
+CREATE INDEX IF NOT EXISTS idx_motions_owner_org_id ON motions(owner_org_id);
+
 -- Add owner_org_id to parties table
 ALTER TABLE parties ADD COLUMN IF NOT EXISTS owner_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL;
 

@@ -262,11 +262,37 @@ async function seedAllData() {
     await CaseMember.bulkCreate(caseMembers, { ignoreDuplicates: true });
     console.log(`✅ Created ${caseMembers.length} case members`);
 
-    // Seed attorneys
+    // Seed attorneys (create parties first, then attorneys)
     console.log('⚖️ Seeding attorneys...');
     const attorneys = [];
+    const attorneyParties = [];
+
+    for (let i = 0; i < 30; i++) {
+      // Create a party for this attorney
+      const attorneyParty = {
+        name: faker.person.fullName(),
+        role: 'Attorney',
+        contact: faker.internet.email(),
+        type: 'Individual',
+        counsel: [{
+          name: faker.person.fullName(),
+          firm: faker.company.name() + ' Law Firm'
+        }],
+        case_id: faker.helpers.arrayElement(caseIds),
+        linked_org_id: faker.helpers.arrayElement(orgIds),
+        owner_org_id: faker.helpers.arrayElement(orgIds),
+      };
+      attorneyParties.push(attorneyParty);
+    }
+
+    // Bulk create attorney parties
+    const createdAttorneyParties = await Party.bulkCreate(attorneyParties, { ignoreDuplicates: true });
+    const attorneyPartyIds = createdAttorneyParties.map((party: any) => party.id);
+
+    // Now create attorneys linked to these parties
     for (let i = 0; i < 30; i++) {
       attorneys.push({
+        party_id: attorneyPartyIds[i],
         first_name: faker.person.firstName(),
         middle_name: faker.datatype.boolean() ? faker.person.middleName() : null,
         last_name: faker.person.lastName(),
@@ -276,7 +302,10 @@ async function seedAllData() {
         email: faker.internet.email(),
         office_phone: faker.phone.number(),
         mobile_phone: faker.phone.number(),
-        fax: faker.phone.number(),
+        bar_number: faker.string.alphanumeric(8),
+        bar_state: faker.location.state({ abbreviated: true }),
+        is_lead: faker.datatype.boolean(),
+        pro_hac_vice: faker.datatype.boolean(),
         firm: faker.company.name() + ' Law Firm',
         address_line1: faker.location.streetAddress(),
         address_line2: faker.datatype.boolean() ? faker.location.secondaryAddress() : null,
@@ -284,10 +313,6 @@ async function seedAllData() {
         state: faker.location.state({ abbreviated: true }),
         zip: faker.location.zipCode(),
         country: 'US',
-        bar_number: faker.string.alphanumeric(8),
-        bar_state: faker.location.state({ abbreviated: true }),
-        is_lead: faker.datatype.boolean(),
-        pro_hac_vice: faker.datatype.boolean(),
         status: 'active',
         termination_date: null,
         termination_notice_date: null,
@@ -301,18 +326,22 @@ async function seedAllData() {
     // Seed docket entries
     console.log('📋 Seeding docket entries...');
     const docketEntries = [];
-    const entryTypes = ['Motion', 'Hearing', 'Filing', 'Order', 'Notice', 'Response'];
+    const documentTypes = ['Motion', 'Hearing', 'Filing', 'Order', 'Notice', 'Response', 'Complaint', 'Answer', 'Brief'];
 
     for (const caseId of caseIds) {
       const numEntries = faker.number.int({ min: 3, max: 8 });
       for (let i = 0; i < numEntries; i++) {
         docketEntries.push({
           case_id: caseId,
-          entry_date: faker.date.past({ years: 1 }),
-          entry_type: faker.helpers.arrayElement(entryTypes),
-          description: faker.lorem.sentence(),
-          filed_by: faker.person.fullName(),
-          status: faker.helpers.arrayElement(['Filed', 'Granted', 'Denied', 'Pending']),
+          entry_number: i + 1,
+          date_filed: faker.date.past({ years: 1 }),
+          text: faker.lorem.sentences({ min: 1, max: 3 }),
+          doc_link: faker.datatype.boolean() ? faker.internet.url() : null,
+          pages: faker.datatype.boolean() ? faker.number.int({ min: 1, max: 50 }) : null,
+          file_size: faker.datatype.boolean() ? `${faker.number.int({ min: 1, max: 10 })} MB` : null,
+          document_type: faker.helpers.arrayElement(documentTypes),
+          cmecf_id: faker.datatype.boolean() ? `[${faker.string.numeric(10)}]` : null,
+          clerk_initials: faker.string.alpha({ length: 2, casing: 'upper' }),
           owner_org_id: faker.helpers.arrayElement(orgIds),
         });
       }
@@ -360,14 +389,13 @@ async function seedAllData() {
       for (let i = 0; i < numMotions; i++) {
         motions.push({
           case_id: caseId,
-          type: faker.helpers.arrayElement(motionTypes),
           title: faker.helpers.arrayElement(motionTypes) + ' - ' + faker.lorem.words(3),
+          type: faker.helpers.arrayElement(motionTypes),
           description: faker.lorem.paragraph(),
           status: faker.helpers.arrayElement(['Filed', 'Granted', 'Denied', 'Pending', 'Withdrawn']),
-          filed_date: faker.date.past({ years: 1 }),
+          filing_date: faker.date.past({ years: 1 }),
           hearing_date: faker.date.future(),
           filed_by: faker.helpers.arrayElement(userIds),
-          assigned_to: faker.helpers.arrayElement(userIds),
           owner_org_id: faker.helpers.arrayElement(orgIds),
         });
       }
@@ -385,15 +413,17 @@ async function seedAllData() {
       for (let i = 0; i < numRequests; i++) {
         discoveryRequests.push({
           case_id: caseId,
-          type: faker.helpers.arrayElement(discoveryTypes),
+          request_type: faker.helpers.arrayElement(discoveryTypes),
           title: faker.helpers.arrayElement(discoveryTypes) + ' - Set ' + faker.number.int({ min: 1, max: 5 }),
           description: faker.lorem.paragraph(),
           status: faker.helpers.arrayElement(['Sent', 'Responded', 'Overdue', 'Completed']),
-          sent_date: faker.date.past({ years: 1 }),
+          served_date: faker.date.past({ years: 1 }),
           due_date: faker.date.future(),
           response_date: faker.date.recent(),
-          sent_by: faker.helpers.arrayElement(userIds),
-          owner_org_id: faker.helpers.arrayElement(orgIds),
+          created_by: faker.helpers.arrayElement(userIds),
+          recipient: faker.company.name() + ' Legal Department',
+          priority: faker.helpers.arrayElement(['low', 'medium', 'high', 'urgent']),
+          response_notes: faker.lorem.sentences(2),
         });
       }
     }
@@ -408,9 +438,11 @@ async function seedAllData() {
     for (const caseId of caseIds) {
       const numTasks = faker.number.int({ min: 3, max: 10 });
       for (let i = 0; i < numTasks; i++) {
+        const taskType = faker.helpers.arrayElement(taskTypes);
         tasks.push({
           case_id: caseId,
-          title: faker.helpers.arrayElement(taskTypes) + ': ' + faker.lorem.words(3),
+          type: taskType.toLowerCase().replace(' ', '_'),
+          title: taskType + ': ' + faker.lorem.words(3),
           description: faker.lorem.sentences(2),
           status: faker.helpers.arrayElement(['pending', 'in_progress', 'completed', 'cancelled']),
           priority: faker.helpers.arrayElement(['low', 'medium', 'high', 'urgent']),

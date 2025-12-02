@@ -29,8 +29,6 @@ export class CasesService {
         'parties',
         'caseMembers',
         'docketEntries',
-        'consolidatedCases',
-        'memberOfCases',
       ],
       order: [['created_at', 'DESC']],
     });
@@ -43,8 +41,6 @@ export class CasesService {
         'parties',
         'caseMembers',
         'docketEntries',
-        'consolidatedCases',
-        'memberOfCases',
       ],
     });
 
