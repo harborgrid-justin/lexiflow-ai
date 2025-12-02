@@ -2,11 +2,13 @@
  * Research Store
  * State management for research feature
  *
- * Note: This implementation uses React Context. For production, consider installing
- * Zustand (npm install zustand) for better performance and dev tools support.
+ * Note: This is a custom store implementation. The unused `create` import from
+ * 'react' has been removed. Consider migrating to Zustand for better performance
+ * and dev tools support.
+ *
+ * @see /config/app.config.ts for centralized configuration
  */
 
-import { create } from 'react';
 import type { SearchFilters } from '../api/research.types';
 
 interface ResearchState {

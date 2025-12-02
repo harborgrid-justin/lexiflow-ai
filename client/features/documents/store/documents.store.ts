@@ -1,9 +1,11 @@
 /**
  * Document Management Store
  * Global state for document browser
+ *
+ * Note: This is a custom store implementation. The unused `create` import from
+ * 'react' has been removed. Consider migrating to Zustand for better dev tools
+ * support and persistence middleware.
  */
-
-import { create } from 'react';
 
 export interface DocumentStoreState {
   // Current folder path
