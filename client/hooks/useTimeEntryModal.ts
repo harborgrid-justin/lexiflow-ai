@@ -1,31 +1,77 @@
-import { useState } from 'react';
+/**
+ * ENZYME MIGRATION: useTimeEntryModal
+ *
+ * Migrated to use Enzyme's advanced hooks for improved stability and analytics.
+ *
+ * Changes:
+ * - Replaced useState with useSafeState to prevent updates on unmounted components
+ * - Wrapped handleRefine with useLatestCallback and added useIsMounted guard
+ * - Wrapped handleSave with useLatestCallback for stable reference
+ * - Added useTrackEvent for analytics tracking:
+ *   - time_entry_ai_refined: Tracks AI refinement with text length metrics
+ *   - time_entry_saved: Tracks saves with duration and case association
+ */
+
 import { OpenAIService } from '../services/openAIService';
+import {
+  useLatestCallback,
+  useSafeState,
+  useIsMounted,
+  useTrackEvent
+} from '../enzyme';
 
 export const useTimeEntryModal = () => {
-  const [desc, setDesc] = useState('');
-  const [duration, setDuration] = useState('0.5');
-  const [isRefining, setIsRefining] = useState(false);
+  const trackEvent = useTrackEvent();
+  const isMounted = useIsMounted();
 
-  const handleRefine = async () => {
+  const [desc, setDesc] = useSafeState('');
+  const [duration, setDuration] = useSafeState('0.5');
+  const [isRefining, setIsRefining] = useSafeState(false);
+
+  const handleRefine = useLatestCallback(async () => {
     if (!desc) return;
+    const originalLength = desc.length;
     setIsRefining(true);
-    const polished = await OpenAIService.refineTimeEntry(desc);
-    setDesc(polished);
-    setIsRefining(false);
-  };
 
-  const handleSave = (onSave: (entry: any) => void, caseId?: string) => {
+    try {
+      const polished = await OpenAIService.refineTimeEntry(desc);
+
+      if (isMounted()) {
+        setDesc(polished);
+        setIsRefining(false);
+        trackEvent('time_entry_ai_refined', {
+          originalLength,
+          refinedLength: polished.length
+        });
+      }
+    } catch (error) {
+      if (isMounted()) {
+        setIsRefining(false);
+      }
+      throw error;
+    }
+  });
+
+  const handleSave = useLatestCallback((onSave: (entry: any) => void, caseId?: string) => {
+    const durationValue = parseFloat(duration);
+
     onSave({
       caseId: caseId || 'General',
       date: new Date().toISOString().split('T')[0],
-      duration: parseFloat(duration) * 60,
+      duration: durationValue * 60,
       description: desc,
       rate: 450,
-      total: parseFloat(duration) * 450,
+      total: durationValue * 450,
       status: 'Unbilled'
     });
+
+    trackEvent('time_entry_saved', {
+      duration: durationValue,
+      hasCaseId: !!caseId
+    });
+
     setDesc('');
-  };
+  });
 
   return {
     desc,

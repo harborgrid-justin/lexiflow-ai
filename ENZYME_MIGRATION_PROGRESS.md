@@ -147,15 +147,16 @@ Several methods called in `useCaseDetail.ts` do not exist on `OpenAIService`:
 - `/client/enzyme/components/HydrationBoundary.tsx` - Progressive hydration
 - `/client/enzyme/types/index.ts` - Type definitions
 
-### 2. Hooks Migration (85%)
+### 2. Hooks Migration (90%)
 
-| Hook | API Request | Mutations | Callbacks | Mounted Check |
-|------|-------------|-----------|-----------|---------------|
-| `useCaseList` | useApiRequest | useApiMutation | useLatestCallback | useIsMounted |
-| `useCaseDetail` | useApiRequest | N/A | useLatestCallback | useIsMounted |
-| `useBillingDashboard` | useApiRequest | N/A | N/A | N/A |
-| `useClauseLibrary` | useApiRequest | N/A | N/A | N/A |
-| `useDiscoveryPlatform` | useApiRequest | useApiMutation | useLatestCallback | N/A |
+| Hook | API Request | Mutations | Callbacks | Mounted Check | Analytics |
+|------|-------------|-----------|-----------|---------------|-----------|
+| `useCaseList` | useApiRequest | useApiMutation | useLatestCallback | useIsMounted | N/A |
+| `useCaseDetail` | useApiRequest | N/A | useLatestCallback | useIsMounted | N/A |
+| `useBillingDashboard` | useApiRequest | N/A | N/A | N/A | N/A |
+| `useClauseLibrary` | useApiRequest | N/A | N/A | N/A | N/A |
+| `useDiscoveryPlatform` | useApiRequest | useApiMutation | useLatestCallback | N/A | useTrackEvent |
+| `useTimeEntryModal` | N/A | N/A | useLatestCallback | useIsMounted | useTrackEvent |
 
 ### 3. Component Migration (40%)
 

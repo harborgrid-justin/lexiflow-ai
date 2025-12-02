@@ -1,48 +1,74 @@
-import { useState, useEffect } from 'react';
+/**
+ * ENZYME MIGRATION (Wave 6, Agent 43)
+ *
+ * This hook manages user profile data with form state and save functionality.
+ * Migrated from useEffect-based fetching to Enzyme's Virtual DOM hooks:
+ * - useApiRequest for user and profile data fetching
+ * - useApiMutation for profile updates
+ * - useSafeState for form fields (bio, phone, skills, theme, editMode)
+ * - useIsMounted guards for safe state updates
+ * - useLatestCallback for stable handler references
+ * - useTrackEvent for profile analytics
+ */
+
+import { useEffect } from 'react';
 import { User, UserProfile as IUserProfile } from '../types';
-import { ApiService } from '../services/apiService';
+import {
+  useApiRequest,
+  useApiMutation,
+  useIsMounted,
+  useLatestCallback,
+  useSafeState,
+  useTrackEvent
+} from '../enzyme';
 
 export const useUserProfile = (userId: string) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<IUserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const isMounted = useIsMounted();
+  const trackEvent = useTrackEvent();
+
+  // Fetch all users to find the current user
+  const { data: users, isLoading: usersLoading } = useApiRequest<User[]>({
+    endpoint: '/api/v1/users',
+    options: { enabled: !!userId }
+  });
+
+  // Fetch user profile
+  const { data: profile, isLoading: profileLoading } = useApiRequest<IUserProfile>({
+    endpoint: `/api/v1/user-profiles/user/${userId}`,
+    options: { enabled: !!userId }
+  });
+
+  // Derived state
+  const user = users?.find(u => u.id === userId) || null;
+  const loading = usersLoading || profileLoading;
+
+  // Edit mode state
+  const [editMode, setEditMode] = useSafeState(false);
 
   // Form state
-  const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
-  const [skills, setSkills] = useState('');
-  const [theme, setTheme] = useState('system');
+  const [bio, setBio] = useSafeState('');
+  const [phone, setPhone] = useSafeState('');
+  const [skills, setSkills] = useSafeState('');
+  const [theme, setTheme] = useSafeState('system');
 
+  // Initialize form when profile loads
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const users = await ApiService.getUsers();
-        const currentUser = users.find(u => u.id === userId);
-        setUser(currentUser || null);
+    if (profile && isMounted()) {
+      setBio(profile.bio || '');
+      setPhone(profile.phone || '');
+      setSkills(Array.isArray(profile.skills) ? profile.skills.join(', ') : profile.skills || '');
+      setTheme(profile.themePreference || 'system');
+    }
+  }, [profile, isMounted, setBio, setPhone, setSkills, setTheme]);
 
-        const userProfile = await ApiService.getUserProfile(userId);
-        setProfile(userProfile);
+  // Profile update mutation
+  const { mutateAsync: updateProfile, isPending: saving } = useApiMutation<IUserProfile>({
+    method: 'PUT',
+    endpoint: `/api/v1/user-profiles/user/${userId}`
+  });
 
-        // Init form
-        if (userProfile) {
-            setBio(userProfile.bio || '');
-            setPhone(userProfile.phone || '');
-            setSkills(Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills || '');
-            setTheme(userProfile.themePreference || 'system');
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [userId]);
-
-  const handleSave = async () => {
-    setSaving(true);
+  // Save handler
+  const handleSave = useLatestCallback(async () => {
     try {
       const updatedProfile = {
         ...profile,
@@ -51,15 +77,23 @@ export const useUserProfile = (userId: string) => {
         skills: skills.split(',').map(s => s.trim()).filter(s => s),
         themePreference: theme
       };
-      await ApiService.updateUserProfile(userId, updatedProfile);
-      setProfile(updatedProfile);
-      setEditMode(false);
+
+      await updateProfile({ data: updatedProfile });
+
+      if (isMounted()) {
+        setEditMode(false);
+        trackEvent('user_profile_saved', { userId });
+      }
     } catch (e) {
-      console.error(e);
-    } finally {
-      setSaving(false);
+      console.error('Failed to save profile:', e);
     }
-  };
+  });
+
+  // Wrap setEditMode to track edit mode toggles
+  const handleSetEditMode = useLatestCallback((enabled: boolean) => {
+    setEditMode(enabled);
+    trackEvent('user_profile_edit_mode', { enabled });
+  });
 
   return {
     user,
@@ -67,7 +101,7 @@ export const useUserProfile = (userId: string) => {
     loading,
     saving,
     editMode,
-    setEditMode,
+    setEditMode: handleSetEditMode,
     bio,
     setBio,
     phone,

@@ -1,17 +1,51 @@
-import React, { useState } from 'react';
+/**
+ * ENZYME MIGRATION: Enhanced with Enzyme framework features
+ *
+ * This hook manages legal research functionality with comprehensive Enzyme optimizations:
+ * - useApiRequest/useApiMutation: Type-safe API operations
+ * - useSafeState: Async-safe state management preventing memory leaks
+ * - useDebouncedValue: Optimized query input to reduce unnecessary API calls
+ * - useLatestCallback: Stable callback references with latest closure values
+ * - useIsMounted: Safe async operations with mount checks
+ * - useTrackEvent: Analytics tracking for search operations and user feedback
+ * - useErrorToast: User-friendly error notifications
+ *
+ * @see /workspaces/lexiflow-ai/client/enzyme/MIGRATION_PLAN.md
+ */
+
+import React from 'react';
 import { ApiService } from '../services/apiService';
 import { ResearchSession, User } from '../types';
-import { useApiRequest, useApiMutation, useLatestCallback, useIsMounted } from '../enzyme';
+import {
+  useApiRequest,
+  useApiMutation,
+  useLatestCallback,
+  useIsMounted,
+  useSafeState,
+  useDebouncedValue,
+  useTrackEvent,
+  useErrorToast
+} from '../enzyme';
 import { useQueryClient } from '@tanstack/react-query';
 
 export const useResearch = (currentUser?: User) => {
-  const [query, setQuery] = useState('');
-  const [currentResults, setCurrentResults] = useState<any | null>(null);
-  const [jurisdiction, setJurisdiction] = useState('');
-  const [searchType, setSearchType] = useState<'comprehensive' | 'case_law' | 'statutes' | 'news'>('comprehensive');
-  
+  // Enzyme: useSafeState for async-safe state management
+  const [query, setQuery] = useSafeState('');
+  const [currentResults, setCurrentResults] = useSafeState<any | null>(null);
+  const [jurisdiction, setJurisdiction] = useSafeState('');
+  const [searchType, setSearchType] = useSafeState<'comprehensive' | 'case_law' | 'statutes' | 'news'>('comprehensive');
+
   const queryClient = useQueryClient();
   const isMounted = useIsMounted();
+
+  // Enzyme: Analytics tracking
+  const trackEvent = useTrackEvent();
+
+  // Enzyme: Error notifications
+  const showErrorToast = useErrorToast();
+
+  // Enzyme: Debounced query for optimized API calls (300ms delay)
+  const debouncedQuery = useDebouncedValue(query, 300);
 
   // Fetch research history with Enzyme
   const { data: history = [], isLoading: isLoadingHistory } = useApiRequest<ResearchSession[]>({
@@ -31,6 +65,13 @@ export const useResearch = (currentUser?: User) => {
   const handleSearch = useLatestCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+
+    // Enzyme: Track search initiation with analytics
+    trackEvent('research_search', {
+      searchType,
+      jurisdiction: jurisdiction || 'all',
+      queryLength: query.length
+    });
 
     if (isMounted()) setCurrentResults(null);
 
@@ -66,7 +107,15 @@ export const useResearch = (currentUser?: User) => {
         };
       }
 
-      if (isMounted()) setCurrentResults(normalizedResults);
+      if (isMounted()) {
+        setCurrentResults(normalizedResults);
+
+        // Enzyme: Track search results with analytics
+        trackEvent('research_results', {
+          resultCount: normalizedResults?.totalResults || 0,
+          searchType
+        });
+      }
 
       // Save to history using Enzyme mutation
       const newSession: ResearchSession = {
@@ -81,22 +130,32 @@ export const useResearch = (currentUser?: User) => {
       await saveSession({ data: newSession });
     } catch (error) {
       console.error('Research failed:', error);
-      alert('Research failed. Please check your Google Custom Search API configuration.');
+      // Enzyme: User-friendly error notification instead of alert()
+      showErrorToast('Research failed. Please check your Google Custom Search API configuration.');
     }
   });
 
   const handleFeedback = useLatestCallback(async (id: string, type: 'positive' | 'negative') => {
     try {
+      // Enzyme: Track feedback with analytics
+      trackEvent('research_feedback', {
+        id,
+        type
+      });
+
       await ApiService.submitResearchFeedback(id, type);
       queryClient.invalidateQueries({ queryKey: ['/api/v1/research/history'] });
     } catch (e) {
       console.error(e);
+      // Enzyme: Show error toast for feedback failures
+      showErrorToast('Failed to submit feedback. Please try again.');
     }
   });
 
   return {
     query,
     setQuery,
+    debouncedQuery, // Enzyme: Expose debounced query for components that need it
     isLoading,
     history,
     currentResults,
