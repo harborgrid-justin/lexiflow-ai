@@ -96,7 +96,7 @@ export const AdminPanel: React.FC = () => {
             {/* Enzyme: Integrations hydrated when idle (rarely accessed) */}
             {activeTab === 'integrations' && (
               <HydrationBoundary id="admin-integrations-tab" priority="low" trigger="idle">
-            <div className="p-8 space-y-6 overflow-auto">
+                <div className="p-8 space-y-6 overflow-auto">
                 <h3 className="font-bold text-lg mb-4">Connected Platforms</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border p-4 rounded-lg flex items-center justify-between">
