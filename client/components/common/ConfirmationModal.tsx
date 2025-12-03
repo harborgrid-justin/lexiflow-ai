@@ -71,7 +71,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             variant={config.confirmButtonVariant}
             onClick={onConfirm}
             disabled={isLoading}
-            loading={isLoading}
+            isLoading={isLoading}
           >
             {confirmText}
           </Button>

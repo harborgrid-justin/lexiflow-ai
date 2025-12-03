@@ -21,7 +21,7 @@ const ENDPOINTS = {
 /**
  * Login response with token and user
  */
-interface LoginResponse {
+export interface LoginResponse {
   access_token: string;
   user: User;
   expires_in?: number;
@@ -31,7 +31,7 @@ interface LoginResponse {
 /**
  * Registration data
  */
-interface RegisterData {
+export interface RegisterData {
   email: string;
   password: string;
   first_name: string;
@@ -65,17 +65,23 @@ export const enzymeAuthService = {
   /**
    * Register a new user
    * @example
-   * const user = await enzymeAuthService.register({
+   * const { user, access_token } = await enzymeAuthService.register({
    *   email: 'newuser@example.com',
    *   password: 'securepassword',
    *   first_name: 'John',
    *   last_name: 'Doe'
    * });
    */
-  async register(userData: RegisterData): Promise<User> {
-    const response = await enzymeClient.post<User>(ENDPOINTS.register, {
+  async register(userData: RegisterData): Promise<LoginResponse> {
+    const response = await enzymeClient.post<LoginResponse>(ENDPOINTS.register, {
       body: userData,
     });
+    
+    // Store the token after successful registration
+    if (response.data.access_token) {
+      localStorage.setItem('authToken', response.data.access_token);
+    }
+
     return response.data;
   },
 

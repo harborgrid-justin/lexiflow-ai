@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { ApiService } from '../../../services/apiService';
+import { enzymeDocumentsService } from '../../../enzyme/services/documents.service';
 import type {
   LegalDocument,
   DocumentVersion,
@@ -15,9 +15,6 @@ import type {
   DocumentUploadMetadata,
   DocumentStats,
   DocumentActivity,
-  DocumentsListResponse,
-  FoldersListResponse,
-  AnnotationReply,
   SharePermissions,
 } from './documents.types';
 
@@ -51,19 +48,17 @@ export function useDocuments(
   return useQuery({
     queryKey: documentKeys.list(filters),
     queryFn: async () => {
-      const params = new URLSearchParams();
-
-      if (filters.search) params.append('search', filters.search);
-      if (filters.folderId) params.append('folderId', filters.folderId);
-      if (filters.caseId) params.append('caseId', filters.caseId);
-      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-      if (filters.dateTo) params.append('dateTo', filters.dateTo);
-      if (filters.type?.length) params.append('type', filters.type.join(','));
-      if (filters.tags?.length) params.append('tags', filters.tags.join(','));
-      if (filters.author?.length) params.append('author', filters.author.join(','));
-      if (filters.status?.length) params.append('status', filters.status.join(','));
-
-      return ApiService.documents.getAll(filters.caseId);
+      return enzymeDocumentsService.getAll({
+        caseId: filters.caseId,
+        folderId: filters.folderId,
+        search: filters.search,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        type: filters.type?.join(','),
+        tags: filters.tags?.join(','),
+        author: filters.author?.join(','),
+        status: filters.status?.join(','),
+      });
     },
     staleTime: 30000, // 30 seconds
     ...options,
@@ -79,7 +74,7 @@ export function useDocument(
 ) {
   return useQuery({
     queryKey: documentKeys.detail(id),
-    queryFn: () => ApiService.documents.getById(id),
+    queryFn: () => enzymeDocumentsService.getById(id),
     enabled: !!id,
     staleTime: 60000, // 1 minute
     ...options,
@@ -95,10 +90,7 @@ export function useDocumentVersions(
 ) {
   return useQuery({
     queryKey: documentKeys.versions(documentId),
-    queryFn: async () => {
-      // Mock implementation - replace with actual API call
-      return [] as DocumentVersion[];
-    },
+    queryFn: () => enzymeDocumentsService.getVersions(documentId),
     enabled: !!documentId,
     staleTime: 60000,
     ...options,
@@ -115,8 +107,8 @@ export function useDocumentAnnotations(
   return useQuery({
     queryKey: documentKeys.annotations(documentId),
     queryFn: async () => {
-      // Mock implementation - replace with actual API call
-      return [] as Annotation[];
+      const annotations = await enzymeDocumentsService.getAnnotations(documentId);
+      return annotations as unknown as Annotation[];
     },
     enabled: !!documentId,
     staleTime: 30000,
@@ -134,7 +126,7 @@ export function useDocumentStats(
   return useQuery({
     queryKey: [...documentKeys.stats(), filters],
     queryFn: async () => {
-      const docs = await ApiService.documents.getAll(filters.caseId);
+      const docs = await enzymeDocumentsService.getAll({ caseId: filters.caseId });
 
       const stats: DocumentStats = {
         total: docs.length,
@@ -187,8 +179,8 @@ export function useDocumentActivity(
   return useQuery({
     queryKey: documentKeys.activity(documentId),
     queryFn: async () => {
-      // Mock implementation - replace with actual API call
-      return [] as DocumentActivity[];
+      const activity = await enzymeDocumentsService.getActivity(documentId);
+      return activity as unknown as DocumentActivity[];
     },
     enabled: !!documentId,
     staleTime: 60000,
@@ -210,19 +202,8 @@ export function useFolders(
   return useQuery({
     queryKey: [...documentKeys.folders(), filters],
     queryFn: async () => {
-      // Mock implementation - replace with actual API call
-      const mockFolders: Folder[] = [
-        {
-          id: 'root',
-          name: 'Documents',
-          path: '/',
-          createdBy: 'system',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          documentCount: 0,
-        },
-      ];
-      return mockFolders;
+      const folders = await enzymeDocumentsService.getFolders(filters);
+      return folders as unknown as Folder[];
     },
     staleTime: 60000,
     ...options,
@@ -243,7 +224,7 @@ export function useUploadDocument(
 
   return useMutation({
     mutationFn: async ({ file, metadata }) => {
-      return ApiService.documents.upload(file, metadata);
+      return enzymeDocumentsService.upload(file, metadata);
     },
     onSuccess: (data, variables) => {
       // Invalidate document lists
@@ -267,7 +248,7 @@ export function useUpdateDocument(
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return ApiService.documents.update(id, data);
+      return enzymeDocumentsService.update(id, data);
     },
     onSuccess: (data, variables) => {
       // Update cache
@@ -290,7 +271,7 @@ export function useDeleteDocument(
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await ApiService.documents.delete(id);
+      await enzymeDocumentsService.delete(id);
     },
     onSuccess: (_, id) => {
       // Remove from cache
@@ -314,10 +295,7 @@ export function useMoveDocument(
 
   return useMutation({
     mutationFn: async ({ documentId, folderId }) => {
-      // Mock implementation - replace with actual API call
-      return ApiService.documents.update(documentId, {
-        // Add folderId field when backend supports it
-      } as any);
+      return enzymeDocumentsService.moveDocument(documentId, folderId);
     },
     onSuccess: (data, variables) => {
       queryClient.setQueryData(documentKeys.detail(variables.documentId), data);
@@ -342,19 +320,9 @@ export function useShareDocument(
 
   return useMutation({
     mutationFn: async ({ documentId, permissions, expiresAt, password }) => {
-      // Mock implementation - replace with actual API call
-      const share: DocumentShare = {
-        id: Math.random().toString(36),
-        documentId,
-        sharedBy: 'current-user',
-        shareLink: `https://lexiflow.com/share/${Math.random().toString(36)}`,
-        expiresAt,
-        permissions,
-        password,
-        downloadable: permissions.view,
-        createdAt: new Date().toISOString(),
-      };
-      return share;
+      const shareData = { permissions, expiresAt, password };
+      const share = await enzymeDocumentsService.shareDocument(documentId, shareData);
+      return share as unknown as DocumentShare;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: documentKeys.share(variables.documentId) });
@@ -373,14 +341,8 @@ export function useAddAnnotation(
 
   return useMutation({
     mutationFn: async (annotation) => {
-      // Mock implementation - replace with actual API call
-      const newAnnotation: Annotation = {
-        ...annotation,
-        id: Math.random().toString(36),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      return newAnnotation;
+      const newAnnotation = await enzymeDocumentsService.addAnnotation(annotation.documentId, annotation);
+      return newAnnotation as unknown as Annotation;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: documentKeys.annotations(variables.documentId) });
@@ -399,8 +361,11 @@ export function useUpdateAnnotation(
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      // Mock implementation - replace with actual API call
-      return { ...data, id } as Annotation;
+      if (!data.documentId) {
+        throw new Error("documentId is required for updating annotation");
+      }
+      const updated = await enzymeDocumentsService.updateAnnotation(data.documentId, id, data);
+      return updated as unknown as Annotation;
     },
     onSuccess: (data, variables) => {
       if (data.documentId) {
@@ -420,8 +385,8 @@ export function useDeleteAnnotation(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }) => {
-      // Mock implementation - replace with actual API call
+    mutationFn: async ({ id, documentId }) => {
+      await enzymeDocumentsService.deleteAnnotation(documentId, id);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: documentKeys.annotations(variables.documentId) });
@@ -440,15 +405,8 @@ export function useCreateFolder(
 
   return useMutation({
     mutationFn: async (folder) => {
-      // Mock implementation - replace with actual API call
-      const newFolder: Folder = {
-        ...folder,
-        id: Math.random().toString(36),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        documentCount: 0,
-      };
-      return newFolder;
+      const newFolder = await enzymeDocumentsService.createFolder(folder);
+      return newFolder as unknown as Folder;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
@@ -467,7 +425,7 @@ export function useDeleteFolder(
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Mock implementation - replace with actual API call
+      await enzymeDocumentsService.deleteFolder(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.folders() });

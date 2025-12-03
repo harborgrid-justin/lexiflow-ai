@@ -16,7 +16,7 @@ const ENDPOINTS = {
 /**
  * Calendar event interface
  */
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   title: string;
   type: 'Hearing' | 'Deposition' | 'Meeting' | 'Deadline' | 'Court Date' | 'Other';
@@ -34,7 +34,7 @@ interface CalendarEvent {
 /**
  * Query parameters for listing calendar events
  */
-interface CalendarListParams {
+export interface CalendarListParams {
   caseId?: string;
   startDate?: string;
   endDate?: string;

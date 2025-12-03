@@ -530,9 +530,12 @@ export const enzymeKnowledgeService = {
     return response.data;
   },
 
-  async search(query: string): Promise<KnowledgeItem[]> {
+  async search(query: string, category?: string): Promise<KnowledgeItem[]> {
+    const params: Record<string, string> = { q: query };
+    if (category) params.category = category;
+    
     const response = await enzymeClient.get<KnowledgeItem[]>(KNOWLEDGE_ENDPOINTS.search, {
-      params: { q: query },
+      params,
     });
     return response.data || [];
   },
@@ -557,9 +560,15 @@ export const enzymeKnowledgeService = {
 // ============================================================================
 
 const JURISDICTION_ENDPOINTS = {
-  list: '/jurisdictions',
-  detail: (id: string) => `/jurisdictions/${id}`,
-  byCode: (code: string) => `/jurisdictions/code/${encodeURIComponent(code)}`,
+  list: '/jurisdiction', // Changed to singular to match API
+  detail: (id: string) => `/jurisdiction/${id}`,
+  byCode: (code: string) => `/jurisdiction/code/${encodeURIComponent(code)}`,
+  federal: '/jurisdiction/federal',
+  state: '/jurisdiction/state',
+  regulatory: '/jurisdiction/regulatory',
+  arbitration: '/jurisdiction/arbitration',
+  localRules: (courtId: string) => `/jurisdiction/courts/${courtId}/local-rules`,
+  search: '/jurisdiction/search',
 } as const;
 
 export const enzymeJurisdictionsService = {
@@ -578,6 +587,40 @@ export const enzymeJurisdictionsService = {
   async getByCode(code: string): Promise<Jurisdiction> {
     const response = await enzymeClient.get<Jurisdiction>(JURISDICTION_ENDPOINTS.byCode(code));
     return response.data;
+  },
+
+  async getFederalCourts(): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(JURISDICTION_ENDPOINTS.federal);
+    return response.data || [];
+  },
+
+  async getStateCourts(state?: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(JURISDICTION_ENDPOINTS.state, {
+      params: state ? { state } : undefined,
+    });
+    return response.data || [];
+  },
+
+  async getRegulatoryBodies(): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(JURISDICTION_ENDPOINTS.regulatory);
+    return response.data || [];
+  },
+
+  async getArbitrationOrgs(): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(JURISDICTION_ENDPOINTS.arbitration);
+    return response.data || [];
+  },
+
+  async getLocalRules(courtId: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(JURISDICTION_ENDPOINTS.localRules(courtId));
+    return response.data || [];
+  },
+
+  async search(query: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(JURISDICTION_ENDPOINTS.search, {
+      params: { q: query },
+    });
+    return response.data || [];
   },
 
   async create(data: Partial<Jurisdiction>): Promise<Jurisdiction> {
@@ -641,6 +684,11 @@ export const enzymeClausesService = {
 
   async delete(id: string): Promise<void> {
     await enzymeClient.delete(CLAUSE_ENDPOINTS.detail(id));
+  },
+
+  async getVersions(id: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(`${CLAUSE_ENDPOINTS.detail(id)}/versions`);
+    return response.data || [];
   },
 };
 
@@ -720,6 +768,38 @@ export const enzymePartiesService = {
 
   async delete(id: string): Promise<void> {
     await enzymeClient.delete(PARTY_ENDPOINTS.detail(id));
+  },
+};
+
+// ============================================================================
+// Users Service
+// ============================================================================
+
+const USER_ENDPOINTS = {
+  list: '/users',
+  detail: (id: string) => `/users/${id}`,
+} as const;
+
+export const enzymeUsersService = {
+  async getAll(): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(USER_ENDPOINTS.list);
+    return response.data || [];
+  },
+
+  async getById(id: string): Promise<unknown> {
+    const response = await enzymeClient.get(USER_ENDPOINTS.detail(id));
+    return response.data;
+  },
+
+  async update(id: string, data: unknown): Promise<unknown> {
+    const response = await enzymeClient.put(USER_ENDPOINTS.detail(id), {
+      body: data as Record<string, unknown>,
+    });
+    return response.data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await enzymeClient.delete(USER_ENDPOINTS.detail(id));
   },
 };
 

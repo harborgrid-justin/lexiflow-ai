@@ -4,8 +4,7 @@
  * Handles all API calls for knowledge base and clause library.
  */
 
-import { enzymeClient } from '@/enzyme';
-import { ApiService } from '@/services/apiService';
+import { enzymeKnowledgeService, enzymeClausesService } from '../../../enzyme/services/misc.service';
 import type {
   KnowledgeItem,
   Clause,
@@ -17,55 +16,44 @@ import type {
 export const KnowledgeApi = {
   // Knowledge Base
   getItems: async (category?: string): Promise<KnowledgeItem[]> => {
-    return ApiService.getKnowledgeBase(category);
+    return enzymeKnowledgeService.getAll({ category });
   },
 
   getItem: async (id: string): Promise<KnowledgeItem> => {
-    const { data } = await enzymeClient.get<KnowledgeItem>(`/knowledge/${id}`);
-    return data;
+    return enzymeKnowledgeService.getById(id);
   },
 
   createItem: async (data: CreateKnowledgeItemRequest): Promise<KnowledgeItem> => {
-    const { data: response } = await enzymeClient.post<KnowledgeItem>('/knowledge', data);
-    return response;
+    return enzymeKnowledgeService.create(data as any);
   },
 
   searchItems: async (query: string, category?: string): Promise<KnowledgeItem[]> => {
-    const params = new URLSearchParams({ query });
-    if (category) params.append('category', category);
-    
-    const { data } = await enzymeClient.get<KnowledgeItem[]>(`/knowledge/search?${params}`);
-    return data;
+    return enzymeKnowledgeService.search(query, category);
   },
 
   // Clause Library
   getClauses: async (): Promise<Clause[]> => {
-    const { data } = await enzymeClient.get<Clause[]>('/clauses');
-    return data;
+    return enzymeClausesService.getAll() as unknown as Clause[];
   },
 
   getClause: async (id: string): Promise<Clause> => {
-    const { data } = await enzymeClient.get<Clause>(`/clauses/${id}`);
-    return data;
+    return enzymeClausesService.getById(id) as unknown as Clause;
   },
 
   createClause: async (data: CreateClauseRequest): Promise<Clause> => {
-    const { data: response } = await enzymeClient.post<Clause>('/clauses', data);
-    return response;
+    return enzymeClausesService.create(data) as unknown as Clause;
   },
 
   updateClause: async ({ id, ...data }: UpdateClauseRequest): Promise<Clause> => {
-    const { data: response } = await enzymeClient.patch<Clause>(`/clauses/${id}`, data);
-    return response;
+    return enzymeClausesService.update(id, data) as unknown as Clause;
   },
 
   deleteClause: async (id: string): Promise<void> => {
-    await enzymeClient.delete(`/clauses/${id}`);
+    return enzymeClausesService.delete(id);
   },
 
   getClauseVersions: async (id: string): Promise<Clause['versions']> => {
-    const { data } = await enzymeClient.get<Clause['versions']>(`/clauses/${id}/versions`);
-    return data;
+    return enzymeClausesService.getVersions(id) as Promise<Clause['versions']>;
   }
 };
 

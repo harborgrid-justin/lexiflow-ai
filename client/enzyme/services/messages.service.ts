@@ -14,6 +14,10 @@ const ENDPOINTS = {
     list: '/messages',
     detail: (id: string) => `/messages/${id}`,
     send: (conversationId: string) => `/messages/${conversationId}/send`,
+    unread: '/messages/unread-count',
+    search: '/messages/search',
+    markRead: '/messages/mark-read',
+    react: (id: string) => `/messages/${id}/react`,
   },
   conversations: {
     list: '/messages/conversations',
@@ -22,14 +26,36 @@ const ENDPOINTS = {
   },
 } as const;
 
-/**
- * Query parameters for listing conversations
- */
-interface ConversationListParams {
-  caseId?: string;
-  userId?: string;
+export interface ConversationFilters {
+  status?: 'active' | 'archived' | 'spam';
+  priority?: 'high' | 'medium' | 'low';
+  assignedTo?: string;
+  search?: string;
   page?: number;
   limit?: number;
+  caseId?: string;
+  userId?: string;
+}
+
+export interface MessageSearchParams {
+  query: string;
+  conversationId?: string;
+  senderId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  hasAttachments?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface SendMessageInput {
+  conversationId: string;
+  content: string;
+  type?: 'text' | 'image' | 'file' | 'system';
+  attachments?: File[];
+  parentMessageId?: string;
+  mentions?: string[];
+  securityLevel?: 'standard' | 'confidential' | 'privileged';
 }
 
 /**
@@ -43,52 +69,59 @@ export const enzymeMessagesService = {
   conversations: {
     /**
      * Get all conversations with optional filtering
-     * @example
-     * const conversations = await enzymeMessagesService.conversations.getAll({ caseId: 'case-123' });
      */
-    async getAll(params?: ConversationListParams): Promise<Conversation[]> {
-      const response = await enzymeClient.get<ApiConversation[]>(ENDPOINTS.conversations.list, {
-        params: params as Record<string, string | number | boolean>,
-      });
+    async getAll(params?: ConversationFilters): Promise<{ conversations: Conversation[]; total: number; hasMore: boolean; page: number; limit: number }> {
+      try {
+        const response = await enzymeClient.get<any>(ENDPOINTS.conversations.list, {
+          params: params as Record<string, string | number | boolean>,
+        });
       
-      // Fetch messages for each conversation
-      const conversationsWithMessages = await Promise.all(
-        (response.data || []).map(async (conv) => {
-          try {
-            const messagesResponse = await enzymeClient.get<ApiMessage[]>(
-              ENDPOINTS.conversations.messages(conv.id)
-            );
-            return transformApiConversation(conv, messagesResponse.data || []);
-          } catch {
-            return transformApiConversation(conv, []);
-          }
-        })
-      );
-      
-      return conversationsWithMessages;
+        const apiConversations = response.data.conversations || response.data || [];
+        const list = Array.isArray(apiConversations) ? apiConversations : [];
+
+        // Fetch messages for each conversation
+        const conversationsWithMessages = await Promise.all(
+          list.map(async (conv: ApiConversation) => {
+            try {
+              const messagesResponse = await enzymeClient.get<any>(
+                ENDPOINTS.conversations.messages(conv.id)
+              );
+              const msgs = messagesResponse.data.messages || messagesResponse.data || [];
+              return transformApiConversation(conv, Array.isArray(msgs) ? msgs : []);
+            } catch {
+              return transformApiConversation(conv, []);
+            }
+          })
+        );
+        
+        return {
+          conversations: conversationsWithMessages,
+          total: response.data.total || conversationsWithMessages.length,
+          hasMore: response.data.hasMore || response.data.has_more || false,
+          page: response.data.page || 1,
+          limit: response.data.limit || 20
+        };
+      } catch (error) {
+        console.error('Failed to fetch conversations:', error);
+        return { conversations: [], total: 0, hasMore: false, page: 1, limit: 20 };
+      }
     },
 
     /**
      * Get a single conversation by ID with messages
-     * @example
-     * const conversation = await enzymeMessagesService.conversations.getById('conv-123');
      */
     async getById(id: string): Promise<Conversation> {
       const [convResponse, messagesResponse] = await Promise.all([
         enzymeClient.get<ApiConversation>(ENDPOINTS.conversations.detail(id)),
-        enzymeClient.get<ApiMessage[]>(ENDPOINTS.conversations.messages(id)),
+        enzymeClient.get<any>(ENDPOINTS.conversations.messages(id)),
       ]);
       
-      return transformApiConversation(convResponse.data, messagesResponse.data || []);
+      const msgs = messagesResponse.data.messages || messagesResponse.data || [];
+      return transformApiConversation(convResponse.data, Array.isArray(msgs) ? msgs : []);
     },
 
     /**
      * Create a new conversation
-     * @example
-     * const conversation = await enzymeMessagesService.conversations.create({
-     *   participants: ['user-1', 'user-2'],
-     *   caseId: 'case-123'
-     * });
      */
     async create(data: Partial<Conversation>): Promise<Conversation> {
       const response = await enzymeClient.post<ApiConversation>(ENDPOINTS.conversations.list, {
@@ -99,8 +132,6 @@ export const enzymeMessagesService = {
 
     /**
      * Update a conversation
-     * @example
-     * const updated = await enzymeMessagesService.conversations.update('conv-123', { subject: 'New Subject' });
      */
     async update(id: string, data: Partial<Conversation>): Promise<Conversation> {
       const response = await enzymeClient.put<ApiConversation>(ENDPOINTS.conversations.detail(id), {
@@ -110,22 +141,117 @@ export const enzymeMessagesService = {
     },
 
     /**
-     * Get messages for a conversation
-     * @example
-     * const messages = await enzymeMessagesService.conversations.getMessages('conv-123');
+     * Delete a conversation
      */
-    async getMessages(conversationId: string): Promise<Message[]> {
-      const response = await enzymeClient.get<ApiMessage[]>(
-        ENDPOINTS.conversations.messages(conversationId)
-      );
-      return (response.data || []).map(transformApiMessage);
+    async delete(id: string): Promise<void> {
+      await enzymeClient.delete(ENDPOINTS.conversations.detail(id));
     },
   },
 
   /**
-   * Create a new message
-   * @example
-   * const message = await enzymeMessagesService.create({ text: 'Hello', conversationId: 'conv-123' });
+   * Message operations
+   */
+  messages: {
+    /**
+     * Get messages for a conversation
+     */
+    async getMessages(conversationId: string, params?: any): Promise<{ messages: Message[]; total: number; hasMore: boolean; cursor?: string }> {
+      const response = await enzymeClient.get<any>(
+        ENDPOINTS.conversations.messages(conversationId),
+        { params }
+      );
+      
+      const msgs = response.data.messages || response.data || [];
+      const messages = (Array.isArray(msgs) ? msgs : []).map(transformApiMessage);
+
+      return {
+        messages,
+        total: response.data.total || messages.length,
+        hasMore: response.data.hasMore || response.data.has_more || false,
+        cursor: response.data.cursor
+      };
+    },
+
+    /**
+     * Send a message
+     */
+    async send(data: SendMessageInput): Promise<Message> {
+      // Strip attachments for now as they need separate handling
+      const { attachments, ...messageData } = data;
+      const response = await enzymeClient.post<ApiMessage>(ENDPOINTS.messages.list, {
+        body: messageData as Record<string, unknown>,
+      });
+      return transformApiMessage(response.data);
+    },
+
+    /**
+     * Get unread count
+     */
+    async getUnreadCount(): Promise<{ count: number; conversationCounts: Record<string, number> }> {
+      const response = await enzymeClient.get<{ count: number; conversationCounts: Record<string, number> }>(
+        ENDPOINTS.messages.unread
+      );
+      return response.data;
+    },
+
+    /**
+     * Search messages
+     */
+    async search(params: MessageSearchParams): Promise<{ messages: Message[]; total: number; hasMore: boolean }> {
+      const response = await enzymeClient.get<any>(ENDPOINTS.messages.search, {
+        params: params as unknown as Record<string, string | number | boolean>,
+      });
+      
+      const msgs = response.data.messages || response.data || [];
+      return {
+        messages: (Array.isArray(msgs) ? msgs : []).map(transformApiMessage),
+        total: response.data.total || (Array.isArray(msgs) ? msgs.length : 0),
+        hasMore: response.data.hasMore || false
+      };
+    },
+
+    /**
+     * Mark messages as read
+     */
+    async markRead(data: { conversationId: string; messageIds?: string[] }): Promise<{ success: boolean }> {
+      const response = await enzymeClient.post<{ success: boolean }>(ENDPOINTS.messages.markRead, {
+        body: data as Record<string, unknown>,
+      });
+      return response.data;
+    },
+
+    /**
+     * Delete a message
+     */
+    async delete(id: string): Promise<void> {
+      await enzymeClient.delete(ENDPOINTS.messages.detail(id));
+    },
+
+    /**
+     * Update a message
+     */
+    async update(id: string, data: Partial<Message>): Promise<Message> {
+      const response = await enzymeClient.put<ApiMessage>(ENDPOINTS.messages.detail(id), {
+        body: data as Record<string, unknown>,
+      });
+      return transformApiMessage(response.data);
+    },
+
+    /**
+     * React to a message
+     */
+    async react(id: string, reaction: string): Promise<Message> {
+      const response = await enzymeClient.post<ApiMessage>(ENDPOINTS.messages.react(id), {
+        body: { reaction },
+      });
+      return transformApiMessage(response.data);
+    },
+  },
+
+  // Legacy/Direct methods (kept for compatibility if needed, but prefer using sub-objects)
+  
+  /**
+   * Create a new message (Legacy)
    */
   async create(data: Partial<Message> & { conversationId?: string }): Promise<Message> {
     const response = await enzymeClient.post<ApiMessage>(ENDPOINTS.messages.list, {
@@ -135,9 +261,7 @@ export const enzymeMessagesService = {
   },
 
   /**
-   * Get a message by ID
-   * @example
-   * const message = await enzymeMessagesService.getById('msg-123');
+   * Get a message by ID (Legacy)
    */
   async getById(id: string): Promise<Message> {
     const response = await enzymeClient.get<ApiMessage>(ENDPOINTS.messages.detail(id));
@@ -145,9 +269,7 @@ export const enzymeMessagesService = {
   },
 
   /**
-   * Update a message
-   * @example
-   * const updated = await enzymeMessagesService.update('msg-123', { text: 'Updated message' });
+   * Update a message (Legacy)
    */
   async update(id: string, data: Partial<Message>): Promise<Message> {
     const response = await enzymeClient.put<ApiMessage>(ENDPOINTS.messages.detail(id), {
@@ -157,9 +279,7 @@ export const enzymeMessagesService = {
   },
 
   /**
-   * Send a message to a conversation
-   * @example
-   * await enzymeMessagesService.sendMessage('conv-123', 'Hello!', 'user-123');
+   * Send a message to a conversation (Legacy)
    */
   async sendMessage(conversationId: string, text: string, senderId?: string): Promise<void> {
     await enzymeClient.post(ENDPOINTS.messages.send(conversationId), {
@@ -168,9 +288,7 @@ export const enzymeMessagesService = {
   },
 
   /**
-   * Get all conversations (simplified)
-   * @example
-   * const conversations = await enzymeMessagesService.getConversations();
+   * Get all conversations (simplified) (Legacy)
    */
   async getConversations(): Promise<Conversation[]> {
     const response = await enzymeClient.get<ApiConversation[]>(ENDPOINTS.messages.list);

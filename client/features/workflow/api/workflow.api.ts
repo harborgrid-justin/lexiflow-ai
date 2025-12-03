@@ -3,7 +3,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { enzymeWorkflowService } from '../../../enzyme/services/workflow.service';
+import { enzymeTasksService } from '../../../enzyme/services/tasks.service';
 import type { WorkflowTask } from '@/types';
 
 // Query Keys
@@ -22,7 +23,7 @@ export const workflowKeys = {
 export function useWorkflowStages(caseId?: string) {
   return useQuery({
     queryKey: caseId ? [...workflowKeys.stages(), caseId] : workflowKeys.stages(),
-    queryFn: () => ApiService.workflow.stages.getAll(caseId),
+    queryFn: () => enzymeWorkflowService.stages.getAll(caseId ? { caseId } : undefined),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -30,7 +31,7 @@ export function useWorkflowStages(caseId?: string) {
 export function useWorkflowTasks(caseId?: string) {
   return useQuery({
     queryKey: caseId ? workflowKeys.caseTasks(caseId) : workflowKeys.tasks(),
-    queryFn: () => ApiService.tasks.getAll(caseId),
+    queryFn: () => enzymeTasksService.getAll(caseId ? { caseId } : undefined),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -38,7 +39,7 @@ export function useWorkflowTasks(caseId?: string) {
 export function useWorkflowTask(id: string) {
   return useQuery({
     queryKey: workflowKeys.task(id),
-    queryFn: () => ApiService.tasks.getById(id),
+    queryFn: () => enzymeTasksService.getById(id),
     enabled: !!id,
   });
 }
@@ -57,7 +58,7 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<WorkflowTask>) => ApiService.tasks.create(data),
+    mutationFn: (data: Partial<WorkflowTask>) => enzymeTasksService.create(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: workflowKeys.tasks() });
       if (variables.caseId) {
@@ -72,7 +73,7 @@ export function useUpdateTask() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<WorkflowTask> }) =>
-      ApiService.tasks.update(id, data),
+      enzymeTasksService.update(id, data),
     onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: workflowKeys.task(id) });
       queryClient.invalidateQueries({ queryKey: workflowKeys.tasks() });
@@ -88,7 +89,7 @@ export function useUpdateTaskStatus() {
 
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: WorkflowTask['status'] }) =>
-      ApiService.tasks.update(id, { status }),
+      enzymeTasksService.update(id, { status }),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: workflowKeys.task(id) });
       queryClient.invalidateQueries({ queryKey: workflowKeys.tasks() });
@@ -100,7 +101,7 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => ApiService.tasks.delete(id),
+    mutationFn: (id: string) => enzymeTasksService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workflowKeys.tasks() });
     },

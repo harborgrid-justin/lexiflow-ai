@@ -3,8 +3,40 @@
 
 import { enzymeClient } from './client';
 import { API_BASE_URL } from '../../services/config';
-import { LegalDocument } from '../../types';
+import { LegalDocument, DocumentVersion } from '../../types';
 import { DocumentUploadMetadata } from '../../services/api-error';
+
+// Local type definitions to avoid circular dependencies
+export interface Folder {
+  id: string;
+  name: string;
+  parentId?: string;
+  path: string;
+  caseId?: string;
+  documentCount?: number;
+  [key: string]: any;
+}
+
+export interface Annotation {
+  id: string;
+  documentId: string;
+  content: string;
+  [key: string]: any;
+}
+
+export interface DocumentShare {
+  id: string;
+  documentId: string;
+  shareLink: string;
+  [key: string]: any;
+}
+
+export interface DocumentActivity {
+  id: string;
+  documentId: string;
+  action: string;
+  [key: string]: any;
+}
 
 /**
  * Endpoint definitions for documents
@@ -16,6 +48,13 @@ const ENDPOINTS = {
   upload: '/documents/upload',
   download: (id: string) => `/documents/${id}/download`,
   content: (id: string) => `/documents/${id}/content`,
+  versions: (id: string) => `/documents/${id}/versions`,
+  annotations: (id: string) => `/documents/${id}/annotations`,
+  activity: (id: string) => `/documents/${id}/activity`,
+  folders: '/folders',
+  folder: (id: string) => `/folders/${id}`,
+  share: (id: string) => `/documents/${id}/share`,
+  move: (id: string) => `/documents/${id}/move`,
 } as const;
 
 /**
@@ -28,6 +67,12 @@ interface DocumentListParams {
   search?: string;
   page?: number;
   limit?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  tags?: string;
+  author?: string;
+  status?: string;
+  folderId?: string;
 }
 
 /**
@@ -111,22 +156,19 @@ export const enzymeDocumentsService = {
     formData.append('file', file);
     
     if (metadata) {
-      if (metadata.title) formData.append('title', metadata.title);
-      if (metadata.type) formData.append('type', metadata.type);
-      if (metadata.caseId) formData.append('case_id', metadata.caseId);
-      if (metadata.description) formData.append('description', metadata.description);
-      if (metadata.tags) formData.append('tags', metadata.tags.join(','));
-      if (metadata.classification) formData.append('classification', metadata.classification);
+      Object.entries(metadata).forEach(([key, value]) => {
+        if (value !== undefined) {
+          formData.append(key, String(value));
+        }
+      });
     }
 
-    // Use native fetch for multipart/form-data as Enzyme client may not support it
+    // Note: enzymeClient handles FormData automatically by detecting it
+    // and letting the browser set the Content-Type with boundary
     const response = await enzymeClient.post<LegalDocument>(ENDPOINTS.upload, {
-      body: formData as unknown as Record<string, unknown>,
-      headers: {
-        // Let browser set Content-Type with boundary
-        'Content-Type': undefined as unknown as string,
-      },
+      body: formData,
     });
+    
     return response.data;
   },
 
@@ -186,6 +228,95 @@ export const enzymeDocumentsService = {
   getDownloadUrl(id: string): string {
     return `${API_BASE_URL}${ENDPOINTS.download(id)}`;
   },
+
+  /**
+   * Get document versions
+   */
+  async getVersions(id: string): Promise<DocumentVersion[]> {
+    const response = await enzymeClient.get<DocumentVersion[]>(ENDPOINTS.versions(id));
+    return response.data || [];
+  },
+
+  /**
+   * Get document annotations
+   */
+  async getAnnotations(id: string): Promise<Annotation[]> {
+    const response = await enzymeClient.get<Annotation[]>(ENDPOINTS.annotations(id));
+    return response.data || [];
+  },
+
+  /**
+   * Get document activity
+   */
+  async getActivity(id: string): Promise<DocumentActivity[]> {
+    const response = await enzymeClient.get<DocumentActivity[]>(ENDPOINTS.activity(id));
+    return response.data || [];
+  },
+
+  /**
+   * Get folders
+   */
+  async getFolders(params?: any): Promise<Folder[]> {
+    const response = await enzymeClient.get<Folder[]>(ENDPOINTS.folders, { params });
+    return response.data || [];
+  },
+
+  /**
+   * Create folder
+   */
+  async createFolder(data: Partial<Folder>): Promise<Folder> {
+    const response = await enzymeClient.post<Folder>(ENDPOINTS.folders, { body: data });
+    return response.data;
+  },
+
+  /**
+   * Delete folder
+   */
+  async deleteFolder(id: string): Promise<void> {
+    await enzymeClient.delete(ENDPOINTS.folder(id));
+  },
+
+  /**
+   * Move document
+   */
+  async moveDocument(id: string, folderId: string): Promise<LegalDocument> {
+    const response = await enzymeClient.post<LegalDocument>(ENDPOINTS.move(id), { 
+      body: { folderId } 
+    });
+    return response.data;
+  },
+
+  /**
+   * Share document
+   */
+  async shareDocument(id: string, data: any): Promise<DocumentShare> {
+    const response = await enzymeClient.post<DocumentShare>(ENDPOINTS.share(id), { body: data });
+    return response.data;
+  },
+
+  /**
+   * Add annotation
+   */
+  async addAnnotation(documentId: string, data: Partial<Annotation>): Promise<Annotation> {
+    const response = await enzymeClient.post<Annotation>(ENDPOINTS.annotations(documentId), { body: data });
+    return response.data;
+  },
+
+  /**
+   * Update annotation
+   */
+  async updateAnnotation(documentId: string, annotationId: string, data: Partial<Annotation>): Promise<Annotation> {
+    const response = await enzymeClient.put<Annotation>(`${ENDPOINTS.annotations(documentId)}/${annotationId}`, { body: data });
+    return response.data;
+  },
+
+  /**
+   * Delete annotation
+   */
+  async deleteAnnotation(documentId: string, annotationId: string): Promise<void> {
+    await enzymeClient.delete(`${ENDPOINTS.annotations(documentId)}/${annotationId}`);
+  },
 };
 
 export default enzymeDocumentsService;
+

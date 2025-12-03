@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { enzymeCalendarService, CalendarEvent } from '../../../enzyme/services/calendar.service';
 
 // Query Keys
 export const calendarKeys = {
@@ -18,7 +18,7 @@ export const calendarKeys = {
 export function useCalendarEvents(dateRange?: { start: string; end: string }) {
   return useQuery({
     queryKey: dateRange ? calendarKeys.dateRange(dateRange.start, dateRange.end) : calendarKeys.events(),
-    queryFn: () => ApiService.calendar.getAll(undefined, dateRange?.start, dateRange?.end),
+    queryFn: () => enzymeCalendarService.getAll({ startDate: dateRange?.start, endDate: dateRange?.end }),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -26,7 +26,7 @@ export function useCalendarEvents(dateRange?: { start: string; end: string }) {
 export function useCalendarEvent(id: string) {
   return useQuery({
     queryKey: calendarKeys.event(id),
-    queryFn: () => ApiService.calendar.getById(id),
+    queryFn: () => enzymeCalendarService.getById(id),
     enabled: !!id,
   });
 }
@@ -34,7 +34,7 @@ export function useCalendarEvent(id: string) {
 export function useCaseEvents(caseId: string) {
   return useQuery({
     queryKey: calendarKeys.caseEvents(caseId),
-    queryFn: () => ApiService.calendar.getAll(caseId),
+    queryFn: () => enzymeCalendarService.getAll({ caseId }),
     enabled: !!caseId,
   });
 }
@@ -44,7 +44,7 @@ export function useCreateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: any) => ApiService.calendar.create(data),
+    mutationFn: (data: Partial<CalendarEvent>) => enzymeCalendarService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: calendarKeys.events() });
     },
@@ -55,8 +55,8 @@ export function useUpdateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      ApiService.calendar.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<CalendarEvent> }) =>
+      enzymeCalendarService.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: calendarKeys.event(id) });
       queryClient.invalidateQueries({ queryKey: calendarKeys.events() });
@@ -68,9 +68,8 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // Note: Delete not available in API yet - placeholder for future implementation
     mutationFn: async (id: string) => {
-      console.warn('Calendar delete not implemented in API');
+      await enzymeCalendarService.delete(id);
       return { id };
     },
     onSuccess: () => {

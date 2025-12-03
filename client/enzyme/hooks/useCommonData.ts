@@ -8,7 +8,7 @@
 import { useApiRequest } from '../services/hooks';
 import type { 
   User, 
-  Task, 
+  WorkflowTask, 
   Client, 
   Organization, 
   DiscoveryRequest, 
@@ -30,7 +30,7 @@ export function useUsers() {
  * Fetch all tasks
  */
 export function useTasks() {
-  return useApiRequest<Task[]>({
+  return useApiRequest<WorkflowTask[]>({
     endpoint: '/tasks',
     options: { staleTime: 60 * 1000 }
   });

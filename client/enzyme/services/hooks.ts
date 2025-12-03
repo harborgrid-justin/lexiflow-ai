@@ -51,7 +51,7 @@ export interface UseApiRequestOptions<T> {
 /**
  * Result returned by useApiRequest hook
  */
-export interface UseApiRequestResult<T> {
+export interface LocalUseApiRequestResult<T> {
   /** The fetched data, or null if not yet loaded */
   data: T | null;
   /** Whether the request is currently in progress */
@@ -120,7 +120,7 @@ function getCacheKey(endpoint: string, params?: Record<string, string | number |
 export function useApiRequest<T>(
   endpoint: string,
   options?: UseApiRequestOptions<T>
-): UseApiRequestResult<T>;
+): LocalUseApiRequestResult<T>;
 
 /**
  * Simplified API request hook for LexiFlow with TanStack Query-like features (object syntax)
@@ -139,13 +139,13 @@ export function useApiRequest<T>(
 export function useApiRequest<T>(config: {
   endpoint: string;
   options?: UseApiRequestOptions<T>;
-}): UseApiRequestResult<T>;
+}): LocalUseApiRequestResult<T>;
 
 // Implementation
 export function useApiRequest<T>(
   endpointOrConfig: string | { endpoint: string; options?: UseApiRequestOptions<T> },
   optionsParam?: UseApiRequestOptions<T>
-): UseApiRequestResult<T> {
+): LocalUseApiRequestResult<T> {
   // Normalize arguments to support both signatures
   const endpoint = typeof endpointOrConfig === 'string'
     ? endpointOrConfig
@@ -289,13 +289,15 @@ export interface UseApiMutationOptions<TData> {
 /**
  * Result returned by useApiMutation hook
  */
-export interface UseApiMutationResult<TData, TVariables> {
+export interface LocalUseApiMutationResult<TData, TVariables> {
   /** Function to trigger the mutation */
-  mutate: (variables?: TVariables) => Promise<TData>;
+  mutateAsync: (variables?: TVariables) => Promise<TData>;
   /** The response data from the last successful mutation */
   data: TData | null;
   /** Whether the mutation is currently in progress */
   isLoading: boolean;
+  /** Alias for isLoading */
+  isPending: boolean;
   /** Error object if the mutation failed */
   error: Error | null;
   /** Function to reset the mutation state */
@@ -338,17 +340,63 @@ export interface UseApiMutationResult<TData, TVariables> {
 export function useApiMutation<TData, TVariables = unknown>(
   endpoint: string,
   options?: UseApiMutationOptions<TData>
-): UseApiMutationResult<TData, TVariables> {
+): LocalUseApiMutationResult<TData, TVariables>;
+
+export function useApiMutation<TData, TVariables = unknown>(config: {
+  method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  endpoint?: string;
+  onSuccess?: (data: TData) => void;
+  onError?: (error: Error) => void;
+  retry?: number;
+  retryDelay?: number;
+}): LocalUseApiMutationResult<TData, TVariables>;
+
+/**
+ * API mutation hook for POST/PUT/PATCH/DELETE requests with retry support (object syntax without endpoint)
+ *
+ * @template TData - The expected response data type
+ * @template TVariables - The type of variables to pass to the mutation
+ * @param config - Configuration object
+ *
+ * @example
+ * ```typescript
+ * const { mutateAsync } = useApiMutation<Case, {endpoint: string, data: Partial<Case>}>({
+ *   method: 'PUT',
+ *   onSuccess: (data) => console.log('Updated:', data),
+ * });
+ *
+ * await mutateAsync({ endpoint: '/cases/123', data: { title: 'Updated' } });
+ * ```
+ */
+export function useApiMutation<TData, TVariables = {endpoint: string, data?: unknown}>(config: {
+  method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  endpoint?: string;
+  onSuccess?: (data: TData) => void;
+  onError?: (error: Error) => void;
+  retry?: number;
+  retryDelay?: number;
+}): LocalUseApiMutationResult<TData, TVariables>;
+
+// Implementation
+export function useApiMutation<TData, TVariables = unknown>(
+  endpointOrConfig: string | { method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE'; endpoint?: string; onSuccess?: (data: TData) => void; onError?: (error: Error) => void; retry?: number; retryDelay?: number },
+  optionsParam?: UseApiMutationOptions<TData>
+): LocalUseApiMutationResult<TData, TVariables> {
+  // Normalize arguments
+  const isObjectConfig = typeof endpointOrConfig === 'object';
+  const config = isObjectConfig ? endpointOrConfig as any : optionsParam;
+  const endpoint = isObjectConfig ? '' : endpointOrConfig; // Will be overridden in mutate if object config
+
   const [data, setData] = useState<TData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isIdle, setIsIdle] = useState(true);
 
-  const method = options?.method ?? 'POST';
-  const maxRetries = options?.retry ?? 0;
-  const retryDelay = options?.retryDelay ?? 1000;
+  const method = config?.method ?? 'POST';
+  const maxRetries = config?.retry ?? 0;
+  const retryDelay = config?.retryDelay ?? 1000;
 
-  const mutate = useCallback(async (variables?: TVariables): Promise<TData> => {
+  const mutateAsync = useCallback(async (variables?: TVariables): Promise<TData> => {
     setIsLoading(true);
     setError(null);
     setIsIdle(false);
@@ -356,24 +404,40 @@ export function useApiMutation<TData, TVariables = unknown>(
     const attemptMutation = async (attemptNumber: number): Promise<TData> => {
       try {
         let response;
+        let actualEndpoint: string;
+        let body: any;
+
+        if (isObjectConfig && config?.endpoint) {
+          // Endpoint in config, variables is body
+          actualEndpoint = config.endpoint;
+          body = variables;
+        } else if (isObjectConfig) {
+          // Endpoint in variables
+          actualEndpoint = (variables as any)?.endpoint;
+          body = (variables as any)?.data;
+        } else {
+          // String endpoint, variables is body
+          actualEndpoint = endpoint;
+          body = variables;
+        }
 
         switch (method) {
           case 'POST':
-            response = await enzymeClient.post<TData>(endpoint, { body: variables });
+            response = await enzymeClient.post<TData>(actualEndpoint, { body });
             break;
           case 'PUT':
-            response = await enzymeClient.put<TData>(endpoint, { body: variables });
+            response = await enzymeClient.put<TData>(actualEndpoint, { body });
             break;
           case 'PATCH':
-            response = await enzymeClient.patch<TData>(endpoint, { body: variables });
+            response = await enzymeClient.patch<TData>(actualEndpoint, { body });
             break;
           case 'DELETE':
-            response = await enzymeClient.delete<TData>(endpoint);
+            response = await enzymeClient.delete<TData>(actualEndpoint);
             break;
         }
 
         setData(response.data);
-        options?.onSuccess?.(response.data);
+        config?.onSuccess?.(response.data);
         return response.data;
       } catch (err) {
         const errorObj = err instanceof Error ? err : new Error('Unknown error');
@@ -385,7 +449,7 @@ export function useApiMutation<TData, TVariables = unknown>(
         }
 
         setError(errorObj);
-        options?.onError?.(errorObj);
+        config?.onError?.(errorObj);
         throw errorObj;
       } finally {
         setIsLoading(false);
@@ -393,7 +457,7 @@ export function useApiMutation<TData, TVariables = unknown>(
     };
 
     return attemptMutation(0);
-  }, [endpoint, method, maxRetries, retryDelay, options]);
+  }, [endpoint, isObjectConfig, config, method, maxRetries, retryDelay]);
 
   const reset = useCallback(() => {
     setData(null);
@@ -402,7 +466,7 @@ export function useApiMutation<TData, TVariables = unknown>(
     setIsIdle(true);
   }, []);
 
-  return { mutate, data, isLoading, error, reset, isIdle };
+  return { mutateAsync, data, isLoading, isPending: isLoading, error, reset, isIdle };
 }
 
 /**

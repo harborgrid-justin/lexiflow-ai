@@ -18,6 +18,11 @@ const ENDPOINTS = {
     list: '/workflow/tasks',
     detail: (id: string) => `/workflow/tasks/${id}`,
   },
+  engine: {
+    sla: {
+      check: '/workflow/engine/sla/check',
+    },
+  },
 } as const;
 
 /**
@@ -161,6 +166,19 @@ export const enzymeWorkflowService = {
       const response = await enzymeClient.put<WorkflowTask>(ENDPOINTS.tasks.detail(id), {
         body: data,
       });
+      return response.data;
+    },
+  },
+
+  /**
+   * Workflow Engine operations
+   */
+  engine: {
+    /**
+     * Check SLA status
+     */
+    async checkSLA(): Promise<unknown> {
+      const response = await enzymeClient.get(ENDPOINTS.engine.sla.check);
       return response.data;
     },
   },

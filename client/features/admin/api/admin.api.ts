@@ -3,7 +3,12 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { 
+  enzymeUsersService, 
+  enzymeOrganizationsService, 
+  enzymeGroupsService, 
+  enzymeAuditService 
+} from '../../../enzyme/services/misc.service';
 import type { User, Organization, Group } from '@/types';
 
 // Query Keys
@@ -23,7 +28,7 @@ export const adminKeys = {
 export function useUsers() {
   return useQuery({
     queryKey: adminKeys.users(),
-    queryFn: () => ApiService.users.getAll(),
+    queryFn: () => enzymeUsersService.getAll() as Promise<User[]>,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -31,7 +36,7 @@ export function useUsers() {
 export function useUser(id: string) {
   return useQuery({
     queryKey: adminKeys.user(id),
-    queryFn: () => ApiService.users.getById(id),
+    queryFn: () => enzymeUsersService.getById(id) as Promise<User>,
     enabled: !!id,
   });
 }
@@ -40,7 +45,7 @@ export function useUser(id: string) {
 export function useOrganizations() {
   return useQuery({
     queryKey: adminKeys.organizations(),
-    queryFn: () => ApiService.organizations.getAll(),
+    queryFn: () => enzymeOrganizationsService.getAll(),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -48,7 +53,7 @@ export function useOrganizations() {
 export function useOrganization(id: string) {
   return useQuery({
     queryKey: adminKeys.organization(id),
-    queryFn: () => ApiService.organizations.getById(id),
+    queryFn: () => enzymeOrganizationsService.getById(id),
     enabled: !!id,
   });
 }
@@ -57,7 +62,7 @@ export function useOrganization(id: string) {
 export function useGroups() {
   return useQuery({
     queryKey: adminKeys.groups(),
-    queryFn: () => ApiService.groups.getAll(),
+    queryFn: () => enzymeGroupsService.getAll(),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -66,7 +71,7 @@ export function useGroups() {
 export function useAuditLogs(filters?: { userId?: string; action?: string; dateFrom?: string; dateTo?: string }) {
   return useQuery({
     queryKey: [...adminKeys.audit(), filters],
-    queryFn: () => ApiService.audit.getLogs(),
+    queryFn: () => enzymeAuditService.getLogs(),
     staleTime: 1 * 60 * 1000, // 1 minute for audit logs
   });
 }
@@ -77,7 +82,7 @@ export function useUpdateUser() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<User> }) =>
-      ApiService.users.update(id, data),
+      enzymeUsersService.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.user(id) });
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
@@ -89,7 +94,7 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => ApiService.users.delete(id),
+    mutationFn: (id: string) => enzymeUsersService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
@@ -100,7 +105,7 @@ export function useCreateOrganization() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<Organization>) => ApiService.organizations.create(data),
+    mutationFn: (data: Partial<Organization>) => enzymeOrganizationsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.organizations() });
     },
@@ -112,7 +117,7 @@ export function useUpdateOrganization() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Organization> }) =>
-      ApiService.organizations.update(id, data),
+      enzymeOrganizationsService.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.organization(id) });
       queryClient.invalidateQueries({ queryKey: adminKeys.organizations() });
@@ -124,7 +129,7 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<Group>) => ApiService.groups.create(data),
+    mutationFn: (data: Partial<Group>) => enzymeGroupsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.groups() });
     },

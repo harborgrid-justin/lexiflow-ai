@@ -6,7 +6,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchJson, postJson, putJson, deleteJson, buildQueryString } from '../../../services/http-client';
+import { enzymeNotificationsService, NotificationOptions } from '../../../enzyme/services/notifications.service';
 import {
   Notification,
   NotificationsResponse,
@@ -41,17 +41,11 @@ export const activityKeys = {
 /**
  * Fetch all notifications with pagination
  */
-export function useNotifications(options?: {
-  page?: number;
-  limit?: number;
-  type?: NotificationType[];
-  unreadOnly?: boolean;
-}) {
+export function useNotifications(options?: NotificationOptions) {
   return useQuery({
     queryKey: notificationKeys.list(options),
     queryFn: async () => {
-      const queryString = buildQueryString(options as any);
-      return fetchJson<NotificationsResponse>(`/notifications${queryString}`);
+      return enzymeNotificationsService.notifications.getAll(options);
     },
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: 1000 * 30, // Refetch every 30 seconds
@@ -65,7 +59,7 @@ export function useNotifications(options?: {
 export function useUnreadCount() {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
-    queryFn: () => fetchJson<{ count: number; byType: Record<NotificationType, number> }>('/notifications/unread-count'),
+    queryFn: () => enzymeNotificationsService.notifications.getUnreadCount(),
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: 1000 * 30, // Refetch every 30 seconds
     refetchOnWindowFocus: true,
@@ -78,7 +72,7 @@ export function useUnreadCount() {
 export function useNotificationPreferences() {
   return useQuery({
     queryKey: notificationKeys.preferences(),
-    queryFn: () => fetchJson<NotificationPreferences>('/notifications/preferences'),
+    queryFn: () => enzymeNotificationsService.notifications.getPreferences(),
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
@@ -95,7 +89,7 @@ export function useMarkNotificationRead() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      return putJson<Notification>(`/notifications/${notificationId}/read`, {});
+      return enzymeNotificationsService.notifications.markRead(notificationId);
     },
     onMutate: async (notificationId) => {
       // Cancel outgoing queries
@@ -143,7 +137,7 @@ export function useMarkAllNotificationsRead() {
 
   return useMutation({
     mutationFn: async () => {
-      return postJson<{ success: boolean; count: number }>('/notifications/mark-all-read', {});
+      return enzymeNotificationsService.notifications.markAllRead();
     },
     onSuccess: () => {
       // Invalidate all notification queries
@@ -160,7 +154,7 @@ export function useClearNotification() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      return deleteJson(`/notifications/${notificationId}`);
+      return enzymeNotificationsService.notifications.delete(notificationId);
     },
     onSuccess: () => {
       // Invalidate notification queries
@@ -178,8 +172,12 @@ export function useClearNotifications() {
 
   return useMutation({
     mutationFn: async (options?: { olderThan?: string; type?: NotificationType[] }) => {
-      const queryString = buildQueryString(options as any);
-      return deleteJson(`/notifications${queryString}`);
+      // Convert NotificationType[] to string[] for service
+      const serviceOptions = options ? {
+        ...options,
+        type: options.type as unknown as string[]
+      } : undefined;
+      return enzymeNotificationsService.notifications.clear(serviceOptions);
     },
     onSuccess: () => {
       // Invalidate all notification queries
@@ -196,7 +194,7 @@ export function useUpdateNotificationPreferences() {
 
   return useMutation({
     mutationFn: async (preferences: Partial<NotificationPreferences>) => {
-      return putJson<NotificationPreferences>('/notifications/preferences', preferences);
+      return enzymeNotificationsService.notifications.updatePreferences(preferences);
     },
     onSuccess: (updatedPreferences) => {
       // Update preferences in cache
@@ -225,8 +223,7 @@ export function useActivityFeed(
   return useQuery({
     queryKey: activityKeys.list({ ...filters, page, limit }),
     queryFn: async () => {
-      const queryString = buildQueryString({ ...filters, page, limit } as any);
-      return fetchJson<ActivityResponse>(`/activity${queryString}`);
+      return enzymeNotificationsService.activity.getAll({ ...filters, page, limit } as any);
     },
     staleTime: 1000 * 60, // 1 minute
     refetchOnWindowFocus: true,
@@ -241,7 +238,7 @@ export function useCaseActivity(caseId: string | undefined, limit: number = 20) 
     queryKey: [...activityKeys.all, 'case', caseId, limit],
     queryFn: async () => {
       if (!caseId) throw new Error('Case ID is required');
-      return fetchJson<ActivityResponse>(`/activity/case/${caseId}?limit=${limit}`);
+      return enzymeNotificationsService.activity.getCaseActivity(caseId, limit);
     },
     enabled: !!caseId,
     staleTime: 1000 * 60, // 1 minute
@@ -256,7 +253,7 @@ export function useUserActivity(userId: string | undefined, limit: number = 20) 
     queryKey: [...activityKeys.all, 'user', userId, limit],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
-      return fetchJson<ActivityResponse>(`/activity/user/${userId}?limit=${limit}`);
+      return enzymeNotificationsService.activity.getUserActivity(userId, limit);
     },
     enabled: !!userId,
     staleTime: 1000 * 60, // 1 minute
@@ -270,7 +267,7 @@ export function useGlobalActivity(page: number = 1, limit: number = 50) {
   return useQuery({
     queryKey: activityKeys.feed(page, limit),
     queryFn: async () => {
-      return fetchJson<ActivityResponse>(`/activity/global?page=${page}&limit=${limit}`);
+      return enzymeNotificationsService.activity.getGlobalActivity(page, limit);
     },
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: 1000 * 60, // Refetch every minute
@@ -290,7 +287,7 @@ export function useCreateActivity() {
 
   return useMutation({
     mutationFn: async (activity: Partial<Activity>) => {
-      return postJson<Activity>('/activity', activity);
+      return enzymeNotificationsService.activity.create(activity);
     },
     onSuccess: () => {
       // Invalidate activity queries to show new activity
@@ -307,7 +304,7 @@ export function useDeleteActivity() {
 
   return useMutation({
     mutationFn: async (activityId: string) => {
-      return deleteJson(`/activity/${activityId}`);
+      return enzymeNotificationsService.activity.delete(activityId);
     },
     onSuccess: () => {
       // Invalidate activity queries

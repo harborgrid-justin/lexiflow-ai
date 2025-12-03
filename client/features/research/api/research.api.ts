@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { researchService } from './research.service';
+import { enzymeResearchService } from '@/enzyme/services/research.service';
 import type {
   SearchQuery,
   SearchResponse,
@@ -59,7 +59,7 @@ export const useSearch = (
 ) => {
   return useQuery({
     queryKey: researchKeys.search(query),
-    queryFn: () => researchService.search(query),
+    queryFn: () => enzymeResearchService.search.perform(query),
     enabled: !!query.query && query.query.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
     ...options,
@@ -72,7 +72,7 @@ export const useSearch = (
 export const useNaturalLanguageSearch = () => {
   return useMutation({
     mutationFn: ({ query, filters }: { query: string; filters?: SearchQuery['filters'] }) =>
-      researchService.naturalLanguageSearch(query, filters),
+      enzymeResearchService.search.naturalLanguage(query, filters),
   });
 };
 
@@ -86,7 +86,7 @@ export const useCaselaw = (
 ) => {
   return useQuery({
     queryKey: researchKeys.caselaw(query),
-    queryFn: () => researchService.searchCaselaw(query, filters),
+    queryFn: () => enzymeResearchService.specialized.searchCaselaw(query, filters),
     enabled: !!query && query.length > 0,
     staleTime: 5 * 60 * 1000,
     ...options,
@@ -103,7 +103,7 @@ export const useStatutes = (
 ) => {
   return useQuery({
     queryKey: researchKeys.statutes(query),
-    queryFn: () => researchService.searchStatutes(query, jurisdiction),
+    queryFn: () => enzymeResearchService.specialized.searchStatutes(query, jurisdiction),
     enabled: !!query && query.length > 0,
     staleTime: 5 * 60 * 1000,
     ...options,
@@ -120,7 +120,7 @@ export const useSecondaryResearch = (
 ) => {
   return useQuery({
     queryKey: researchKeys.secondary(query),
-    queryFn: () => researchService.searchSecondary(query, sourceTypes),
+    queryFn: () => enzymeResearchService.specialized.searchSecondary(query, sourceTypes),
     enabled: !!query && query.length > 0,
     staleTime: 5 * 60 * 1000,
     ...options,
@@ -136,7 +136,7 @@ export const useSearchSuggestions = (
 ) => {
   return useQuery({
     queryKey: researchKeys.suggestions(partialQuery),
-    queryFn: () => researchService.getSuggestions(partialQuery),
+    queryFn: () => enzymeResearchService.search.getSuggestions(partialQuery),
     enabled: !!partialQuery && partialQuery.length >= 3,
     staleTime: 2 * 60 * 1000,
     ...options,
@@ -152,7 +152,7 @@ export const useSearchTemplates = (
 ) => {
   return useQuery({
     queryKey: researchKeys.templates(category),
-    queryFn: () => researchService.getSearchTemplates(category),
+    queryFn: () => enzymeResearchService.search.getTemplates(category),
     staleTime: 10 * 60 * 1000, // 10 minutes
     ...options,
   });
@@ -169,7 +169,7 @@ export const useCaseAnalysis = (
 ) => {
   return useQuery({
     queryKey: researchKeys.caseAnalysis(caseId),
-    queryFn: () => researchService.getCaseAnalysis(caseId),
+    queryFn: () => enzymeResearchService.cases.getAnalysis(caseId),
     enabled: !!caseId,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -185,7 +185,7 @@ export const useAIAnalysis = (
 ) => {
   return useQuery({
     queryKey: researchKeys.aiAnalysis(caseId),
-    queryFn: () => researchService.getAICaseAnalysis(caseId),
+    queryFn: () => enzymeResearchService.ai.analyzeCase(caseId),
     enabled: !!caseId,
     staleTime: 15 * 60 * 1000, // 15 minutes (AI analysis is expensive)
     ...options,
@@ -202,7 +202,7 @@ export const useSimilarCases = (
 ) => {
   return useQuery({
     queryKey: researchKeys.similarCases(caseId),
-    queryFn: () => researchService.getSimilarCases(caseId, limit),
+    queryFn: () => enzymeResearchService.cases.getSimilar(caseId, limit),
     enabled: !!caseId,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -214,7 +214,7 @@ export const useSimilarCases = (
  */
 export const useOpposingArguments = () => {
   return useMutation({
-    mutationFn: (caseId: string) => researchService.getOpposingArguments(caseId),
+    mutationFn: (caseId: string) => enzymeResearchService.ai.getOpposingArguments(caseId),
   });
 };
 
@@ -229,7 +229,7 @@ export const useCitationCheck = (
 ) => {
   return useQuery({
     queryKey: researchKeys.citationCheck(documentId),
-    queryFn: () => researchService.checkCitations(documentId),
+    queryFn: () => enzymeResearchService.ai.checkCitations(documentId),
     enabled: !!documentId,
     staleTime: 5 * 60 * 1000,
     ...options,
@@ -241,7 +241,7 @@ export const useCitationCheck = (
  */
 export const useValidateCitation = () => {
   return useMutation({
-    mutationFn: (citation: string) => researchService.validateCitation(citation),
+    mutationFn: (citation: string) => enzymeResearchService.citations.validate(citation),
   });
 };
 
@@ -255,7 +255,7 @@ export const useCitationGraph = (
 ) => {
   return useQuery({
     queryKey: researchKeys.citationGraph(caseId),
-    queryFn: () => researchService.getCitationGraph(caseId, depth),
+    queryFn: () => enzymeResearchService.cases.getCitationGraph(caseId, depth),
     enabled: !!caseId,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -272,7 +272,7 @@ export const useCitingCases = (
 ) => {
   return useQuery({
     queryKey: researchKeys.citingCases(caseId),
-    queryFn: () => researchService.getCitingCases(caseId, limit),
+    queryFn: () => enzymeResearchService.cases.getCiting(caseId, limit),
     enabled: !!caseId,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -289,7 +289,7 @@ export const useCitedCases = (
 ) => {
   return useQuery({
     queryKey: researchKeys.citedCases(caseId),
-    queryFn: () => researchService.getCitedCases(caseId, limit),
+    queryFn: () => enzymeResearchService.cases.getCited(caseId, limit),
     enabled: !!caseId,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -307,7 +307,7 @@ export const useResearchHistory = (
 ) => {
   return useQuery({
     queryKey: researchKeys.history(),
-    queryFn: () => researchService.getResearchHistory(limit),
+    queryFn: () => enzymeResearchService.history.get(limit),
     staleTime: 1 * 60 * 1000, // 1 minute
     ...options,
   });
@@ -319,7 +319,7 @@ export const useResearchHistory = (
 export const useClearHistory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => researchService.clearResearchHistory(),
+    mutationFn: () => enzymeResearchService.history.clear(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.history() });
     },
@@ -332,7 +332,7 @@ export const useClearHistory = () => {
 export const useDeleteHistoryItem = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => researchService.deleteHistoryItem(id),
+    mutationFn: (id: string) => enzymeResearchService.history.deleteItem(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.history() });
     },
@@ -349,7 +349,7 @@ export const useSavedSearches = (
 ) => {
   return useQuery({
     queryKey: researchKeys.savedSearches(),
-    queryFn: () => researchService.getSavedSearches(),
+    queryFn: () => enzymeResearchService.savedSearches.getAll(),
     staleTime: 5 * 60 * 1000,
     ...options,
   });
@@ -362,7 +362,7 @@ export const useCreateSavedSearch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<SavedSearch, 'id' | 'createdAt'>) =>
-      researchService.createSavedSearch(data),
+      enzymeResearchService.savedSearches.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.savedSearches() });
     },
@@ -376,7 +376,7 @@ export const useUpdateSavedSearch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<SavedSearch> }) =>
-      researchService.updateSavedSearch(id, data),
+      enzymeResearchService.savedSearches.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.savedSearches() });
     },
@@ -389,7 +389,7 @@ export const useUpdateSavedSearch = () => {
 export const useDeleteSavedSearch = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => researchService.deleteSavedSearch(id),
+    mutationFn: (id: string) => enzymeResearchService.savedSearches.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.savedSearches() });
     },
@@ -401,7 +401,7 @@ export const useDeleteSavedSearch = () => {
  */
 export const useExecuteSavedSearch = () => {
   return useMutation({
-    mutationFn: (id: string) => researchService.executeSavedSearch(id),
+    mutationFn: (id: string) => enzymeResearchService.savedSearches.execute(id),
   });
 };
 
@@ -415,7 +415,7 @@ export const useResearchFolders = (
 ) => {
   return useQuery({
     queryKey: researchKeys.folders(),
-    queryFn: () => researchService.getFolders(),
+    queryFn: () => enzymeResearchService.folders.getAll(),
     staleTime: 5 * 60 * 1000,
     ...options,
   });
@@ -430,7 +430,7 @@ export const useResearchFolder = (
 ) => {
   return useQuery({
     queryKey: researchKeys.folder(id),
-    queryFn: () => researchService.getFolder(id),
+    queryFn: () => enzymeResearchService.folders.getById(id),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
     ...options,
@@ -444,7 +444,7 @@ export const useCreateFolder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<ResearchFolder, 'id' | 'createdAt' | 'updatedAt'>) =>
-      researchService.createFolder(data),
+      enzymeResearchService.folders.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.folders() });
     },
@@ -458,7 +458,7 @@ export const useUpdateFolder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ResearchFolder> }) =>
-      researchService.updateFolder(id, data),
+      enzymeResearchService.folders.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: researchKeys.folders() });
       queryClient.invalidateQueries({ queryKey: researchKeys.folder(id) });
@@ -472,7 +472,7 @@ export const useUpdateFolder = () => {
 export const useDeleteFolder = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => researchService.deleteFolder(id),
+    mutationFn: (id: string) => enzymeResearchService.folders.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.folders() });
     },
@@ -486,7 +486,7 @@ export const useAddCaseToFolder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ folderId, caseId }: { folderId: string; caseId: string }) =>
-      researchService.addCaseToFolder(folderId, caseId),
+      enzymeResearchService.folders.addCase(folderId, caseId),
     onSuccess: (_, { folderId }) => {
       queryClient.invalidateQueries({ queryKey: researchKeys.folder(folderId) });
     },
@@ -500,7 +500,7 @@ export const useRemoveCaseFromFolder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ folderId, caseId }: { folderId: string; caseId: string }) =>
-      researchService.removeCaseFromFolder(folderId, caseId),
+      enzymeResearchService.folders.removeCase(folderId, caseId),
     onSuccess: (_, { folderId }) => {
       queryClient.invalidateQueries({ queryKey: researchKeys.folder(folderId) });
     },
@@ -517,7 +517,7 @@ export const useCitationAlerts = (
 ) => {
   return useQuery({
     queryKey: researchKeys.citationAlerts(),
-    queryFn: () => researchService.getCitationAlerts(),
+    queryFn: () => enzymeResearchService.alerts.getAll(),
     staleTime: 5 * 60 * 1000,
     ...options,
   });
@@ -530,7 +530,7 @@ export const useCreateCitationAlert = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<CitationAlert, 'id' | 'createdAt'>) =>
-      researchService.createCitationAlert(data),
+      enzymeResearchService.alerts.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.citationAlerts() });
     },
@@ -544,7 +544,7 @@ export const useUpdateCitationAlert = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CitationAlert> }) =>
-      researchService.updateCitationAlert(id, data),
+      enzymeResearchService.alerts.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.citationAlerts() });
     },
@@ -557,7 +557,7 @@ export const useUpdateCitationAlert = () => {
 export const useDeleteCitationAlert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => researchService.deleteCitationAlert(id),
+    mutationFn: (id: string) => enzymeResearchService.alerts.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.citationAlerts() });
     },
@@ -571,7 +571,7 @@ export const useToggleCitationAlert = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      researchService.toggleCitationAlert(id, enabled),
+      enzymeResearchService.alerts.toggle(id, enabled),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: researchKeys.citationAlerts() });
     },
@@ -589,7 +589,7 @@ export const useStatute = (
 ) => {
   return useQuery({
     queryKey: researchKeys.statute(id),
-    queryFn: () => researchService.getStatute(id),
+    queryFn: () => enzymeResearchService.statutes.getById(id),
     enabled: !!id,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -602,7 +602,7 @@ export const useStatute = (
 export const useStatuteRelatedCases = (statuteId: string, limit?: number) => {
   return useQuery({
     queryKey: [...researchKeys.statute(statuteId), 'cases'],
-    queryFn: () => researchService.getStatuteRelatedCases(statuteId, limit),
+    queryFn: () => enzymeResearchService.statutes.getRelatedCases(statuteId, limit),
     enabled: !!statuteId,
     staleTime: 10 * 60 * 1000,
   });
@@ -615,7 +615,7 @@ export const useStatuteRelatedCases = (statuteId: string, limit?: number) => {
  */
 export const useResearchSummary = () => {
   return useMutation({
-    mutationFn: (caseIds: string[]) => researchService.getResearchSummary(caseIds),
+    mutationFn: (caseIds: string[]) => enzymeResearchService.ai.getResearchSummary(caseIds),
   });
 };
 
@@ -624,7 +624,7 @@ export const useResearchSummary = () => {
  */
 export const useExtractKeyHoldings = () => {
   return useMutation({
-    mutationFn: (caseText: string) => researchService.extractKeyHoldings(caseText),
+    mutationFn: (caseText: string) => enzymeResearchService.ai.extractKeyHoldings(caseText),
   });
 };
 
@@ -634,7 +634,7 @@ export const useExtractKeyHoldings = () => {
 export const useGenerateResearchMemo = () => {
   return useMutation({
     mutationFn: ({ query, caseIds }: { query: string; caseIds: string[] }) =>
-      researchService.generateResearchMemo(query, caseIds),
+      enzymeResearchService.ai.generateResearchMemo(query, caseIds),
   });
 };
 
@@ -648,7 +648,7 @@ export const useCasesLikeThis = (
 ) => {
   return useQuery({
     queryKey: [...researchKeys.aiAnalysis(caseId), 'similar'],
-    queryFn: () => researchService.getCasesLikeThis(caseId, limit),
+    queryFn: () => enzymeResearchService.ai.getCasesLikeThis(caseId, limit),
     enabled: !!caseId,
     staleTime: 10 * 60 * 1000,
     ...options,
@@ -663,7 +663,7 @@ export const useCasesLikeThis = (
 export const useExportResults = () => {
   return useMutation({
     mutationFn: ({ resultIds, format }: { resultIds: string[]; format: 'pdf' | 'docx' | 'csv' }) =>
-      researchService.exportResults(resultIds, format),
+      enzymeResearchService.export.results(resultIds, format),
   });
 };
 
@@ -673,6 +673,6 @@ export const useExportResults = () => {
 export const useExportFolder = () => {
   return useMutation({
     mutationFn: ({ folderId, format }: { folderId: string; format: 'pdf' | 'docx' }) =>
-      researchService.exportFolder(folderId, format),
+      enzymeResearchService.folders.export(folderId, format),
   });
 };

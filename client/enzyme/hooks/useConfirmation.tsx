@@ -5,8 +5,8 @@ import { useLatestCallback } from '../index';
 interface UseConfirmationOptions {
   title?: string;
   message?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
+  confirmText?: string;
+  cancelText?: string;
   variant?: 'danger' | 'warning' | 'info';
   onConfirm?: () => void | Promise<void>;
   onCancel?: () => void;
@@ -57,8 +57,8 @@ export function useConfirmation(defaultOptions: UseConfirmationOptions = {}): Us
       onConfirm={handleConfirm}
       title={options.title || 'Confirm Action'}
       message={options.message || 'Are you sure you want to proceed?'}
-      confirmLabel={options.confirmLabel || 'Confirm'}
-      cancelLabel={options.cancelLabel || 'Cancel'}
+      confirmText={options.confirmText || 'Confirm'}
+      cancelText={options.cancelText || 'Cancel'}
       variant={options.variant || 'warning'}
     />
   );

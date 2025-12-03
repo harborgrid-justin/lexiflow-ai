@@ -6,18 +6,15 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchJson, postJson, putJson, deleteJson, buildQueryString } from '../../../services/http-client';
+import { enzymeMessagesService, ConversationFilters, MessageSearchParams, SendMessageInput } from '../../../enzyme/services/messages.service';
 import {
   Conversation,
   Message,
   ConversationsResponse,
   MessagesResponse,
-  SendMessageInput,
   CreateConversationInput,
   UpdateConversationInput,
   MarkMessagesReadInput,
-  MessageSearchParams,
-  ConversationFilters,
 } from './communication.types';
 
 // ============================================================================
@@ -44,8 +41,7 @@ export function useConversations(filters?: ConversationFilters) {
   return useQuery({
     queryKey: [...messageKeys.conversations(), filters],
     queryFn: async () => {
-      const queryString = filters ? buildQueryString(filters as any) : '';
-      return fetchJson<ConversationsResponse>(`/messages/conversations${queryString}`);
+      return enzymeMessagesService.conversations.getAll(filters);
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,
@@ -60,7 +56,7 @@ export function useConversation(id: string | undefined) {
     queryKey: messageKeys.conversation(id || ''),
     queryFn: async () => {
       if (!id) throw new Error('Conversation ID is required');
-      return fetchJson<Conversation>(`/messages/conversations/${id}`);
+      return enzymeMessagesService.conversations.getById(id);
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 2, // 2 minutes
@@ -81,8 +77,7 @@ export function useConversationMessages(
     queryKey: [...messageKeys.conversationMessages(conversationId || ''), options],
     queryFn: async () => {
       if (!conversationId) throw new Error('Conversation ID is required');
-      const queryString = buildQueryString(options as any);
-      return fetchJson<MessagesResponse>(`/messages/conversations/${conversationId}/messages${queryString}`);
+      return enzymeMessagesService.messages.getMessages(conversationId, options);
     },
     enabled: !!conversationId,
     staleTime: 1000 * 30, // 30 seconds
@@ -97,7 +92,7 @@ export function useConversationMessages(
 export function useUnreadCount() {
   return useQuery({
     queryKey: messageKeys.unreadCount(),
-    queryFn: () => fetchJson<{ count: number; conversationCounts: Record<string, number> }>('/messages/unread-count'),
+    queryFn: () => enzymeMessagesService.messages.getUnreadCount(),
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: 1000 * 30, // Refetch every 30 seconds
     refetchOnWindowFocus: true,
@@ -111,8 +106,7 @@ export function useSearchMessages(params: MessageSearchParams) {
   return useQuery({
     queryKey: messageKeys.search(params),
     queryFn: async () => {
-      const queryString = buildQueryString(params as any);
-      return fetchJson<MessagesResponse>(`/messages/search${queryString}`);
+      return enzymeMessagesService.messages.search(params);
     },
     enabled: !!params.query && params.query.length >= 2,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -131,7 +125,7 @@ export function useCreateConversation() {
 
   return useMutation({
     mutationFn: async (input: CreateConversationInput) => {
-      return postJson<Conversation>('/messages/conversations', input);
+      return enzymeMessagesService.conversations.create(input);
     },
     onSuccess: (newConversation) => {
       // Invalidate conversations list
@@ -151,7 +145,7 @@ export function useUpdateConversation(conversationId: string) {
 
   return useMutation({
     mutationFn: async (input: UpdateConversationInput) => {
-      return putJson<Conversation>(`/messages/conversations/${conversationId}`, input);
+      return enzymeMessagesService.conversations.update(conversationId, input);
     },
     onSuccess: (updatedConversation) => {
       // Update conversation in cache
@@ -171,7 +165,7 @@ export function useDeleteConversation() {
 
   return useMutation({
     mutationFn: async (conversationId: string) => {
-      return deleteJson(`/messages/conversations/${conversationId}`);
+      return enzymeMessagesService.conversations.delete(conversationId);
     },
     onSuccess: (_, conversationId) => {
       // Remove conversation from cache
@@ -204,11 +198,11 @@ export function useSendMessage() {
         });
 
         // For now, send without attachments (would need separate upload endpoint)
-        const { attachments, ...messageData } = input;
-        return postJson<Message>('/messages', messageData);
+        // enzymeMessagesService.messages.send will strip attachments anyway
+        return enzymeMessagesService.messages.send(input);
       }
 
-      return postJson<Message>('/messages', input);
+      return enzymeMessagesService.messages.send(input);
     },
     onMutate: async (input) => {
       // Cancel outgoing queries for the conversation messages
@@ -287,7 +281,7 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: async (input: MarkMessagesReadInput) => {
-      return postJson<{ success: boolean }>('/messages/mark-read', input);
+      return enzymeMessagesService.messages.markRead(input);
     },
     onSuccess: (_, input) => {
       // Update unread count
@@ -312,7 +306,7 @@ export function useDeleteMessage() {
 
   return useMutation({
     mutationFn: async ({ messageId, conversationId }: { messageId: string; conversationId: string }) => {
-      return deleteJson(`/messages/${messageId}`);
+      return enzymeMessagesService.messages.delete(messageId);
     },
     onSuccess: (_, { conversationId }) => {
       // Refresh messages for the conversation
@@ -339,7 +333,7 @@ export function useEditMessage() {
       conversationId: string;
       content: string;
     }) => {
-      return putJson<Message>(`/messages/${messageId}`, { content });
+      return enzymeMessagesService.messages.update(messageId, { content });
     },
     onSuccess: (_, { conversationId }) => {
       // Refresh messages for the conversation
@@ -366,7 +360,7 @@ export function useReactToMessage() {
       conversationId: string;
       reaction: string;
     }) => {
-      return postJson<Message>(`/messages/${messageId}/react`, { reaction });
+      return enzymeMessagesService.messages.react(messageId, reaction);
     },
     onSuccess: (_, { conversationId }) => {
       // Refresh messages for the conversation

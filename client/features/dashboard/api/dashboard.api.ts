@@ -1,22 +1,16 @@
 /**
  * Dashboard Feature - API Service
  */
+import { enzymeAnalyticsService } from '@/enzyme/services/misc.service';
+import { enzymeWorkflowService } from '@/enzyme/services/workflow.service';
 
 export const DashboardApi = {
   getDashboardData: async () => {
-    const response = await fetch('/api/v1/analytics/dashboard', {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to fetch dashboard data');
-    return response.json();
+    return enzymeAnalyticsService.getDashboard();
   },
 
   getSLAStatus: async () => {
-    const response = await fetch('/api/v1/workflow/engine/sla/check', {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to fetch SLA status');
-    return response.json();
+    return enzymeWorkflowService.engine.checkSLA();
   }
 };
 

@@ -25,11 +25,7 @@ import {
   useLatestCallback,
   useIsMounted,
   useDebouncedValue,
-} from '@missionfabric-js/enzyme/hooks';
-import {
-  useOptimisticUpdate,
   useErrorToast,
-  useSafeCallback,
 } from '@missionfabric-js/enzyme/hooks';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -43,7 +39,7 @@ export const useDocumentManager = () => {
 
   const queryClient = useQueryClient();
   const isMounted = useIsMounted();
-  const showErrorToast = useErrorToast();
+  const showErrorToast = useErrorToast() as any;
 
   // Debounce search term for optimized filtering
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
@@ -58,7 +54,7 @@ export const useDocumentManager = () => {
   });
 
   // Mutation for updating documents
-  const { mutateAsync: updateDocument } = useApiMutation<LegalDocument, Partial<LegalDocument>>({
+  const { mutateAsync: updateDocument } = useApiMutation<LegalDocument>({
     method: 'PUT',
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/documents'] });
@@ -86,9 +82,9 @@ export const useDocumentManager = () => {
       console.error('Failed to restore document version:', err);
 
       if (isMounted()) {
-        const errorMessage = err instanceof ApiError
-          ? `Failed to restore document: ${err.statusText}`
-          : 'Failed to restore document. Please try again.';
+      const errorMessage = err instanceof ApiError
+        ? `Failed to restore document: ${err.message}`
+        : 'Failed to restore document. Please try again.';
         setError(errorMessage);
         showErrorToast(errorMessage);
       }
@@ -109,97 +105,105 @@ export const useDocumentManager = () => {
   });
 
   // Error-safe UI interactions
-  const toggleSelection = useSafeCallback((id: string) => {
+  const toggleSelection = (id: string) => {
     if (selectedDocs.includes(id)) setSelectedDocs(selectedDocs.filter(d => d !== id));
     else setSelectedDocs([...selectedDocs, id]);
-  }, [selectedDocs]);
+  };
 
   // Optimistically add a tag with automatic rollback on failure
-  const addTag = useOptimisticUpdate(
-    async (docId: string, tag: string) => {
-      if (!tag.trim()) return;
-      const doc = documents.find(d => d.id === docId);
-      if (!doc || ensureTagsArray(doc.tags).includes(tag.trim())) return;
+  const addTag = useLatestCallback(async (docId: string, tag: string) => {
+    if (!tag.trim()) return;
+    const doc = documents.find(d => d.id === docId);
+    if (!doc || ensureTagsArray(doc.tags).includes(tag.trim())) return;
 
-      const updatedTags = [...ensureTagsArray(doc.tags), tag.trim()];
+    // Optimistic update
+    const previousTags = ensureTagsArray(doc.tags);
+    const updatedTags = [...previousTags, tag.trim()];
 
+    queryClient.setQueryData(['/documents'], (oldData: LegalDocument[] | undefined) => {
+      if (!oldData) return oldData;
+      return oldData.map(d => {
+        if (d.id === docId) {
+          return { ...d, tags: updatedTags };
+        }
+        return d;
+      });
+    });
+
+    try {
       await updateDocument({
         endpoint: `/documents/${docId}`,
         data: { tags: updatedTags }
       });
-    },
-    {
-      onError: (err) => {
-        console.error('Failed to add tag:', err);
-        const errorMessage = err instanceof ApiError
-          ? `Failed to add tag: ${err.statusText}`
-          : 'Failed to add tag. Please try again.';
-
-        if (isMounted()) {
-          setError(errorMessage);
-          showErrorToast(errorMessage);
-        }
-      },
-      onOptimisticUpdate: (docId: string, tag: string) => {
-        queryClient.setQueryData(['/documents'], (oldData: LegalDocument[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map(d => {
-            if (d.id === docId) {
-              const updatedTags = [...ensureTagsArray(d.tags), tag.trim()];
-              return { ...d, tags: updatedTags };
-            }
-            return d;
-          });
+    } catch (err) {
+      // Rollback
+      queryClient.setQueryData(['/documents'], (oldData: LegalDocument[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(d => {
+          if (d.id === docId) {
+            return { ...d, tags: previousTags };
+          }
+          return d;
         });
-      },
-      onRollback: () => {
-        queryClient.invalidateQueries({ queryKey: ['/documents'] });
+      });
+
+      console.error('Failed to add tag:', err);
+      const errorMessage = err instanceof ApiError
+        ? `Failed to add tag: ${err.message}`
+        : 'Failed to add tag. Please try again.';
+
+      if (isMounted()) {
+        setError(errorMessage);
+        showErrorToast(errorMessage);
       }
     }
-  );
+  });  // Optimistically remove a tag with automatic rollback on failure
+  const removeTag = useLatestCallback(async (docId: string, tag: string) => {
+    const doc = documents.find(d => d.id === docId);
+    if (!doc) return;
 
-  // Optimistically remove a tag with automatic rollback on failure
-  const removeTag = useOptimisticUpdate(
-    async (docId: string, tag: string) => {
-      const doc = documents.find(d => d.id === docId);
-      if (!doc) return;
+    // Optimistic update
+    const previousTags = ensureTagsArray(doc.tags);
+    const updatedTags = previousTags.filter(t => t !== tag);
 
-      const updatedTags = ensureTagsArray(doc.tags).filter(t => t !== tag);
+    queryClient.setQueryData(['/api/v1/documents'], (oldData: LegalDocument[] | undefined) => {
+      if (!oldData) return oldData;
+      return oldData.map(d => {
+        if (d.id === docId) {
+          return { ...d, tags: updatedTags };
+        }
+        return d;
+      });
+    });
 
+    try {
       await updateDocument({
         endpoint: `/documents/${docId}`,
         data: { tags: updatedTags }
       });
-    },
-    {
-      onError: (err) => {
-        console.error('Failed to remove tag:', err);
-        const errorMessage = err instanceof ApiError
-          ? `Failed to remove tag: ${err.statusText}`
-          : 'Failed to remove tag. Please try again.';
-
-        if (isMounted()) {
-          setError(errorMessage);
-          showErrorToast(errorMessage);
-        }
-      },
-      onOptimisticUpdate: (docId: string, tag: string) => {
-        queryClient.setQueryData(['/api/v1/documents'], (oldData: LegalDocument[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map(d => {
-            if (d.id === docId) {
-              const updatedTags = ensureTagsArray(d.tags).filter(t => t !== tag);
-              return { ...d, tags: updatedTags };
-            }
-            return d;
-          });
+    } catch (err) {
+      // Rollback
+      queryClient.setQueryData(['/api/v1/documents'], (oldData: LegalDocument[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(d => {
+          if (d.id === docId) {
+            return { ...d, tags: previousTags };
+          }
+          return d;
         });
-      },
-      onRollback: () => {
-        queryClient.invalidateQueries({ queryKey: ['/api/v1/documents'] });
+      });
+
+      console.error('Failed to remove tag:', err);
+      const errorMessage = err instanceof ApiError
+        ? `Failed to remove tag: ${err.message}`
+        : 'Failed to remove tag. Please try again.';
+
+      if (isMounted()) {
+        setError(errorMessage);
+        showErrorToast(errorMessage);
       }
     }
-  );
+  });
 
   const allTags = useMemo(() => Array.from(new Set(documents.flatMap(d => ensureTagsArray(d.tags)))), [documents]);
 

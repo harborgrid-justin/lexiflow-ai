@@ -1,6 +1,8 @@
 // Settings API with TanStack Query hooks
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { enzymeSettingsService } from '@/enzyme/services/settings.service';
+import { enzymeAuthService } from '@/enzyme/services/auth.service';
 import type {
   UserSettings,
   UpdateUserSettingsInput,
@@ -16,28 +18,6 @@ import type {
   ConnectIntegrationInput,
   IntegrationType,
 } from './settings.types';
-
-// API base URL
-const API_BASE = '/api';
-
-// Helper function for API calls
-const apiCall = async <T,>(endpoint: string, options?: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
-
-  return response.json();
-};
 
 // Query Keys
 export const settingsKeys = {
@@ -60,7 +40,7 @@ export const settingsKeys = {
 export const useUserSettings = () => {
   return useQuery({
     queryKey: settingsKeys.user(),
-    queryFn: () => apiCall<UserSettings>('/users/me/settings'),
+    queryFn: () => enzymeSettingsService.user.get(),
   });
 };
 
@@ -71,11 +51,7 @@ export const useUpdateUserSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateUserSettingsInput) =>
-      apiCall<UserSettings>('/users/me/settings', {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: UpdateUserSettingsInput) => enzymeSettingsService.user.update(data),
     onSuccess: (data) => {
       queryClient.setQueryData(settingsKeys.user(), data);
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
@@ -93,7 +69,7 @@ export const useUpdateUserSettings = () => {
 export const useOrganizationSettings = () => {
   return useQuery({
     queryKey: settingsKeys.organization(),
-    queryFn: () => apiCall<OrganizationSettings>('/organizations/settings'),
+    queryFn: () => enzymeSettingsService.organization.get(),
   });
 };
 
@@ -104,11 +80,7 @@ export const useUpdateOrganizationSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateOrganizationSettingsInput) =>
-      apiCall<OrganizationSettings>('/organizations/settings', {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: UpdateOrganizationSettingsInput) => enzymeSettingsService.organization.update(data),
     onSuccess: (data) => {
       queryClient.setQueryData(settingsKeys.organization(), data);
     },
@@ -124,11 +96,7 @@ export const useUpdateOrganizationSettings = () => {
  */
 export const useChangePassword = () => {
   return useMutation({
-    mutationFn: (data: ChangePasswordInput) =>
-      apiCall<{ message: string }>('/users/me/password', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: ChangePasswordInput) => enzymeAuthService.changePassword(data.currentPassword, data.newPassword),
   });
 };
 
@@ -137,7 +105,7 @@ export const useChangePassword = () => {
  */
 export const useSetupTwoFactor = () => {
   return useMutation({
-    mutationFn: () => apiCall<TwoFactorSetup>('/users/me/2fa/setup', { method: 'POST' }),
+    mutationFn: () => enzymeSettingsService.security.setupTwoFactor(),
   });
 };
 
@@ -148,11 +116,7 @@ export const useEnableTwoFactor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: EnableTwoFactorInput) =>
-      apiCall<{ backupCodes: string[] }>('/users/me/2fa/enable', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: EnableTwoFactorInput) => enzymeSettingsService.security.enableTwoFactor(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.user() });
     },
@@ -166,11 +130,7 @@ export const useDisableTwoFactor = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (password: string) =>
-      apiCall<{ message: string }>('/users/me/2fa/disable', {
-        method: 'POST',
-        body: JSON.stringify({ password }),
-      }),
+    mutationFn: (password: string) => enzymeSettingsService.security.disableTwoFactor(password),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.user() });
     },
@@ -187,7 +147,7 @@ export const useDisableTwoFactor = () => {
 export const useSessions = () => {
   return useQuery({
     queryKey: settingsKeys.sessions(),
-    queryFn: () => apiCall<UserSession[]>('/users/me/sessions'),
+    queryFn: () => enzymeSettingsService.sessions.getAll(),
   });
 };
 
@@ -198,10 +158,7 @@ export const useRevokeSession = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (sessionId: string) =>
-      apiCall<{ message: string }>(`/users/me/sessions/${sessionId}`, {
-        method: 'DELETE',
-      }),
+    mutationFn: (sessionId: string) => enzymeSettingsService.sessions.revoke(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.sessions() });
     },
@@ -215,10 +172,7 @@ export const useRevokeAllSessions = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      apiCall<{ message: string }>('/users/me/sessions', {
-        method: 'DELETE',
-      }),
+    mutationFn: () => enzymeSettingsService.sessions.revokeAll(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.sessions() });
     },
@@ -235,7 +189,7 @@ export const useRevokeAllSessions = () => {
 export const useApiKeys = () => {
   return useQuery({
     queryKey: settingsKeys.apiKeys(),
-    queryFn: () => apiCall<ApiKey[]>('/users/me/api-keys'),
+    queryFn: () => enzymeSettingsService.apiKeys.getAll(),
   });
 };
 
@@ -246,11 +200,7 @@ export const useCreateApiKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateApiKeyInput) =>
-      apiCall<ApiKey>('/users/me/api-keys', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: CreateApiKeyInput) => enzymeSettingsService.apiKeys.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.apiKeys() });
     },
@@ -264,10 +214,7 @@ export const useRevokeApiKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (keyId: string) =>
-      apiCall<{ message: string }>(`/users/me/api-keys/${keyId}`, {
-        method: 'DELETE',
-      }),
+    mutationFn: (keyId: string) => enzymeSettingsService.apiKeys.revoke(keyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.apiKeys() });
     },
@@ -284,7 +231,7 @@ export const useRevokeApiKey = () => {
 export const useIntegrations = () => {
   return useQuery({
     queryKey: settingsKeys.integrations(),
-    queryFn: () => apiCall<Integration[]>('/integrations'),
+    queryFn: () => enzymeSettingsService.integrations.getAll(),
   });
 };
 
@@ -295,11 +242,7 @@ export const useConnectIntegration = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ConnectIntegrationInput) =>
-      apiCall<Integration>('/integrations/connect', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: ConnectIntegrationInput) => enzymeSettingsService.integrations.connect(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.integrations() });
     },
@@ -313,10 +256,7 @@ export const useDisconnectIntegration = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (type: IntegrationType) =>
-      apiCall<{ message: string }>(`/integrations/${type}`, {
-        method: 'DELETE',
-      }),
+    mutationFn: (type: IntegrationType) => enzymeSettingsService.integrations.disconnect(type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.integrations() });
     },
@@ -330,23 +270,7 @@ export const useUploadAvatar = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      const response = await fetch(`${API_BASE}/users/me/avatar`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-        throw new Error(error.message);
-      }
-
-      return response.json();
-    },
+    mutationFn: (file: File) => enzymeSettingsService.user.uploadAvatar(file),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.user() });
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] });

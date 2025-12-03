@@ -4,39 +4,35 @@
  * Handles all API calls for evidence vault and chain of custody.
  */
 
-import { ApiService } from '@/services/apiService';
+import { enzymeEvidenceService } from '@/enzyme/services/evidence.service';
 import type { EvidenceItem, ChainOfCustodyEvent } from '@/types';
 import type { EvidenceStats } from './evidence.types';
 
 export const EvidenceApi = {
   // Evidence Items
   getAll: async (): Promise<EvidenceItem[]> => {
-    return ApiService.evidence.getAll();
+    return enzymeEvidenceService.getAll();
   },
 
   getById: async (id: string): Promise<EvidenceItem> => {
-    return ApiService.evidence.getById(id);
+    return enzymeEvidenceService.getById(id);
   },
 
   create: async (data: Partial<EvidenceItem>): Promise<EvidenceItem> => {
-    return ApiService.evidence.create(data);
+    return enzymeEvidenceService.create(data);
   },
 
   update: async (id: string, data: Partial<EvidenceItem>): Promise<EvidenceItem> => {
-    return ApiService.evidence.update(id, data);
+    return enzymeEvidenceService.update(id, data);
   },
 
   delete: async (id: string): Promise<void> => {
-    const response = await fetch(`/api/v1/evidence/${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to delete evidence');
+    return enzymeEvidenceService.delete(id);
   },
 
   // Chain of Custody
   getCustodyLog: async (evidenceId: string): Promise<ChainOfCustodyEvent[]> => {
-    const evidence = await ApiService.evidence.getById(evidenceId);
+    const evidence = await enzymeEvidenceService.getById(evidenceId);
     return evidence.chainOfCustody || [];
   },
 
@@ -44,21 +40,21 @@ export const EvidenceApi = {
     evidenceId: string,
     event: Omit<ChainOfCustodyEvent, 'id'>
   ): Promise<ChainOfCustodyEvent> => {
-    const evidence = await ApiService.evidence.getById(evidenceId);
+    const evidence = await enzymeEvidenceService.getById(evidenceId);
     const newEvent: ChainOfCustodyEvent = {
       ...event,
       id: `cust-${Date.now()}`
     };
     
     const updatedChain = [newEvent, ...(evidence.chainOfCustody || [])];
-    await ApiService.evidence.update(evidenceId, { chainOfCustody: updatedChain });
+    await enzymeEvidenceService.update(evidenceId, { chainOfCustody: updatedChain });
     
     return newEvent;
   },
 
   // Stats
   getStats: async (): Promise<EvidenceStats> => {
-    const items = await ApiService.evidence.getAll();
+    const items = await enzymeEvidenceService.getAll();
     
     return {
       totalItems: items.length,
@@ -75,20 +71,13 @@ export const EvidenceApi = {
 
   // Search
   search: async (query: string): Promise<EvidenceItem[]> => {
-    const items = await ApiService.evidence.getAll();
-    const lowerQuery = query.toLowerCase();
-    
-    return items.filter(item =>
-      item.title.toLowerCase().includes(lowerQuery) ||
-      item.description.toLowerCase().includes(lowerQuery) ||
-      item.caseId.toLowerCase().includes(lowerQuery) ||
-      item.custodian.toLowerCase().includes(lowerQuery)
-    );
+    const items = await enzymeEvidenceService.getAll({ search: query });
+    return items;
   },
 
   // Verify blockchain hash
   verifyBlockchain: async (evidenceId: string): Promise<{ verified: boolean; hash: string }> => {
-    const evidence = await ApiService.evidence.getById(evidenceId);
+    const evidence = await enzymeEvidenceService.getById(evidenceId);
     
     return {
       verified: !!evidence.blockchainHash,

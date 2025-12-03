@@ -3,15 +3,27 @@
 
 import { enzymeClient } from './client';
 import { DiscoveryRequest } from '../../types';
+import { LegalHold, PrivilegeLogEntry, DiscoveryProduction, CreateDiscoveryRequestInput, UpdateDiscoveryRequestInput } from '../../features/discovery/api/discovery.types';
 
 /**
  * Endpoint definitions for discovery
  */
 const ENDPOINTS = {
-  list: '/discovery',
-  detail: (id: string) => `/discovery/${id}`,
-  responses: (id: string) => `/discovery/${id}/responses`,
-  production: (id: string) => `/discovery/${id}/production`,
+  requests: {
+    list: '/discovery/requests',
+    detail: (id: string) => `/discovery/requests/${id}`,
+  },
+  legalHolds: {
+    list: '/discovery/legal-holds',
+    detail: (id: string) => `/discovery/legal-holds/${id}`,
+    release: (id: string) => `/discovery/legal-holds/${id}/release`,
+  },
+  privilegeLog: {
+    list: '/discovery/privilege-log',
+  },
+  productions: {
+    list: '/discovery/productions',
+  },
 } as const;
 
 /**
@@ -32,121 +44,120 @@ interface DiscoveryListParams {
  */
 export const enzymeDiscoveryService = {
   /**
-   * Get all discovery requests with optional filtering
-   * @example
-   * const requests = await enzymeDiscoveryService.getAll({ caseId: 'case-123' });
+   * Discovery Requests
    */
+  requests: {
+    /**
+     * Get all discovery requests
+     */
+    async getAll(params?: DiscoveryListParams): Promise<DiscoveryRequest[]> {
+      const response = await enzymeClient.get<DiscoveryRequest[]>(ENDPOINTS.requests.list, {
+        params: params as Record<string, string | number | boolean>,
+      });
+      return response.data || [];
+    },
+
+    /**
+     * Get a single discovery request by ID
+     */
+    async getById(id: string): Promise<DiscoveryRequest> {
+      const response = await enzymeClient.get<DiscoveryRequest>(ENDPOINTS.requests.detail(id));
+      return response.data;
+    },
+
+    /**
+     * Create a new discovery request
+     */
+    async create(data: CreateDiscoveryRequestInput): Promise<DiscoveryRequest> {
+      const response = await enzymeClient.post<DiscoveryRequest>(ENDPOINTS.requests.list, {
+        body: data as Record<string, unknown>,
+      });
+      return response.data;
+    },
+
+    /**
+     * Update an existing discovery request
+     */
+    async update(id: string, data: UpdateDiscoveryRequestInput): Promise<DiscoveryRequest> {
+      const response = await enzymeClient.put<DiscoveryRequest>(ENDPOINTS.requests.detail(id), {
+        body: data as Record<string, unknown>,
+      });
+      return response.data;
+    },
+  },
+
+  /**
+   * Legal Holds
+   */
+  legalHolds: {
+    async getAll(): Promise<LegalHold[]> {
+      const response = await enzymeClient.get<LegalHold[]>(ENDPOINTS.legalHolds.list);
+      return response.data || [];
+    },
+
+    async create(data: Omit<LegalHold, 'id'>): Promise<LegalHold> {
+      const response = await enzymeClient.post<LegalHold>(ENDPOINTS.legalHolds.list, {
+        body: data as Record<string, unknown>,
+      });
+      return response.data;
+    },
+
+    async release(id: string): Promise<LegalHold> {
+      const response = await enzymeClient.post<LegalHold>(ENDPOINTS.legalHolds.release(id));
+      return response.data;
+    },
+  },
+
+  /**
+   * Privilege Log
+   */
+  privilegeLog: {
+    async getAll(): Promise<PrivilegeLogEntry[]> {
+      const response = await enzymeClient.get<PrivilegeLogEntry[]>(ENDPOINTS.privilegeLog.list);
+      return response.data || [];
+    },
+
+    async add(data: Omit<PrivilegeLogEntry, 'id'>): Promise<PrivilegeLogEntry> {
+      const response = await enzymeClient.post<PrivilegeLogEntry>(ENDPOINTS.privilegeLog.list, {
+        body: data as Record<string, unknown>,
+      });
+      return response.data;
+    },
+  },
+
+  /**
+   * Productions
+   */
+  productions: {
+    async getAll(requestId?: string): Promise<DiscoveryProduction[]> {
+      const response = await enzymeClient.get<DiscoveryProduction[]>(ENDPOINTS.productions.list, {
+        params: requestId ? { requestId } : undefined,
+      });
+      return response.data || [];
+    },
+
+    async create(data: Omit<DiscoveryProduction, 'id'>): Promise<DiscoveryProduction> {
+      const response = await enzymeClient.post<DiscoveryProduction>(ENDPOINTS.productions.list, {
+        body: data as Record<string, unknown>,
+      });
+      return response.data;
+    },
+  },
+
+  // Legacy methods for backward compatibility (mapped to new structure)
   async getAll(params?: DiscoveryListParams): Promise<DiscoveryRequest[]> {
-    const response = await enzymeClient.get<DiscoveryRequest[]>(ENDPOINTS.list, {
-      params: params as Record<string, string | number | boolean>,
-    });
-    return response.data || [];
+    return enzymeDiscoveryService.requests.getAll(params);
   },
-
-  /**
-   * Get a single discovery request by ID
-   * @example
-   * const request = await enzymeDiscoveryService.getById('discovery-123');
-   */
   async getById(id: string): Promise<DiscoveryRequest> {
-    const response = await enzymeClient.get<DiscoveryRequest>(ENDPOINTS.detail(id));
-    return response.data;
+    return enzymeDiscoveryService.requests.getById(id);
   },
-
-  /**
-   * Create a new discovery request
-   * @example
-   * const request = await enzymeDiscoveryService.create({
-   *   caseId: 'case-123',
-   *   type: 'Interrogatories',
-   *   description: 'Initial interrogatories to defendant'
-   * });
-   */
-  async create(data: Partial<DiscoveryRequest>): Promise<DiscoveryRequest> {
-    const apiRequest = {
-      case_id: data.caseId,
-      type: data.type,
-      title: data.title,
-      description: data.description,
-      status: data.status,
-      due_date: data.dueDate,
-      service_date: data.serviceDate,
-      propounding_party: data.propoundingParty,
-      responding_party: data.respondingParty,
-      response_preview: data.responsePreview,
-    };
-
-    const cleanRequest = Object.fromEntries(
-      Object.entries(apiRequest).filter(([_, v]) => v !== undefined)
-    );
-
-    const response = await enzymeClient.post<DiscoveryRequest>(ENDPOINTS.list, {
-      body: cleanRequest,
-    });
-    return response.data;
+  async create(data: any): Promise<DiscoveryRequest> {
+    return enzymeDiscoveryService.requests.create(data);
   },
-
-  /**
-   * Update an existing discovery request
-   * @example
-   * const updated = await enzymeDiscoveryService.update('discovery-123', { status: 'Responded' });
-   */
-  async update(id: string, data: Partial<DiscoveryRequest>): Promise<DiscoveryRequest> {
-    const apiRequest = {
-      type: data.type,
-      title: data.title,
-      description: data.description,
-      status: data.status,
-      due_date: data.dueDate,
-      service_date: data.serviceDate,
-      propounding_party: data.propoundingParty,
-      responding_party: data.respondingParty,
-      response_preview: data.responsePreview,
-    };
-
-    const cleanRequest = Object.fromEntries(
-      Object.entries(apiRequest).filter(([_, v]) => v !== undefined)
-    );
-
-    const response = await enzymeClient.put<DiscoveryRequest>(ENDPOINTS.detail(id), {
-      body: cleanRequest,
-    });
-    return response.data;
-  },
-
-  /**
-   * Delete a discovery request
-   * @example
-   * await enzymeDiscoveryService.delete('discovery-123');
-   */
-  async delete(id: string): Promise<void> {
-    await enzymeClient.delete(ENDPOINTS.detail(id));
-  },
-
-  /**
-   * Get responses for a discovery request
-   * @example
-   * const responses = await enzymeDiscoveryService.getResponses('discovery-123');
-   */
-  async getResponses(id: string): Promise<unknown[]> {
-    const response = await enzymeClient.get<unknown[]>(ENDPOINTS.responses(id));
-    return response.data || [];
-  },
-
-  /**
-   * Add a response to a discovery request
-   * @example
-   * await enzymeDiscoveryService.addResponse('discovery-123', { 
-   *   content: 'Response content',
-   *   objections: ['Vague and ambiguous']
-   * });
-   */
-  async addResponse(id: string, data: unknown): Promise<unknown> {
-    const response = await enzymeClient.post(ENDPOINTS.responses(id), {
-      body: data as Record<string, unknown>,
-    });
-    return response.data;
+  async update(id: string, data: any): Promise<DiscoveryRequest> {
+    return enzymeDiscoveryService.requests.update(id, data);
   },
 };
 
 export default enzymeDiscoveryService;
+

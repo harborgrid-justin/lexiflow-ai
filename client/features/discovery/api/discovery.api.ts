@@ -4,7 +4,7 @@
  * Handles all API calls for discovery requests, legal holds, and privilege log.
  */
 
-import { enzymeClient } from '@/enzyme';
+import { enzymeDiscoveryService } from '@/enzyme/services/discovery.service';
 import type { DiscoveryRequest } from '@/types';
 import type {
   LegalHold,
@@ -17,64 +17,50 @@ import type {
 export const DiscoveryApi = {
   // Discovery Requests
   getRequests: async (): Promise<DiscoveryRequest[]> => {
-    const { data } = await enzymeClient.get<DiscoveryRequest[]>('/discovery/requests');
-    return data;
+    return enzymeDiscoveryService.requests.getAll();
   },
 
   getRequest: async (id: string): Promise<DiscoveryRequest> => {
-    const { data } = await enzymeClient.get<DiscoveryRequest>(`/discovery/requests/${id}`);
-    return data;
+    return enzymeDiscoveryService.requests.getById(id);
   },
 
   createRequest: async (data: CreateDiscoveryRequestInput): Promise<DiscoveryRequest> => {
-    const { data: response } = await enzymeClient.post<DiscoveryRequest>('/discovery/requests', data);
-    return response;
+    return enzymeDiscoveryService.requests.create(data);
   },
 
   updateRequest: async (id: string, data: UpdateDiscoveryRequestInput): Promise<DiscoveryRequest> => {
-    const { data: response } = await enzymeClient.put<DiscoveryRequest>(`/discovery/requests/${id}`, data);
-    return response;
+    return enzymeDiscoveryService.requests.update(id, data);
   },
 
   // Legal Holds
   getLegalHolds: async (): Promise<LegalHold[]> => {
-    const { data } = await enzymeClient.get<LegalHold[]>('/discovery/legal-holds');
-    return data;
+    return enzymeDiscoveryService.legalHolds.getAll();
   },
 
   createLegalHold: async (data: Omit<LegalHold, 'id'>): Promise<LegalHold> => {
-    const { data: response } = await enzymeClient.post<LegalHold>('/discovery/legal-holds', data);
-    return response;
+    return enzymeDiscoveryService.legalHolds.create(data);
   },
 
   releaseLegalHold: async (id: string): Promise<LegalHold> => {
-    const { data: response } = await enzymeClient.post<LegalHold>(`/discovery/legal-holds/${id}/release`);
-    return response;
+    return enzymeDiscoveryService.legalHolds.release(id);
   },
 
   // Privilege Log
   getPrivilegeLog: async (): Promise<PrivilegeLogEntry[]> => {
-    const { data } = await enzymeClient.get<PrivilegeLogEntry[]>('/discovery/privilege-log');
-    return data;
+    return enzymeDiscoveryService.privilegeLog.getAll();
   },
 
   addPrivilegeEntry: async (data: Omit<PrivilegeLogEntry, 'id'>): Promise<PrivilegeLogEntry> => {
-    const { data: response } = await enzymeClient.post<PrivilegeLogEntry>('/discovery/privilege-log', data);
-    return response;
+    return enzymeDiscoveryService.privilegeLog.add(data);
   },
 
   // Productions
   getProductions: async (requestId?: string): Promise<DiscoveryProduction[]> => {
-    const url = requestId 
-      ? `/discovery/productions?requestId=${requestId}`
-      : '/discovery/productions';
-    const { data } = await enzymeClient.get<DiscoveryProduction[]>(url);
-    return data;
+    return enzymeDiscoveryService.productions.getAll(requestId);
   },
 
   createProduction: async (data: Omit<DiscoveryProduction, 'id'>): Promise<DiscoveryProduction> => {
-    const { data: response } = await enzymeClient.post<DiscoveryProduction>('/discovery/productions', data);
-    return response;
+    return enzymeDiscoveryService.productions.create(data);
   },
 
 };

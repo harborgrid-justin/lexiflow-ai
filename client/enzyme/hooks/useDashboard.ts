@@ -20,10 +20,8 @@ import {
   useTrackEvent,
   useDebouncedValue
 } from '@missionfabric-js/enzyme/hooks';
-import { useWorkflowEngine } from './useWorkflowEngine';
 
 export const useDashboard = () => {
-  const { checkSLABreaches: _checkSLABreaches } = useWorkflowEngine();
   const trackEvent = useTrackEvent();
 
   // Fetch dashboard data with automatic caching

@@ -53,7 +53,7 @@ export const useResearch = (currentUser?: User) => {
   usePageView('legal_research');
 
   // Enzyme: Error notifications
-  const showErrorToast = useErrorToast();
+  const showErrorToast = useErrorToast() as any;
 
   // Enzyme: Debounced query for optimized API calls (300ms delay)
   const debouncedQuery = useDebouncedValue(query, 300);
@@ -138,7 +138,7 @@ export const useResearch = (currentUser?: User) => {
         userId: currentUser?.id,
       };
 
-      await saveSession({ data: newSession });
+      await saveSession(newSession);
     } catch (error) {
       console.error('Research failed:', error);
       showErrorToast('Research failed. Please check your Google Custom Search API configuration.');

@@ -7,6 +7,7 @@
 import { useState, useMemo } from 'react';
 import type { Case, LegalDocument, WorkflowStage, TimeEntry, TimelineEvent, Party, Motion, DocketEntry } from '@/types';
 import { OpenAIService } from '@/services/openAIService';
+import { ApiService } from '@/services/apiService';
 import { useApiRequest } from '@/enzyme';
 import { useLatestCallback, useIsMounted } from '@missionfabric-js/enzyme/hooks';
 
@@ -162,7 +163,7 @@ export const useCaseDetail = (caseData: Case) => {
     setAnalyzingId(doc.id);
     try {
       const result = await OpenAIService.analyzeDocument(doc.content);
-      await OpenAIService.updateDocument(doc.id, { summary: result.summary, riskScore: result.riskScore });
+      await ApiService.documents.update(doc.id, { summary: result.summary, riskScore: result.riskScore });
       refetchDocs();
     } catch (err) {
       console.error('Failed to analyze document:', err);
@@ -196,7 +197,7 @@ export const useCaseDetail = (caseData: Case) => {
 
   const createDocument = useLatestCallback(async (doc: Partial<LegalDocument>) => {
     try {
-      const newDoc = await OpenAIService.createDocument(doc);
+      const newDoc = await ApiService.documents.create(doc);
       refetchDocs();
       return newDoc;
     } catch (err) {
@@ -226,7 +227,7 @@ export const useCaseDetail = (caseData: Case) => {
         }))
       }));
       
-      await Promise.all(newStages.map(stage => OpenAIService.createWorkflowStage(stage)));
+      await Promise.all(newStages.map(stage => ApiService.workflow.stages.create(stage)));
       refetchStages();
     } catch (err) {
       console.error('Failed to generate workflow:', err);
@@ -242,7 +243,7 @@ export const useCaseDetail = (caseData: Case) => {
 
   const addTimeEntry = useLatestCallback(async (entry: Partial<TimeEntry>) => {
     try {
-      const newEntry = await OpenAIService.createTimeEntry(entry);
+      const newEntry = await ApiService.billing.timeEntries.create(entry);
       refetchBilling();
       return newEntry;
     } catch (err) {
@@ -256,7 +257,7 @@ export const useCaseDetail = (caseData: Case) => {
 
   const toggleTask = useLatestCallback(async (taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
     try {
-      await OpenAIService.updateWorkflowTask(taskId, { status });
+      await ApiService.workflow.tasks.update(taskId, { status });
       refetchStages();
       
       const stageWithTask = stages.find(s => s.tasks.some(t => t.id === taskId));
@@ -264,9 +265,9 @@ export const useCaseDetail = (caseData: Case) => {
         const updatedTasks = stageWithTask.tasks.map(t => t.id === taskId ? { ...t, status } : t);
         const allDone = updatedTasks.every(t => t.status === 'Done');
         if (allDone) {
-          await OpenAIService.updateWorkflowStage(stageWithTask.id, { status: 'Completed' });
+          await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Completed' });
         } else {
-          await OpenAIService.updateWorkflowStage(stageWithTask.id, { status: 'Active' });
+          await ApiService.workflow.stages.update(stageWithTask.id, { status: 'Active' });
         }
         refetchStages();
       }

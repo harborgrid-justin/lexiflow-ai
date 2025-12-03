@@ -81,6 +81,12 @@ export { enzymeMotionsService } from './motions.service';
 // Tasks Service
 export { enzymeTasksService } from './tasks.service';
 
+// Settings Service
+export { enzymeSettingsService } from './settings.service';
+
+// Research Service
+export { enzymeResearchService } from './research.service';
+
 // Auth Service
 export { enzymeAuthService } from './auth.service';
 
@@ -115,6 +121,8 @@ import { enzymeSearchService } from './search.service';
 import { enzymeCalendarService } from './calendar.service';
 import { enzymeMotionsService } from './motions.service';
 import { enzymeTasksService } from './tasks.service';
+import { enzymeSettingsService } from './settings.service';
+import { enzymeResearchService } from './research.service';
 import { enzymeAuthService } from './auth.service';
 import {
   enzymeOrganizationsService,
@@ -130,23 +138,15 @@ import {
   enzymeUserProfilesService,
 } from './misc.service';
 
+import { enzymeNotificationsService } from './notifications.service';
+
 /**
- * Unified Enzyme API Service
- * Drop-in replacement for ApiService with enhanced features:
- * - Automatic retry with exponential backoff
- * - Rate limiting
- * - Request deduplication
- * - Type-safe responses
- * - Token management
+ * Main Enzyme API Service Object
+ * Aggregates all domain-specific services into a single access point.
  *
- * @example
+ * Usage:
  * ```typescript
- * // Using the consolidated service
- * import { EnzymeApiService } from './enzyme/services';
- *
- * // Cases
- * const cases = await EnzymeApiService.cases.getAll();
- * const newCase = await EnzymeApiService.cases.create({ title: 'New Case' });
+ * import { EnzymeApiService } from '@/enzyme/services';
  *
  * // Documents
  * const docs = await EnzymeApiService.documents.getAll({ caseId: 'case-123' });
@@ -164,12 +164,15 @@ export const EnzymeApiService = {
   workflow: enzymeWorkflowService,
   evidence: enzymeEvidenceService,
   messages: enzymeMessagesService,
+  notifications: enzymeNotificationsService,
   search: enzymeSearchService,
   motions: enzymeMotionsService,
   discovery: enzymeDiscoveryService,
   billing: enzymeBillingService,
   calendar: enzymeCalendarService,
   tasks: enzymeTasksService,
+  settings: enzymeSettingsService,
+  research: enzymeResearchService,
 
   // Additional Services
   organizations: enzymeOrganizationsService,

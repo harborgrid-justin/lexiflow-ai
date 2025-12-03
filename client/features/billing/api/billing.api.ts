@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { enzymeBillingService } from '@/enzyme/services/billing.service';
 import type { TimeEntry } from '@/types';
 
 // Query Keys
@@ -21,9 +21,7 @@ export const billingKeys = {
 export function useTimeEntries(caseId?: string) {
   return useQuery({
     queryKey: caseId ? billingKeys.caseEntries(caseId) : billingKeys.entries(),
-    queryFn: () => caseId 
-      ? ApiService.billing.getTimeEntries(caseId)
-      : ApiService.billing.getAllTimeEntries(),
+    queryFn: () => enzymeBillingService.timeEntries.getAll({ caseId }),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -31,7 +29,7 @@ export function useTimeEntries(caseId?: string) {
 export function useTimeEntry(id: string) {
   return useQuery({
     queryKey: billingKeys.entry(id),
-    queryFn: () => ApiService.billing.getTimeEntry(id),
+    queryFn: () => enzymeBillingService.timeEntries.getById(id),
     enabled: !!id,
   });
 }
@@ -39,9 +37,7 @@ export function useTimeEntry(id: string) {
 export function useBillingSummary(caseId?: string) {
   return useQuery({
     queryKey: caseId ? billingKeys.caseSummary(caseId) : billingKeys.summary(),
-    queryFn: () => caseId 
-      ? ApiService.billing.getCaseSummary(caseId)
-      : ApiService.billing.getSummary(),
+    queryFn: () => enzymeBillingService.getStats({ caseId }),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -51,7 +47,7 @@ export function useCreateTimeEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<TimeEntry>) => ApiService.billing.createTimeEntry(data),
+    mutationFn: (data: Partial<TimeEntry>) => enzymeBillingService.timeEntries.create(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: billingKeys.entries() });
       if (variables.caseId) {
@@ -66,7 +62,7 @@ export function useUpdateTimeEntry() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<TimeEntry> }) =>
-      ApiService.billing.updateTimeEntry(id, data),
+      enzymeBillingService.timeEntries.update(id, data),
     onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: billingKeys.entry(id) });
       queryClient.invalidateQueries({ queryKey: billingKeys.entries() });
@@ -81,7 +77,7 @@ export function useDeleteTimeEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => ApiService.billing.deleteTimeEntry(id),
+    mutationFn: (id: string) => enzymeBillingService.timeEntries.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.entries() });
     },

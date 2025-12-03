@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { enzymeAnalyticsService } from '../../../enzyme/services/misc.service';
 
 // Query Keys
 export const analyticsKeys = {
@@ -22,7 +22,7 @@ export const analyticsKeys = {
 export function useAnalyticsDashboard(dateRange?: { start: string; end: string }) {
   return useQuery({
     queryKey: [...analyticsKeys.dashboard(), dateRange],
-    queryFn: () => ApiService.analytics.getExecutiveDashboard(dateRange),
+    queryFn: () => enzymeAnalyticsService.getExecutiveDashboard(dateRange),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -30,7 +30,7 @@ export function useAnalyticsDashboard(dateRange?: { start: string; end: string }
 export function useCaseMetrics(filters?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...analyticsKeys.caseMetrics(), filters],
-    queryFn: () => ApiService.analytics.getCaseAnalytics(filters),
+    queryFn: () => enzymeAnalyticsService.cases.getAnalytics(filters),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -38,7 +38,7 @@ export function useCaseMetrics(filters?: Record<string, unknown>) {
 export function useFinancialMetrics(dateRange?: { start: string; end: string }) {
   return useQuery({
     queryKey: [...analyticsKeys.financialMetrics(), dateRange],
-    queryFn: () => ApiService.analytics.getFinancialAnalytics(dateRange),
+    queryFn: () => enzymeAnalyticsService.financial.getAnalytics(dateRange),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -46,7 +46,7 @@ export function useFinancialMetrics(dateRange?: { start: string; end: string }) 
 export function useProductivityMetrics() {
   return useQuery({
     queryKey: analyticsKeys.productivityMetrics(),
-    queryFn: () => ApiService.analytics.getProductivityAnalytics(),
+    queryFn: () => enzymeAnalyticsService.productivity.getAnalytics(),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -54,7 +54,7 @@ export function useProductivityMetrics() {
 export function useWorkflowMetrics() {
   return useQuery({
     queryKey: analyticsKeys.workflowMetrics(),
-    queryFn: () => ApiService.analytics.getTaskMetrics(),
+    queryFn: () => enzymeAnalyticsService.productivity.getTaskMetrics(),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -62,7 +62,7 @@ export function useWorkflowMetrics() {
 export function useReports() {
   return useQuery({
     queryKey: analyticsKeys.reports(),
-    queryFn: () => ApiService.analytics.getReports(),
+    queryFn: () => enzymeAnalyticsService.reports.getAll(),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -70,7 +70,7 @@ export function useReports() {
 export function useReport(id: string) {
   return useQuery({
     queryKey: analyticsKeys.report(id),
-    queryFn: () => ApiService.analytics.getReport(id),
+    queryFn: () => enzymeAnalyticsService.reports.getById(id),
     enabled: !!id,
   });
 }

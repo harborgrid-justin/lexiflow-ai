@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { enzymeClientsService } from '../../../enzyme/services/misc.service';
 import type { Client } from '@/types';
 
 // Query Keys
@@ -22,7 +22,7 @@ export const clientKeys = {
 export function useClients(filters?: Record<string, unknown>) {
   return useQuery({
     queryKey: clientKeys.list(filters),
-    queryFn: () => ApiService.clients.getAll(),
+    queryFn: () => enzymeClientsService.getAll(filters as any),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -30,7 +30,7 @@ export function useClients(filters?: Record<string, unknown>) {
 export function useClient(id: string) {
   return useQuery({
     queryKey: clientKeys.detail(id),
-    queryFn: () => ApiService.clients.getById(id),
+    queryFn: () => enzymeClientsService.getById(id),
     enabled: !!id,
   });
 }
@@ -39,7 +39,7 @@ export function useClientSummary() {
   return useQuery({
     queryKey: clientKeys.summary(),
     queryFn: async () => {
-      const clients = await ApiService.clients.getAll();
+      const clients = await enzymeClientsService.getAll();
       return {
         totalClients: clients.length,
         activeClients: clients.filter((c: Client) => c.status === 'Active')
@@ -67,7 +67,7 @@ export function useCreateClient() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<Client>) => ApiService.clients.create(data),
+    mutationFn: (data: Partial<Client>) => enzymeClientsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all });
     },
@@ -79,7 +79,7 @@ export function useUpdateClient() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Client> }) =>
-      ApiService.clients.update(id, data),
+      enzymeClientsService.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: clientKeys.lists() });
@@ -91,7 +91,7 @@ export function useDeleteClient() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => ApiService.clients.delete(id),
+    mutationFn: (id: string) => enzymeClientsService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.all });
     },

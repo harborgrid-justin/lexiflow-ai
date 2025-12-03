@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { enzymeAuthService } from '../../../enzyme/services/auth.service';
 import type { User } from '@/types';
 import type {
   LoginCredentials,
@@ -39,7 +39,7 @@ export const useCurrentUser = (
 ) => {
   return useQuery({
     queryKey: authKeys.user(),
-    queryFn: () => ApiService.auth.getCurrentUser(),
+    queryFn: () => enzymeAuthService.getCurrentUser(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
     ...options,
@@ -73,8 +73,7 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await ApiService.auth.login(credentials.email, credentials.password);
-      ApiService.setAuthToken(response.access_token);
+      const response = await enzymeAuthService.login(credentials.email, credentials.password);
       return response;
     },
     onSuccess: (data) => {
@@ -92,10 +91,16 @@ export const useRegister = () => {
 
   return useMutation({
     mutationFn: async (data: RegisterData) => {
-      const response = await ApiService.auth.register(data.email, data.password, data.name);
-      if (response.access_token) {
-        ApiService.setAuthToken(response.access_token);
-      }
+      const [firstName, ...lastNameParts] = data.name.split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+      
+      const response = await enzymeAuthService.register({
+        email: data.email,
+        password: data.password,
+        first_name: firstName,
+        last_name: lastName,
+        organization_id: data.organizationId
+      });
       return response;
     },
     onSuccess: (data) => {
@@ -114,7 +119,7 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: async () => {
-      ApiService.clearAuthToken();
+      await enzymeAuthService.logout();
     },
     onSuccess: () => {
       queryClient.setQueryData(authKeys.user(), null);

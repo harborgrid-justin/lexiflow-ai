@@ -40,15 +40,24 @@ const ENDPOINTS = {
 /**
  * Query parameters for listing cases
  */
-interface CaseListParams {
-  status?: CaseStatus;
+export interface CaseListParams {
+  status?: CaseStatus | string;
   clientId?: string;
   assigneeId?: string;
   search?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'createdAt' | 'updatedAt' | 'filingDate' | 'title';
+  sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  [key: string]: any; // Allow other filters
+}
+
+export interface CaseListResult {
+  cases: Case[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 /**
@@ -61,11 +70,39 @@ export const enzymeCasesService = {
    * @example
    * const cases = await enzymeCasesService.getAll({ status: 'Active' });
    */
-  async getAll(params?: CaseListParams): Promise<Case[]> {
-    const response = await enzymeClient.get<ApiCase[]>(ENDPOINTS.list, { 
+  async getAll(params?: CaseListParams): Promise<CaseListResult> {
+    const response = await enzymeClient.get<any>(ENDPOINTS.list, { 
       params: params as Record<string, string | number | boolean> 
     });
-    return response.data.map(transformApiCase);
+
+    if (response.data && Array.isArray(response.data.cases)) {
+      return {
+        cases: response.data.cases.map(transformApiCase),
+        total: response.data.total || 0,
+        page: response.data.page || 1,
+        limit: response.data.limit || 20,
+        totalPages: response.data.totalPages || 1
+      };
+    }
+
+    // Fallback for array response
+    if (Array.isArray(response.data)) {
+      return {
+        cases: response.data.map(transformApiCase),
+        total: response.data.length,
+        page: 1,
+        limit: response.data.length,
+        totalPages: 1
+      };
+    }
+
+    return {
+      cases: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0
+    };
   },
 
   /**
@@ -233,6 +270,22 @@ export const enzymeCasesService = {
   async getBilling(caseId: string): Promise<TimeEntry[]> {
     const response = await enzymeClient.get<TimeEntry[]>(ENDPOINTS.billing(caseId));
     return response.data || [];
+  },
+
+  /**
+   * Get parties for a case
+   */
+  async getParties(caseId: string): Promise<any[]> {
+    const response = await enzymeClient.get<any[]>(`/cases/${caseId}/parties`);
+    return response.data || [];
+  },
+
+  /**
+   * Get metrics for a case
+   */
+  async getMetrics(caseId: string): Promise<any> {
+    const response = await enzymeClient.get<any>(`/cases/${caseId}/metrics`);
+    return response.data;
   },
 };
 
