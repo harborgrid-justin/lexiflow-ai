@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { BillingService } from './billing.service';
+import { BillingPrismaService } from './billing.prisma.service';
 import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 import { UpdateTimeEntryDto } from './dto/update-time-entry.dto';
 import { TimeEntry } from '../../models/billing.model';
@@ -17,7 +18,7 @@ import { TimeEntry } from '../../models/billing.model';
 @ApiTags('billing')
 @Controller('billing')
 export class BillingController {
-  constructor(private readonly billingService: BillingService) {}
+  constructor(private readonly billingService: BillingPrismaService) {}
 
   @Get('time-entries')
   @ApiOperation({ summary: 'Get all time entries' })

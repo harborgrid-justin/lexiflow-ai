@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { 
+import {
   User,
   Organization,
   TimeEntry,
@@ -11,11 +11,16 @@ import {
 } from '../../models';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { UsersPrismaService } from './users.prisma.service';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([User, Organization, TimeEntry, WorkflowTask, Task, KnowledgeArticle, Clause])],
+  imports: [
+    SequelizeModule.forFeature([User, Organization, TimeEntry, WorkflowTask, Task, KnowledgeArticle, Clause]),
+    PrismaModule,
+  ],
   controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService],
+  providers: [UsersService, UsersPrismaService],
+  exports: [UsersService, UsersPrismaService],
 })
 export class UsersModule {}
