@@ -4,27 +4,22 @@
  * Data fetching and state management for the Client CRM.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiRequest, useApiMutation, useLatestCallback } from '@/enzyme';
 import { ApiService } from '@/services/apiService';
-import { useLatestCallback } from '@/enzyme';
 import type { Client } from '@/types';
 
 export const useClientCRM = () => {
-  const queryClient = useQueryClient();
-
   // Fetch clients
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => ApiService.clients.getAll(),
-    staleTime: 5 * 60 * 1000, // 5 min cache
+  const { data: clients = [], isLoading } = useApiRequest<Client[]>({
+    endpoint: '/clients',
+    options: {
+      staleTime: 5 * 60 * 1000, // 5 min cache
+    }
   });
 
   // Mutation for creating clients
-  const createClientMutation = useMutation({
-    mutationFn: (data: Partial<Client>) => ApiService.clients.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-    },
+  const { mutateAsync: createClient } = useApiMutation<Client, Partial<Client>>({
+    mutationFn: (data) => ApiService.clients.create(data)
   });
 
   const handleAddClient = useLatestCallback(async (clientName: string) => {
@@ -35,7 +30,7 @@ export const useClientCRM = () => {
       totalBilled: 0,
       matters: [],
     };
-    await createClientMutation.mutateAsync(newClient);
+    await createClient(newClient);
   });
 
   return {

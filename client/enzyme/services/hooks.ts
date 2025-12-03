@@ -273,7 +273,7 @@ export function useApiRequest<T>(
 /**
  * Configuration options for useApiMutation hook
  */
-export interface UseApiMutationOptions<TData> {
+export interface UseApiMutationOptions<TData, TVariables = unknown> {
   /** HTTP method to use. Default: 'POST' */
   method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Callback invoked when the mutation succeeds */
@@ -284,6 +284,8 @@ export interface UseApiMutationOptions<TData> {
   retry?: number;
   /** Delay in milliseconds between retry attempts. Default: 1000 */
   retryDelay?: number;
+  /** Custom mutation function to execute instead of standard REST call */
+  mutationFn?: (variables: TVariables) => Promise<TData>;
 }
 
 /**
@@ -339,7 +341,7 @@ export interface LocalUseApiMutationResult<TData, TVariables> {
  */
 export function useApiMutation<TData, TVariables = unknown>(
   endpoint: string,
-  options?: UseApiMutationOptions<TData>
+  options?: UseApiMutationOptions<TData, TVariables>
 ): LocalUseApiMutationResult<TData, TVariables>;
 
 export function useApiMutation<TData, TVariables = unknown>(config: {
@@ -349,6 +351,7 @@ export function useApiMutation<TData, TVariables = unknown>(config: {
   onError?: (error: Error) => void;
   retry?: number;
   retryDelay?: number;
+  mutationFn?: (variables: TVariables) => Promise<TData>;
 }): LocalUseApiMutationResult<TData, TVariables>;
 
 /**
@@ -375,12 +378,13 @@ export function useApiMutation<TData, TVariables = {endpoint: string, data?: unk
   onError?: (error: Error) => void;
   retry?: number;
   retryDelay?: number;
+  mutationFn?: (variables: TVariables) => Promise<TData>;
 }): LocalUseApiMutationResult<TData, TVariables>;
 
 // Implementation
 export function useApiMutation<TData, TVariables = unknown>(
-  endpointOrConfig: string | { method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE'; endpoint?: string; onSuccess?: (data: TData) => void; onError?: (error: Error) => void; retry?: number; retryDelay?: number },
-  optionsParam?: UseApiMutationOptions<TData>
+  endpointOrConfig: string | { method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE'; endpoint?: string; onSuccess?: (data: TData) => void; onError?: (error: Error) => void; retry?: number; retryDelay?: number; mutationFn?: (variables: TVariables) => Promise<TData> },
+  optionsParam?: UseApiMutationOptions<TData, TVariables>
 ): LocalUseApiMutationResult<TData, TVariables> {
   // Normalize arguments
   const isObjectConfig = typeof endpointOrConfig === 'object';
@@ -403,42 +407,49 @@ export function useApiMutation<TData, TVariables = unknown>(
 
     const attemptMutation = async (attemptNumber: number): Promise<TData> => {
       try {
-        let response;
-        let actualEndpoint: string;
-        let body: any;
+        let responseData: TData;
 
-        if (isObjectConfig && config?.endpoint) {
-          // Endpoint in config, variables is body
-          actualEndpoint = config.endpoint;
-          body = variables;
-        } else if (isObjectConfig) {
-          // Endpoint in variables
-          actualEndpoint = (variables as any)?.endpoint;
-          body = (variables as any)?.data;
+        if (config?.mutationFn) {
+          responseData = await config.mutationFn(variables as TVariables);
         } else {
-          // String endpoint, variables is body
-          actualEndpoint = endpoint;
-          body = variables;
+          let response;
+          let actualEndpoint: string;
+          let body: any;
+
+          if (isObjectConfig && config?.endpoint) {
+            // Endpoint in config, variables is body
+            actualEndpoint = config.endpoint;
+            body = variables;
+          } else if (isObjectConfig) {
+            // Endpoint in variables
+            actualEndpoint = (variables as any)?.endpoint;
+            body = (variables as any)?.data;
+          } else {
+            // String endpoint, variables is body
+            actualEndpoint = endpoint;
+            body = variables;
+          }
+
+          switch (method) {
+            case 'POST':
+              response = await enzymeClient.post<TData>(actualEndpoint, { body });
+              break;
+            case 'PUT':
+              response = await enzymeClient.put<TData>(actualEndpoint, { body });
+              break;
+            case 'PATCH':
+              response = await enzymeClient.patch<TData>(actualEndpoint, { body });
+              break;
+            case 'DELETE':
+              response = await enzymeClient.delete<TData>(actualEndpoint);
+              break;
+          }
+          responseData = response.data;
         }
 
-        switch (method) {
-          case 'POST':
-            response = await enzymeClient.post<TData>(actualEndpoint, { body });
-            break;
-          case 'PUT':
-            response = await enzymeClient.put<TData>(actualEndpoint, { body });
-            break;
-          case 'PATCH':
-            response = await enzymeClient.patch<TData>(actualEndpoint, { body });
-            break;
-          case 'DELETE':
-            response = await enzymeClient.delete<TData>(actualEndpoint);
-            break;
-        }
-
-        setData(response.data);
-        config?.onSuccess?.(response.data);
-        return response.data;
+        setData(responseData);
+        config?.onSuccess?.(responseData);
+        return responseData;
       } catch (err) {
         const errorObj = err instanceof Error ? err : new Error('Unknown error');
 

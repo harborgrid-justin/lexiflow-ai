@@ -10,16 +10,10 @@
  */
 
 import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService, ApiError } from '@/services/apiService';
+import { useApiRequest, useApiMutation, useLatestCallback, useIsMounted, useErrorToast, useSafeState } from '@/enzyme';
+import { enzymeEvidenceService } from '@/enzyme/services/evidence.service';
 import { EvidenceItem, ChainOfCustodyEvent } from '@/types';
 import { ensureTagsArray } from '@/utils/type-transformers';
-import {
-  useLatestCallback,
-  useIsMounted,
-  useErrorToast,
-  useSafeState
-} from '@/enzyme';
 import type { ViewMode, DetailTab, EvidenceFilters } from '../api/evidence.types';
 
 export type { ViewMode, DetailTab, EvidenceFilters };
@@ -45,80 +39,45 @@ export const useEvidenceVault = () => {
   const [selectedItem, setSelectedItem] = useSafeState<EvidenceItem | null>(null);
   const [filters, setFilters] = useSafeState<EvidenceFilters>(DEFAULT_FILTERS);
 
-  const queryClient = useQueryClient();
   const isMounted = useIsMounted();
   const showErrorToast = useErrorToast();
 
-  // Fetch evidence with TanStack Query
+  // Fetch evidence with Enzyme
   const { 
     data: evidenceItems = [], 
     isLoading: loading, 
     refetch 
-  } = useQuery({
-    queryKey: ['evidence'],
-    queryFn: () => ApiService.evidence.getAll(),
-    staleTime: 3 * 60 * 1000,
-    retry: 2
+  } = useApiRequest<EvidenceItem[]>({
+    endpoint: '/evidence',
+    options: {
+      staleTime: 3 * 60 * 1000,
+      retry: 2
+    }
   });
 
-  // Create mutation with optimistic updates
-  const createMutation = useMutation({
-    mutationFn: (newItem: Partial<EvidenceItem>) => ApiService.evidence.create(newItem),
-    onMutate: async (newItem) => {
-      await queryClient.cancelQueries({ queryKey: ['evidence'] });
-      const previousData = queryClient.getQueryData<EvidenceItem[]>(['evidence']);
-
-      queryClient.setQueryData<EvidenceItem[]>(['evidence'], (old = []) => [
-        ...old,
-        { ...newItem, id: `temp-${Date.now()}` } as EvidenceItem
-      ]);
-
-      return { previousData };
-    },
+  // Create mutation
+  const { mutateAsync: createMutation } = useApiMutation<EvidenceItem, Partial<EvidenceItem>>({
+    mutationFn: (newItem) => enzymeEvidenceService.create(newItem),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['evidence'] });
+      refetch();
       if (isMounted()) {
         setView('inventory');
       }
     },
-    onError: (err: unknown, _newItem, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(['evidence'], context.previousData);
-      }
-      const message = err instanceof ApiError ? err.statusText : 'Failed to log item';
+    onError: (err) => {
+      const message = err.message || 'Failed to log item';
       showErrorToast(`Failed to log item: ${message}`);
     }
   });
 
-  // Update mutation with optimistic updates
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<EvidenceItem> }) =>
-      ApiService.evidence.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['evidence'] });
-      const previousData = queryClient.getQueryData<EvidenceItem[]>(['evidence']);
-
-      queryClient.setQueryData<EvidenceItem[]>(['evidence'], (old = []) =>
-        old.map(item => (item.id === id ? { ...item, ...data } : item))
-      );
-
-      if (selectedItem?.id === id) {
-        setSelectedItem({ ...selectedItem, ...data } as EvidenceItem);
-      }
-
-      return { previousData, previousSelectedItem: selectedItem };
-    },
+  // Update mutation
+  const { mutateAsync: updateMutation } = useApiMutation<EvidenceItem, { id: string; data: Partial<EvidenceItem> }>({
+    mutationFn: ({ id, data }) => enzymeEvidenceService.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['evidence'] });
+      refetch();
     },
-    onError: (err: unknown, _variables, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(['evidence'], context.previousData);
-      }
-      if (context?.previousSelectedItem) {
-        setSelectedItem(context.previousSelectedItem);
-      }
-      const message = err instanceof ApiError ? err.statusText : 'Failed to update';
+    onError: (err) => {
+      const message = err.message || 'Failed to update';
       showErrorToast(`Failed to update: ${message}`);
     }
   });
@@ -136,14 +95,14 @@ export const useEvidenceVault = () => {
   });
 
   const handleIntakeComplete = useLatestCallback(async (newItem: EvidenceItem) => {
-    await createMutation.mutateAsync(newItem);
+    await createMutation(newItem);
   });
 
   const handleCustodyUpdate = useLatestCallback(async (newEvent: ChainOfCustodyEvent) => {
     if (!selectedItem) return;
 
     const updatedChain = [newEvent, ...(selectedItem.chainOfCustody || [])];
-    await updateMutation.mutateAsync({
+    await updateMutation({
       id: selectedItem.id,
       data: { chainOfCustody: updatedChain }
     });

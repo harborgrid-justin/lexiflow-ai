@@ -5,8 +5,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useLatestCallback } from '@/enzyme';
+import { useApiRequest, useLatestCallback } from '@/enzyme';
 import { JurisdictionApi } from '../api/jurisdiction.api';
 import type { JurisdictionView, JurisdictionFilters } from '../api/jurisdiction.types';
 
@@ -22,32 +21,35 @@ export const useJurisdiction = (initialView: JurisdictionView = 'federal') => {
   const [filters, setFilters] = useState<JurisdictionFilters>(DEFAULT_FILTERS);
 
   // Federal courts query
-  const federalQuery = useQuery({
-    queryKey: ['jurisdiction', 'federal'],
-    queryFn: JurisdictionApi.getFederalCourts,
-    staleTime: 10 * 60 * 1000,
-    enabled: view === 'federal'
+  const { data: federalCourts, isLoading: federalLoading, error: federalError } = useApiRequest({
+    endpoint: '/jurisdiction/federal',
+    options: {
+      enabled: view === 'federal',
+      staleTime: 10 * 60 * 1000,
+    }
   });
 
   // State courts query
-  const stateQuery = useQuery({
-    queryKey: ['jurisdiction', 'state', filters.state],
-    queryFn: () => JurisdictionApi.getStateCourts(filters.state),
-    staleTime: 10 * 60 * 1000,
-    enabled: view === 'state'
+  const { data: stateCourts, isLoading: stateLoading, error: stateError } = useApiRequest({
+    endpoint: '/jurisdiction/state',
+    options: {
+      enabled: view === 'state',
+      params: { state: filters.state },
+      staleTime: 10 * 60 * 1000,
+    }
   });
 
   // Regulatory bodies query
-  const regulatoryQuery = useQuery({
-    queryKey: ['jurisdiction', 'regulatory'],
-    queryFn: JurisdictionApi.getRegulatoryBodies,
-    staleTime: 10 * 60 * 1000,
-    enabled: view === 'regulatory'
+  const { data: regulatoryBodies, isLoading: regulatoryLoading, error: regulatoryError } = useApiRequest({
+    endpoint: '/jurisdiction/regulatory',
+    options: {
+      enabled: view === 'regulatory',
+      staleTime: 10 * 60 * 1000,
+    }
   });
 
   // Arbitration organizations query
-  const arbitrationQuery = useQuery({
-    queryKey: ['jurisdiction', 'arbitration'],
+  const { data: arbitrationOrgs, isLoading: arbitrationLoading, error: arbitrationError } = useApiRequest({
     queryFn: JurisdictionApi.getArbitrationOrgs,
     staleTime: 10 * 60 * 1000,
     enabled: view === 'arbitration'

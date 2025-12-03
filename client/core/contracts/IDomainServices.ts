@@ -59,18 +59,6 @@ export interface IComplianceService extends IBaseService<ComplianceDashboard> {
 }
 
 /**
- * User Management Service Interface
- */
-export interface IUserService extends IBaseService<User> {
-  authenticate(email: string, password: string): Promise<ServiceResponse<{ user: User; token: string }>>;
-  getCurrentUser(): Promise<ServiceResponse<User>>;
-  updateUserProfile(userId: string, profile: Partial<User>): Promise<ServiceResponse<User>>;
-  getUsersByRole(role: string): Promise<ServiceResponse<User[]>>;
-  assignRole(userId: string, role: string): Promise<ServiceResponse<void>>;
-  getUserPermissions(userId: string): Promise<ServiceResponse<string[]>>;
-}
-
-/**
  * Client Management Service Interface
  */
 export interface IClientService extends IBaseService<Client> {

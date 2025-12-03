@@ -4,45 +4,43 @@
  * Manages legal holds for discovery compliance.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLatestCallback } from '@/enzyme';
+import { useApiRequest, useApiMutation, useLatestCallback } from '@/enzyme';
 import { DiscoveryApi } from '../api/discovery.api';
 import type { LegalHold } from '../api/discovery.types';
 
 export const useLegalHolds = () => {
-  const queryClient = useQueryClient();
-
   const { 
     data: holds = [], 
     isLoading, 
     error,
     refetch 
-  } = useQuery({
-    queryKey: ['discovery', 'legal-holds'],
-    queryFn: DiscoveryApi.getLegalHolds,
-    staleTime: 5 * 60 * 1000
-  });
-
-  const createMutation = useMutation({
-    mutationFn: DiscoveryApi.createLegalHold,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discovery', 'legal-holds'] });
+  } = useApiRequest<LegalHold[]>({
+    endpoint: '/discovery/legal-holds',
+    options: {
+      staleTime: 5 * 60 * 1000
     }
   });
 
-  const releaseMutation = useMutation({
+  const { mutateAsync: createMutation } = useApiMutation<LegalHold, Omit<LegalHold, 'id'>>({
+    mutationFn: DiscoveryApi.createLegalHold,
+    onSuccess: () => {
+      refetch();
+    }
+  });
+
+  const { mutateAsync: releaseMutation } = useApiMutation<LegalHold, string>({
     mutationFn: DiscoveryApi.releaseLegalHold,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discovery', 'legal-holds'] });
+      refetch();
     }
   });
 
   const createHold = useLatestCallback(async (data: Omit<LegalHold, 'id'>) => {
-    return createMutation.mutateAsync(data);
+    return createMutation(data);
   });
 
   const releaseHold = useLatestCallback(async (id: string) => {
-    return releaseMutation.mutateAsync(id);
+    return releaseMutation(id);
   });
 
   return {

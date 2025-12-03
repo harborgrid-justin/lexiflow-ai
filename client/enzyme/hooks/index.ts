@@ -61,3 +61,12 @@ export * from './useTimeEntryModal';
 export * from './useUserProfile';
 export * from './useWorkflowAnalytics';
 export * from './useWorkflowEngine';
+export * from './useArgument';
+export * from './useDefense';
+export * from './useGameTheory';
+export * from './useWarRoom';
+export * from './useCitation';
+export * from './useReference';
+export * from './useFormatting';
+export * from './useLinking';
+

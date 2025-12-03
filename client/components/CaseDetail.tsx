@@ -18,11 +18,11 @@
  */
 
 import React, { Suspense, lazy } from 'react';
-import { Case, TimelineEvent, User } from '../types';
+import { Case, TimelineEvent, User, BillingModel, LegalDocument } from '../types';
 import { ArrowLeft, MapPin, DollarSign } from 'lucide-react';
 import { PageHeader, Button } from './common';
 import { CaseTimeline } from './case-detail/CaseTimeline';
-import { useCaseDetail } from '../hooks/useCaseDetail';
+import { useCaseDetail } from '../features/cases/hooks/useCaseDetail';
 import { WorkflowQuickActions } from './workflow/WorkflowQuickActions';
 import { TabNavigation } from './common/TabNavigation';
 import {
@@ -48,6 +48,9 @@ const CaseParties = lazy(() => import('./case-detail/CaseParties').then(m => ({ 
 const CaseMotions = lazy(() => import('./case-detail/CaseMotions').then(m => ({ default: m.CaseMotions })));
 const CaseTeam = lazy(() => import('./case-detail/CaseTeam').then(m => ({ default: m.CaseTeam })));
 const CaseDocketEntries = lazy(() => import('./case-detail/CaseDocketEntries').then(m => ({ default: m.CaseDocketEntries })));
+const CaseGameTheory = lazy(() => import('./case-detail/CaseGameTheory').then(m => ({ default: m.CaseGameTheory })));
+const CaseWarRoom = lazy(() => import('./case-detail/CaseWarRoom').then(m => ({ default: m.CaseWarRoom })));
+const CaseConnections = lazy(() => import('./case-detail/CaseConnections').then(m => ({ default: m.CaseConnections })));
 
 interface CaseDetailProps {
   caseData: Case;
@@ -56,7 +59,24 @@ interface CaseDetailProps {
   hideHeader?: boolean;
 }
 
-const TABS = ['Overview', 'Team', 'Motions', 'Parties', 'Docket', 'Documents', 'Evidence', 'Discovery', 'Messages', 'Workflow', 'Drafting', 'Contract Review', 'Billing'];
+const TABS = [
+  { id: 'Overview', label: 'Overview' },
+  { id: 'Team', label: 'Team' },
+  { id: 'Motions', label: 'Motions' },
+  { id: 'Parties', label: 'Parties' },
+  { id: 'Docket', label: 'Docket' },
+  { id: 'Documents', label: 'Documents' },
+  { id: 'Evidence', label: 'Evidence' },
+  { id: 'Discovery', label: 'Discovery' },
+  { id: 'Messages', label: 'Messages' },
+  { id: 'Workflow', label: 'Workflow' },
+  { id: 'Drafting', label: 'Drafting' },
+  { id: 'Contract Review', label: 'Contract Review' },
+  { id: 'Billing', label: 'Billing' },
+  { id: 'Game Theory', label: 'Game Theory' },
+  { id: 'War Room', label: 'War Room' },
+  { id: 'Connections', label: 'Connections' },
+];
 
 /**
  * Loading fallback component for Suspense boundaries
@@ -163,9 +183,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
   });
 
   // ENZYME: Stable callback for document analysis
-  const handleDocumentAnalyze = useLatestCallback((docId: string) => {
-    trackEvent('case_document_analyze', { caseId: caseData.id, documentId: docId });
-    handleAnalyze(docId);
+  const handleDocumentAnalyze = useLatestCallback((doc: LegalDocument) => {
+    trackEvent('case_document_analyze', { caseId: caseData.id, documentId: doc.id });
+    handleAnalyze(doc);
   });
 
   // ENZYME: Stable callback for document creation
@@ -188,9 +208,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
   });
 
   // ENZYME: Stable callback for task toggle
-  const handleTaskToggle = useLatestCallback((stageId: string, taskId: string) => {
-    trackEvent('case_task_toggle', { caseId: caseData.id, stageId, taskId });
-    toggleTask(stageId, taskId);
+  const handleTaskToggle = useLatestCallback((taskId: string, status: 'Pending' | 'In Progress' | 'Done') => {
+    trackEvent('case_task_toggle', { caseId: caseData.id, taskId, status });
+    toggleTask(taskId, status);
   });
 
   // ENZYME: Stable callback for module navigation from workflow
@@ -230,7 +250,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
               <CaseDocuments
                 documents={documents}
                 analyzingId={analyzingId}
-                onAnalyze={handleDocumentAnalyze}
+                onAnalyze={handleAnalyze}
                 onDocumentCreated={handleDocumentCreate}
                 currentUser={currentUser}
               />
@@ -283,7 +303,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
         return (
           <Suspense fallback={<TabLoadingFallback />}>
             <HydrationBoundary id="case-evidence" priority="normal" trigger="visible">
-              <CaseEvidence caseId={caseData.id} currentUser={currentUser} />
+              <CaseEvidence caseId={caseData.id} />
             </HydrationBoundary>
           </Suspense>
         );
@@ -356,10 +376,37 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, curren
           <Suspense fallback={<TabLoadingFallback />}>
             <LazyHydration priority="low" trigger="idle">
               <CaseBilling
-                billingModel={caseData.billingModel || 'Hourly'}
+                billingModel={(caseData.billingModel as BillingModel) || 'Hourly'}
                 value={caseData.value}
                 entries={billingEntries}
               />
+            </LazyHydration>
+          </Suspense>
+        );
+
+      case 'Game Theory':
+        return (
+          <Suspense fallback={<TabLoadingFallback />}>
+            <LazyHydration priority="low" trigger="visible">
+              <CaseGameTheory caseId={caseData.id} />
+            </LazyHydration>
+          </Suspense>
+        );
+
+      case 'War Room':
+        return (
+          <Suspense fallback={<TabLoadingFallback />}>
+            <LazyHydration priority="low" trigger="visible">
+              <CaseWarRoom caseId={caseData.id} />
+            </LazyHydration>
+          </Suspense>
+        );
+
+      case 'Connections':
+        return (
+          <Suspense fallback={<TabLoadingFallback />}>
+            <LazyHydration priority="low" trigger="visible">
+              <CaseConnections caseId={caseData.id} />
             </LazyHydration>
           </Suspense>
         );

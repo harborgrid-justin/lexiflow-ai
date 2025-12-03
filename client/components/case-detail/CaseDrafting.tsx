@@ -23,12 +23,13 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Cpu, Book, AlertTriangle, Check, Wand2, Search, History } from 'lucide-react';
+import { Cpu, Book, AlertTriangle, Check, Wand2, Search, History, PenTool } from 'lucide-react';
 import { OpenAIService } from '../../services/openAIService';
 import { Clause } from '../../types';
 import { AdvancedEditor } from '../AdvancedEditor';
 import { ApiService } from '../../services/apiService';
 import { ClauseHistoryModal } from '../ClauseHistoryModal';
+import { DraftingTools } from './DraftingTools';
 import {
   useLatestCallback,
   useTrackEvent,
@@ -47,7 +48,7 @@ interface CaseDraftingProps {
 
 export const CaseDrafting: React.FC<CaseDraftingProps> = ({
   caseId,
-  _caseTitle,
+  caseTitle,
   draftPrompt,
   setDraftPrompt,
   draftResult,
@@ -59,7 +60,7 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
 
   const [content, setContent] = useState('');
   const [reviewResult, setReviewResult] = useState('');
-  const [activeModeState, setActiveModeState] = useState<'edit' | 'review' | 'clauses'>('edit');
+  const [activeModeState, setActiveModeState] = useState<'edit' | 'review' | 'clauses' | 'tools'>('edit');
   const [loading, setLoading] = useState(false);
   const [clauses, setClauses] = useState<Clause[]>([]);
 
@@ -190,13 +191,14 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
     onDraft();
   });
 
-  const handleTabChange = useLatestCallback((newMode: 'edit' | 'review' | 'clauses') => {
+  const handleTabChange = useLatestCallback((newMode: 'edit' | 'review' | 'clauses' | 'tools') => {
     trackEvent('case_drafting_tab_changed', {
       fromTab: activeModeState,
       toTab: newMode
     });
     setActiveModeState(newMode);
   });
+
 
   const handleClauseHistoryView = useLatestCallback((clause: Clause) => {
     trackEvent('case_drafting_clause_history_viewed', {
@@ -250,20 +252,26 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
         <div className="flex border-b border-slate-100">
           <button
             onClick={() => handleTabChange('edit')}
-            className={`flex-1 py-3 text-sm font-medium ${activeMode !== 'review' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`flex-1 py-3 text-sm font-medium ${activeMode === 'edit' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            Clause Library
+            Clauses
           </button>
           <button
             onClick={() => handleTabChange('review')}
             className={`flex-1 py-3 text-sm font-medium ${activeMode === 'review' ? 'text-amber-600 border-b-2 border-amber-600 bg-amber-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            Risk Analysis
+            Risks
+          </button>
+          <button
+            onClick={() => handleTabChange('tools')}
+            className={`flex-1 py-3 text-sm font-medium ${activeMode === 'tools' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50/50' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            Tools
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto bg-slate-50/30 flex flex-col">
-          {activeMode === 'review' ? (
+          {activeMode === 'review' && (
              <div className="p-4 space-y-4">
                 <div className="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800 flex items-start">
                     <AlertTriangle className="h-4 w-4 mr-2 shrink-0 mt-0.5"/>
@@ -285,7 +293,9 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
                     </div>
                 )}
              </div>
-          ) : (
+          )}
+
+          {activeMode === 'edit' && (
             <div className="flex flex-col h-full">
               {/* Search Bar */}
               <div className="p-3 border-b border-slate-100 bg-white sticky top-0 z-10">
@@ -344,6 +354,13 @@ export const CaseDrafting: React.FC<CaseDraftingProps> = ({
                 )}
               </div>
             </div>
+          )}
+
+          {activeMode === 'tools' && (
+             <DraftingTools 
+                content={content}
+                onUpdateContent={setContent}
+             />
           )}
         </div>
       </div>

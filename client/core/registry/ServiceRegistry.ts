@@ -140,11 +140,6 @@ export class ServiceRegistry {
       return new TaskService();
     });
 
-    this.registerSingleton(SERVICE_KEYS.USER_SERVICE, () => {
-      const { UserService } = require('../services/UserService');
-      return new UserService();
-    });
-
     // Additional services for future implementation
     // Evidence, Communication, Motion services can be added as needed
   }

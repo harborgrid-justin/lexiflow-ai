@@ -109,6 +109,9 @@ export const enzymeClientsService = {
 const ANALYTICS_ENDPOINTS = {
   list: '/analytics',
   detail: (id: string) => `/analytics/${id}`,
+  casePrediction: (caseId: string) => `/analytics/case-prediction/${caseId}`,
+  judge: (name: string) => `/analytics/judge/${encodeURIComponent(name)}`,
+  counsel: (name: string) => `/analytics/counsel/${encodeURIComponent(name)}`,
   dashboard: '/analytics/dashboard',
   executive: {
     dashboard: '/analytics/executive/dashboard',
@@ -177,6 +180,21 @@ export const enzymeAnalyticsService = {
   async getById(id: string): Promise<unknown> {
     const response = await enzymeClient.get(ANALYTICS_ENDPOINTS.detail(id));
     return response.data;
+  },
+
+  async getCasePrediction(caseId: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(ANALYTICS_ENDPOINTS.casePrediction(caseId));
+    return response.data || [];
+  },
+
+  async getJudgeAnalytics(judgeName: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(ANALYTICS_ENDPOINTS.judge(judgeName));
+    return response.data || [];
+  },
+
+  async getCounselPerformance(counselName: string): Promise<unknown[]> {
+    const response = await enzymeClient.get<unknown[]>(ANALYTICS_ENDPOINTS.counsel(counselName));
+    return response.data || [];
   },
 
   async getDashboard(): Promise<{ stats: unknown[]; chartData: unknown[]; alerts: unknown[] }> {
@@ -737,6 +755,7 @@ const PARTY_ENDPOINTS = {
   list: '/parties',
   detail: (id: string) => `/parties/${id}`,
   byCase: (caseId: string) => `/parties/case/${caseId}`,
+  removeMember: (caseId: string, userId: string) => `/parties/case/${caseId}/user/${userId}`,
 } as const;
 
 export const enzymePartiesService = {
@@ -768,6 +787,10 @@ export const enzymePartiesService = {
 
   async delete(id: string): Promise<void> {
     await enzymeClient.delete(PARTY_ENDPOINTS.detail(id));
+  },
+
+  async removeMember(caseId: string, userId: string): Promise<void> {
+    await enzymeClient.delete(PARTY_ENDPOINTS.removeMember(caseId, userId));
   },
 };
 

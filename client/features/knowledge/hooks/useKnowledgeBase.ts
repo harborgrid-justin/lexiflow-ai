@@ -10,8 +10,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useDebouncedValue } from '@/enzyme';
+import { useApiRequest, useDebouncedValue } from '@/enzyme';
 import { KnowledgeApi } from '../api';
 import type { KnowledgeItem, KnowledgeTab } from '../api/knowledge.types';
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '../types';
-import { ApiService } from '../services/apiService';
+import { enzymeAuthService, enzymeUsersService, enzymeUserProfilesService } from '../enzyme/services';
 import { FEATURE_FLAGS, AUTH_CONFIG } from '../config';
 
 interface AuthContextType {
@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
       if (token) {
         try {
-          const currentUser = await ApiService.auth.getCurrentUser();
+          const currentUser = await enzymeAuthService.getCurrentUser();
           setUser(currentUser);
           // Update last active timestamp
           if (currentUser.id) {
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               if (FEATURE_FLAGS.ENABLE_DEBUG_LOGGING) {
                 console.log('AuthContext: Calling updateLastActive for user', currentUser.id);
               }
-              await ApiService.userProfiles.updateLastActive(currentUser.id);
+              await enzymeUserProfilesService.updateLastActive(currentUser.id);
             } catch (updateError) {
               console.error('Failed to update last active timestamp:', updateError);
             }
@@ -94,8 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     clearError();
     try {
-      const response = await ApiService.auth.login(email, password);
-      ApiService.setAuthToken(response.access_token);
+      const response = await enzymeAuthService.login(email, password);
       setUser(response.user);
 
       // Update last active timestamp
@@ -104,7 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (FEATURE_FLAGS.ENABLE_DEBUG_LOGGING) {
             console.log('AuthContext login: Calling updateLastActive for user', response.user.id);
           }
-          await ApiService.userProfiles.updateLastActive(response.user.id);
+          await enzymeUserProfilesService.updateLastActive(response.user.id);
         } catch (updateError) {
           console.error('Failed to update last active timestamp after login:', updateError);
         }
@@ -132,7 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       // Try to get current user to validate/refresh the session
-      const currentUser = await ApiService.auth.getCurrentUser();
+      const currentUser = await enzymeAuthService.getCurrentUser();
       setUser(currentUser);
       setTokenExpiryWarning(false);
       setError(null);
@@ -150,7 +149,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    ApiService.clearAuthToken();
+    // Clear tokens from storage
+    localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
     setUser(null);
     setOriginalUser(null);
     setIsImpersonating(false);
@@ -160,7 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!user) return false;
 
     try {
-      const updatedUser = await ApiService.users.update(user.id, data);
+      const updatedUser = await enzymeUsersService.update(user.id, data);
       setUser(updatedUser);
       return true;
     } catch (error) {

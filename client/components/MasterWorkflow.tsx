@@ -31,21 +31,45 @@ export const MasterWorkflow: React.FC<MasterWorkflowProps> = ({ onSelectCase }) 
   const { getNotifications } = useWorkflowEngine();
   const [unreadCount, setUnreadCount] = useState(0);
   const [analyticsSection, setAnalyticsSection] = useState<string | null>('capabilities');
+  const [metrics, setMetrics] = useState<any>(null);
   const {
-    metrics,
-    velocity,
-    bottlenecks,
-    refreshAnalytics,
-    isRefreshing,
-    checkSLABreaches,
+    loading,
+    getWorkflowMetrics,
+    getTaskCompletionTrends,
+    getUserProductivityMetrics,
   } = useWorkflowAnalytics();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refreshAnalytics = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const metricsData = await getWorkflowMetrics();
+      setMetrics(metricsData);
+    } catch (error) {
+      console.error('Failed to refresh analytics:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [getWorkflowMetrics]);
+
+  useEffect(() => {
+    refreshAnalytics();
+  }, [refreshAnalytics]);
+
+  const velocity = null; // Replace with actual velocity calculation if needed
+  const bottlenecks = {
+    slowestStages: [],
+    blockedTasks: [],
+    overloadedUsers: []
+  };
+  const checkSLABreaches = () => { /* Implement SLA breach check */ };
 
   const loadNotificationCount = useCallback(async () => {
-    const notifications = await getNotifications(currentUser.id, true);
+    const notifications = await getNotifications();
     if (notifications) {
       setUnreadCount(notifications.length);
     }
-  }, [getNotifications, currentUser.id]);
+  }, [getNotifications]);
 
   useEffect(() => {
     const fetchData = async () => {

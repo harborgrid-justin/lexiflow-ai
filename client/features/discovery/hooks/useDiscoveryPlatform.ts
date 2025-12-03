@@ -9,8 +9,7 @@
  * - Stable callbacks with useLatestCallback
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLatestCallback } from '@/enzyme';
+import { useApiRequest, useApiMutation, useLatestCallback } from '@/enzyme';
 import { DiscoveryApi } from '../api/discovery.api';
 import type { DiscoveryRequest } from '@/types';
 import type { UpdateDiscoveryRequestInput } from '../api/discovery.types';
@@ -24,33 +23,31 @@ interface UseDiscoveryPlatformReturn {
 }
 
 export const useDiscoveryPlatform = (): UseDiscoveryPlatformReturn => {
-  const queryClient = useQueryClient();
-
   // Fetch discovery requests
   const { 
     data: requests = [], 
     isLoading, 
     error,
     refetch 
-  } = useQuery({
-    queryKey: ['discovery', 'requests'],
-    queryFn: DiscoveryApi.getRequests,
-    staleTime: 5 * 60 * 1000,
-    retry: 2
+  } = useApiRequest<DiscoveryRequest[]>({
+    endpoint: '/discovery/requests',
+    options: {
+      staleTime: 5 * 60 * 1000,
+      retry: 2
+    }
   });
 
   // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateDiscoveryRequestInput }) =>
-      DiscoveryApi.updateRequest(id, updates),
+  const { mutateAsync: updateMutation } = useApiMutation<DiscoveryRequest, { id: string; updates: UpdateDiscoveryRequestInput }>({
+    mutationFn: ({ id, updates }) => DiscoveryApi.updateRequest(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discovery', 'requests'] });
+      refetch();
     }
   });
 
   const updateRequest = useLatestCallback(async (reqId: string, updates: UpdateDiscoveryRequestInput) => {
     try {
-      await updateMutation.mutateAsync({ id: reqId, updates });
+      await updateMutation({ id: reqId, updates });
     } catch (err) {
       console.error('Failed to update discovery request:', err);
       throw err;
@@ -60,7 +57,7 @@ export const useDiscoveryPlatform = (): UseDiscoveryPlatformReturn => {
   return {
     requests,
     isLoading,
-    error: error as Error | null,
+    error,
     updateRequest,
     refetch
   };

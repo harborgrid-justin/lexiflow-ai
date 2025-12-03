@@ -3,7 +3,7 @@
  * TanStack Query hooks for document operations
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+import { useApiRequest, useApiMutation } from '../../../enzyme/services/hooks';
 import { enzymeDocumentsService } from '../../../enzyme/services/documents.service';
 import type {
   LegalDocument,
@@ -42,13 +42,12 @@ export const documentKeys = {
  * Fetch documents with filtering and search
  */
 export function useDocuments(
-  filters: DocumentFilters = {},
-  options?: Omit<UseQueryOptions<LegalDocument[], Error>, 'queryKey' | 'queryFn'>
+  filters: DocumentFilters = {}
 ) {
-  return useQuery({
-    queryKey: documentKeys.list(filters),
-    queryFn: async () => {
-      return enzymeDocumentsService.getAll({
+  return useApiRequest<LegalDocument[]>({
+    endpoint: '/documents',
+    options: {
+      params: {
         caseId: filters.caseId,
         folderId: filters.folderId,
         search: filters.search,
@@ -58,42 +57,35 @@ export function useDocuments(
         tags: filters.tags?.join(','),
         author: filters.author?.join(','),
         status: filters.status?.join(','),
-      });
-    },
-    staleTime: 30000, // 30 seconds
-    ...options,
+      },
+      staleTime: 30000,
+    }
   });
 }
 
 /**
  * Fetch single document by ID
  */
-export function useDocument(
-  id: string,
-  options?: Omit<UseQueryOptions<LegalDocument, Error>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery({
-    queryKey: documentKeys.detail(id),
-    queryFn: () => enzymeDocumentsService.getById(id),
-    enabled: !!id,
-    staleTime: 60000, // 1 minute
-    ...options,
+export function useDocument(id: string) {
+  return useApiRequest<LegalDocument>({
+    endpoint: `/documents/${id}`,
+    options: {
+      enabled: !!id,
+      staleTime: 60000,
+    }
   });
 }
 
 /**
  * Fetch document versions
  */
-export function useDocumentVersions(
-  documentId: string,
-  options?: Omit<UseQueryOptions<DocumentVersion[], Error>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery({
-    queryKey: documentKeys.versions(documentId),
-    queryFn: () => enzymeDocumentsService.getVersions(documentId),
-    enabled: !!documentId,
-    staleTime: 60000,
-    ...options,
+export function useDocumentVersions(documentId: string) {
+  return useApiRequest<DocumentVersion[]>({
+    endpoint: `/documents/${documentId}/versions`,
+    options: {
+      enabled: !!documentId,
+      staleTime: 60000,
+    }
   });
 }
 

@@ -75,7 +75,6 @@ export const useDomainServices = () => {
     useCase: <T>() => useService<T>('ICaseService'),
     useDocument: <T>() => useService<T>('IDocumentService'),
     useCompliance: <T>() => useService<T>('IComplianceService'),
-    useUser: <T>() => useService<T>('IUserService'),
     useClient: <T>() => useService<T>('IClientService'),
     useBilling: <T>() => useService<T>('IBillingService'),
     useTask: <T>() => useService<T>('ITaskService'),

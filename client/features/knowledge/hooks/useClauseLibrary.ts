@@ -10,7 +10,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiRequest, useApiMutation } from '@/enzyme';
 import { KnowledgeApi } from '../api';
 import type { Clause, CreateClauseRequest, UpdateClauseRequest, ClauseFilters } from '../api/knowledge.types';
 
@@ -38,7 +38,6 @@ interface UseClauseLibraryReturn {
 
 export const useClauseLibrary = (options?: UseClauseLibraryOptions): UseClauseLibraryReturn => {
   const { staleTime = 10 * 60 * 1000 } = options ?? {};
-  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFiltersState] = useState<ClauseFilters>({ searchTerm: '' });
@@ -53,10 +52,11 @@ export const useClauseLibrary = (options?: UseClauseLibraryOptions): UseClauseLi
     isLoading: loading, 
     error,
     refetch 
-  } = useQuery({
-    queryKey: ['clauses'],
-    queryFn: KnowledgeApi.getClauses,
-    staleTime
+  } = useApiRequest<Clause[]>({
+    endpoint: '/clauses',
+    options: {
+      staleTime
+    }
   });
 
   // Filter clauses based on search term and filters
@@ -74,31 +74,21 @@ export const useClauseLibrary = (options?: UseClauseLibraryOptions): UseClauseLi
   }, [clauses, searchTerm, filters.category, filters.riskRating]);
 
   // Create mutation
-  const createMutation = useMutation({
+  const { mutateAsync: createClause, isLoading: isCreating } = useApiMutation<Clause, CreateClauseRequest>({
     mutationFn: KnowledgeApi.createClause,
-    onSuccess: (newClause) => {
-      queryClient.setQueryData<Clause[]>(['clauses'], (old = []) => [...old, newClause]);
-    }
+    onSuccess: () => refetch()
   });
 
   // Update mutation
-  const updateMutation = useMutation({
+  const { mutateAsync: updateClause, isLoading: isUpdating } = useApiMutation<Clause, UpdateClauseRequest>({
     mutationFn: KnowledgeApi.updateClause,
-    onSuccess: (updatedClause) => {
-      queryClient.setQueryData<Clause[]>(['clauses'], (old = []) =>
-        old.map(c => c.id === updatedClause.id ? updatedClause : c)
-      );
-    }
+    onSuccess: () => refetch()
   });
 
   // Delete mutation
-  const deleteMutation = useMutation({
+  const { mutateAsync: deleteClause, isLoading: isDeleting } = useApiMutation<void, string>({
     mutationFn: KnowledgeApi.deleteClause,
-    onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<Clause[]>(['clauses'], (old = []) =>
-        old.filter(c => c.id !== deletedId)
-      );
-    }
+    onSuccess: () => refetch()
   });
 
   return {
@@ -110,12 +100,12 @@ export const useClauseLibrary = (options?: UseClauseLibraryOptions): UseClauseLi
     setSearchTerm,
     filters,
     setFilters,
-    createClause: createMutation.mutateAsync,
-    updateClause: updateMutation.mutateAsync,
-    deleteClause: deleteMutation.mutateAsync,
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    createClause,
+    updateClause,
+    deleteClause,
+    isCreating,
+    isUpdating,
+    isDeleting,
     refetch
   };
 };

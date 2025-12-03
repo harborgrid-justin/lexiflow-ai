@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiRequest, useApiMutation } from '../../../enzyme/services/hooks';
 import { enzymeMotionsService } from '../../../enzyme/services/motions.service';
 import type { Motion } from '../../../types';
 import type { MotionFilters } from './motions.types';
@@ -12,52 +12,38 @@ export const motionKeys = {
 };
 
 export function useMotions(filters: MotionFilters = {}) {
-  return useQuery({
-    queryKey: motionKeys.list(filters),
-    queryFn: () => enzymeMotionsService.getAll(filters),
-    staleTime: 5 * 60 * 1000,
+  return useApiRequest<Motion[]>({
+    endpoint: '/motions',
+    options: {
+      params: filters,
+      staleTime: 5 * 60 * 1000,
+    }
   });
 }
 
 export function useMotion(id: string) {
-  return useQuery({
-    queryKey: motionKeys.detail(id),
-    queryFn: () => enzymeMotionsService.getById(id),
-    enabled: !!id,
+  return useApiRequest<Motion>({
+    endpoint: `/motions/${id}`,
+    options: {
+      enabled: !!id,
+    }
   });
 }
 
 export function useCreateMotion() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: Partial<Motion>) => enzymeMotionsService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: motionKeys.lists() });
-    },
+  return useApiMutation<Motion, Partial<Motion>>({
+    mutationFn: (data) => enzymeMotionsService.create(data)
   });
 }
 
 export function useUpdateMotion() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Motion> }) =>
-      enzymeMotionsService.update(id, data), // Note: Service needs update method
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: motionKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: motionKeys.lists() });
-    },
+  return useApiMutation<Motion, { id: string; data: Partial<Motion> }>({
+    mutationFn: ({ id, data }) => enzymeMotionsService.update(id, data)
   });
 }
 
 export function useDeleteMotion() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => enzymeMotionsService.delete(id), // Note: Service needs delete method
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: motionKeys.lists() });
-    },
+  return useApiMutation<void, string>({
+    mutationFn: (id) => enzymeMotionsService.delete(id)
   });
 }

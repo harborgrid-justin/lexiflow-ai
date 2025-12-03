@@ -6,9 +6,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useApiRequest, useLatestCallback, useIsMounted } from '@/enzyme';
 import { ApiService } from '@/services/apiService';
-import { useLatestCallback, useIsMounted } from '@/enzyme';
 import type { WorkflowTask, Case, ConflictCheck } from '@/types';
 
 interface CalendarEvent {
@@ -28,19 +27,16 @@ export const useCalendarView = () => {
   const isMounted = useIsMounted();
 
   // Fetch tasks
-  const { data: tasks = [], isLoading: loadingTasks } = useQuery({
-    queryKey: ['workflow', 'tasks'],
-    queryFn: async () => {
-      try {
-        return (await ApiService.workflow.tasks.getAll()) as WorkflowTask[];
-      } catch (_err) {
+  const { data: tasks = [], isLoading: loadingTasks } = useApiRequest<WorkflowTask[]>({
+    endpoint: '/workflow/tasks',
+    options: {
+      staleTime: 2 * 60 * 1000, // 2 min cache
+      onError: (err) => {
         if (isMounted()) {
           setError('Failed to load tasks');
         }
-        return [];
       }
-    },
-    staleTime: 2 * 60 * 1000, // 2 min cache
+    }
   });
 
   // Fetch cases

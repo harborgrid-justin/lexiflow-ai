@@ -19,7 +19,7 @@ import {
   useErrorToast,
   usePageView,
 } from '@/enzyme';
-import { useQueryClient } from '@tanstack/react-query';
+
 
 export type SearchType = 'comprehensive' | 'case_law' | 'statutes' | 'news';
 

@@ -5,14 +5,8 @@
  */
 
 import { useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useApiRequest, useLatestCallback, useTrackEvent, useDebouncedValue, useIsMounted } from '@/enzyme';
 import { Briefcase, FileText, Clock, AlertTriangle } from 'lucide-react';
-import {
-  useLatestCallback,
-  useTrackEvent,
-  useDebouncedValue,
-  useIsMounted
-} from '@/enzyme';
 import { DashboardApi } from '../api/dashboard.api';
 import type { DashboardStat, ChartDataPoint, DashboardAlert, SLABreaches } from '../api/dashboard.types';
 
@@ -32,20 +26,22 @@ export const useDashboard = () => {
     data: dashboardData, 
     isLoading, 
     refetch: refetchDashboard 
-  } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: DashboardApi.getDashboardData,
-    staleTime: 5 * 60 * 1000
+  } = useApiRequest({
+    endpoint: '/dashboard',
+    options: {
+      staleTime: 5 * 60 * 1000
+    }
   });
 
   // Fetch SLA data
   const { 
     data: slaData, 
     refetch: refetchSLA 
-  } = useQuery({
-    queryKey: ['dashboard', 'sla'],
-    queryFn: DashboardApi.getSLAStatus,
-    staleTime: 2 * 60 * 1000
+  } = useApiRequest({
+    endpoint: '/dashboard/sla',
+    options: {
+      staleTime: 2 * 60 * 1000
+    }
   });
 
   // Map icon strings to components

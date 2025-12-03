@@ -41,7 +41,7 @@ interface AdvancedEditorProps {
   onInsertRequest?: () => void;
 }
 
-export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, onSave, placeholder, _onInsertRequest }) => {
+export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({ initialContent, onSave, placeholder, onInsertRequest }) => {
   // Enzyme hooks
   const trackEvent = useTrackEvent();
   const isMounted = useIsMounted();

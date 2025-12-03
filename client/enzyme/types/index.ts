@@ -19,3 +19,6 @@ export interface AnalyticsEvent {
   timestamp: number;
   metadata?: Record<string, any>;
 }
+
+export * from './services';
+

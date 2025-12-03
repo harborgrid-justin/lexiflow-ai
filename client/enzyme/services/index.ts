@@ -87,6 +87,33 @@ export { enzymeSettingsService } from './settings.service';
 // Research Service
 export { enzymeResearchService } from './research.service';
 
+// Docket Service
+export { enzymeDocketService } from './docket.service';
+
+// Argument Service
+export { enzymeArgumentService } from './argument.service';
+
+// Defense Service
+export { enzymeDefenseService } from './defense.service';
+
+// Game Theory Service
+export { enzymeGameTheoryService } from './gametheory.service';
+
+// War Room Service
+export { enzymeWarRoomService } from './warroom.service';
+
+// Citation Service
+export { enzymeCitationService } from './citation.service';
+
+// Reference Service
+export { enzymeReferenceService } from './reference.service';
+
+// Formatting Service
+export { enzymeFormattingService } from './formatting.service';
+
+// Linking Service
+export { enzymeLinkingService } from './linking.service';
+
 // Auth Service
 export { enzymeAuthService } from './auth.service';
 
@@ -139,6 +166,15 @@ import {
 } from './misc.service';
 
 import { enzymeNotificationsService } from './notifications.service';
+import { enzymeDocketService } from './docket.service';
+import { enzymeArgumentService } from './argument.service';
+import { enzymeDefenseService } from './defense.service';
+import { enzymeGameTheoryService } from './gametheory.service';
+import { enzymeWarRoomService } from './warroom.service';
+import { enzymeCitationService } from './citation.service';
+import { enzymeReferenceService } from './reference.service';
+import { enzymeFormattingService } from './formatting.service';
+import { enzymeLinkingService } from './linking.service';
 
 /**
  * Main Enzyme API Service Object
@@ -173,6 +209,15 @@ export const EnzymeApiService = {
   tasks: enzymeTasksService,
   settings: enzymeSettingsService,
   research: enzymeResearchService,
+  docket: enzymeDocketService,
+  argument: enzymeArgumentService,
+  defense: enzymeDefenseService,
+  gameTheory: enzymeGameTheoryService,
+  warRoom: enzymeWarRoomService,
+  citation: enzymeCitationService,
+  reference: enzymeReferenceService,
+  formatting: enzymeFormattingService,
+  linking: enzymeLinkingService,
 
   // Additional Services
   organizations: enzymeOrganizationsService,
