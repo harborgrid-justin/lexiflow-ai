@@ -34,7 +34,7 @@ export const CaseAnalysisPage: React.FC = () => {
   const { caseId = '' } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'citations' | 'similar' | 'ai'>('overview');
-  const [showCitationGraph, setShowCitationGraph] = useState(false);
+  const [_showCitationGraph, _setShowCitationGraph] = useState(false);
 
   const { savedResultIds, addSavedResult, removeSavedResult } = useResearchStore();
   const isSaved = savedResultIds.has(caseId);

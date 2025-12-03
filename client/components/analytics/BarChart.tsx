@@ -39,6 +39,28 @@ const COLORS = [
   '#f43f5e',
 ];
 
+const CustomTooltip = ({ active, payload, label, formatValue }: any) => {
+  if (!active || !payload) return null;
+
+  return (
+    <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+      <p className="font-medium text-slate-900 mb-2">{label}</p>
+      {payload.map((entry: any, index: number) => (
+        <div key={index} className="flex items-center gap-2 text-sm">
+          <div
+            className="w-3 h-3 rounded"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-slate-600">{entry.name}:</span>
+          <span className="font-medium text-slate-900">
+            {formatValue ? formatValue(entry.value) : entry.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const BarChart: React.FC<BarChartProps> = ({
   data,
   dataKeys,
@@ -51,27 +73,6 @@ export const BarChart: React.FC<BarChartProps> = ({
   formatValue,
   colors = COLORS,
 }) => {
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload) return null;
-
-    return (
-      <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
-        <p className="font-medium text-slate-900 mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
-            <div
-              className="w-3 h-3 rounded"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-slate-600">{entry.name}:</span>
-            <span className="font-medium text-slate-900">
-              {formatValue ? formatValue(entry.value) : entry.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   const ChartComponent = (
     <RechartsBarChart
@@ -109,7 +110,7 @@ export const BarChart: React.FC<BarChartProps> = ({
           />
         </>
       )}
-      <Tooltip content={<CustomTooltip />} />
+      <Tooltip content={<CustomTooltip formatValue={formatValue} />} />
       {showLegend && <Legend wrapperStyle={{ paddingTop: '20px' }} />}
       {dataKeys.map((item, index) => (
         <Bar

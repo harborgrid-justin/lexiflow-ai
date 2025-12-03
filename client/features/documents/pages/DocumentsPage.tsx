@@ -3,19 +3,14 @@
  * Main document management interface with split-pane layout
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Upload,
   Grid3x3,
   List,
-  Eye,
-  Search,
   SlidersHorizontal,
   ChevronLeft,
   FolderPlus,
-  Download,
-  Star,
-  Clock,
 } from 'lucide-react';
 import { useDocuments, useDocumentStats, useFolders, useDeleteDocument } from '../api/documents.api';
 import { DocumentCard } from '../components/DocumentCard';
@@ -118,7 +113,7 @@ export const DocumentsPage: React.FC = () => {
     setTagDocument(document);
   };
 
-  const handleDelete = async (documentId: string) => {
+  const _handleDelete = async (documentId: string) => {
     if (confirm('Are you sure you want to delete this document?')) {
       try {
         await deleteMutation.mutateAsync(documentId);

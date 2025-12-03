@@ -17,7 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useCitationCheck } from '../api';
-import type { CitationValidation, TreatmentStatus } from '../api/research.types';
+import type { TreatmentStatus } from '../api/research.types';
 import { KeyciteIndicator } from './KeyciteIndicator';
 
 interface CitationCheckerProps {

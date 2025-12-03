@@ -33,7 +33,11 @@ interface AnalyticsStore {
     chartAnimations: boolean;
     refreshInterval: number;
   };
-  setPreferences: (prefs: Partial<typeof preferences>) => void;
+  setPreferences: (prefs: Partial<{
+    showSparklines: boolean;
+    chartAnimations: boolean;
+    refreshInterval: number;
+  }>) => void;
 }
 
 // Default state
@@ -187,33 +191,4 @@ export const useAnalyticsStore = (): AnalyticsStore => {
     preferences,
     setPreferences,
   };
-};
-
-/**
- * Analytics Store Context (Optional - for global state)
- * Can be used with React Context API if needed
- */
-import { createContext, useContext, ReactNode } from 'react';
-
-const AnalyticsStoreContext = createContext<AnalyticsStore | null>(null);
-
-export const AnalyticsStoreProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const store = useAnalyticsStore();
-  return (
-    <AnalyticsStoreContext.Provider value={store}>
-      {children}
-    </AnalyticsStoreContext.Provider>
-  );
-};
-
-export const useAnalyticsStoreContext = () => {
-  const context = useContext(AnalyticsStoreContext);
-  if (!context) {
-    throw new Error(
-      'useAnalyticsStoreContext must be used within AnalyticsStoreProvider'
-    );
-  }
-  return context;
 };

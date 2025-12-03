@@ -26,6 +26,28 @@ interface AreaChartProps {
   formatValue?: (value: number) => string;
 }
 
+const CustomTooltip = ({ active, payload, label, formatValue }: any) => {
+  if (!active || !payload) return null;
+
+  return (
+    <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+      <p className="font-medium text-slate-900 mb-2">{label}</p>
+      {payload.map((entry: any, index: number) => (
+        <div key={index} className="flex items-center gap-2 text-sm">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-slate-600">{entry.name}:</span>
+          <span className="font-medium text-slate-900">
+            {formatValue ? formatValue(entry.value) : entry.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const AreaChart: React.FC<AreaChartProps> = ({
   data,
   dataKeys,
@@ -36,27 +58,6 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   stacked = false,
   formatValue,
 }) => {
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload) return null;
-
-    return (
-      <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
-        <p className="font-medium text-slate-900 mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-slate-600">{entry.name}:</span>
-            <span className="font-medium text-slate-900">
-              {formatValue ? formatValue(entry.value) : entry.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -75,7 +76,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
           tick={{ fill: '#64748b', fontSize: 12 }}
           tickFormatter={formatValue}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<CustomTooltip formatValue={formatValue} />} />
         {showLegend && <Legend wrapperStyle={{ paddingTop: '20px' }} />}
         {dataKeys.map((item) => (
           <Area

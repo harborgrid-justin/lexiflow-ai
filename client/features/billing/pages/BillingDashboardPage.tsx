@@ -102,7 +102,7 @@ export const BillingDashboardPage: React.FC<BillingDashboardPageProps> = ({
           icon={DollarSign}
           color="text-blue-600"
           bg="bg-blue-50"
-          trend={{ value: 12, isPositive: true }}
+          trend="+12%"
         />
         <StatCard
           label="Realization Rate"

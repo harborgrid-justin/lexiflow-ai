@@ -3,9 +3,20 @@
 // This can be used alongside or as a replacement for the existing casesService
 
 import { enzymeClient } from './client';
-import { Case, CaseStatus } from '../../types';
-import { ApiCase } from '../../shared-types';
-import { transformApiCase } from '../../utils/type-transformers';
+import { 
+  Case, 
+  CaseStatus, 
+  LegalDocument, 
+  WorkflowStage, 
+  Motion, 
+  DiscoveryRequest, 
+  EvidenceItem, 
+  TimelineEvent, 
+  TimeEntry, 
+  CaseMember 
+} from '../../types';
+import { ApiCase, ApiEvidence } from '../../shared-types';
+import { transformApiCase, transformApiEvidence } from '../../utils/type-transformers';
 
 /**
  * Type-safe endpoint definitions for cases
@@ -16,10 +27,14 @@ const ENDPOINTS = {
   list: '/cases',
   detail: (id: string) => `/cases/${id}`,
   documents: (id: string) => `/cases/${id}/documents`,
-  team: (id: string) => `/cases/${id}/team`,
+  team: (id: string) => `/parties/case/${id}`,
   workflow: (id: string) => `/cases/${id}/workflow`,
   timeline: (id: string) => `/cases/${id}/timeline`,
   stats: '/cases/stats',
+  motions: (id: string) => `/cases/${id}/motions`,
+  discovery: (id: string) => `/cases/${id}/discovery`,
+  evidence: (id: string) => `/cases/${id}/evidence`,
+  billing: (id: string) => `/cases/${id}/billing`,
 } as const;
 
 /**
@@ -159,17 +174,65 @@ export const enzymeCasesService = {
   /**
    * Get documents for a case
    */
-  async getDocuments(caseId: string) {
-    const response = await enzymeClient.get(ENDPOINTS.documents(caseId));
-    return response.data;
+  async getDocuments(caseId: string): Promise<LegalDocument[]> {
+    const response = await enzymeClient.get<LegalDocument[]>(ENDPOINTS.documents(caseId));
+    return response.data || [];
   },
 
   /**
    * Get team members for a case
    */
-  async getTeam(caseId: string) {
-    const response = await enzymeClient.get(ENDPOINTS.team(caseId));
-    return response.data;
+  async getTeam(caseId: string): Promise<CaseMember[]> {
+    const response = await enzymeClient.get<CaseMember[]>(ENDPOINTS.team(caseId));
+    return response.data || [];
+  },
+
+  /**
+   * Get workflow stages for a case
+   */
+  async getWorkflow(caseId: string): Promise<WorkflowStage[]> {
+    const response = await enzymeClient.get<WorkflowStage[]>(ENDPOINTS.workflow(caseId));
+    return response.data || [];
+  },
+
+  /**
+   * Get motions for a case
+   */
+  async getMotions(caseId: string): Promise<Motion[]> {
+    const response = await enzymeClient.get<Motion[]>(ENDPOINTS.motions(caseId));
+    return response.data || [];
+  },
+
+  /**
+   * Get discovery requests for a case
+   */
+  async getDiscovery(caseId: string): Promise<DiscoveryRequest[]> {
+    const response = await enzymeClient.get<DiscoveryRequest[]>(ENDPOINTS.discovery(caseId));
+    return response.data || [];
+  },
+
+  /**
+   * Get evidence for a case
+   */
+  async getEvidence(caseId: string): Promise<EvidenceItem[]> {
+    const response = await enzymeClient.get<ApiEvidence[]>(ENDPOINTS.evidence(caseId));
+    return (response.data || []).map(transformApiEvidence);
+  },
+
+  /**
+   * Get timeline events for a case
+   */
+  async getTimeline(caseId: string): Promise<TimelineEvent[]> {
+    const response = await enzymeClient.get<TimelineEvent[]>(ENDPOINTS.timeline(caseId));
+    return response.data || [];
+  },
+
+  /**
+   * Get billing entries for a case
+   */
+  async getBilling(caseId: string): Promise<TimeEntry[]> {
+    const response = await enzymeClient.get<TimeEntry[]>(ENDPOINTS.billing(caseId));
+    return response.data || [];
   },
 };
 

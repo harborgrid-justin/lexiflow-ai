@@ -1,9 +1,13 @@
 /**
  * Compliance API Hooks
+ * 
+ * Refactored to use SOA service architecture with dependency injection.
+ * Uses the service registry to access the compliance service instead of direct API calls.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiService } from '@/services/apiService';
+import { useService } from '@/core/registry';
+import { SERVICE_KEYS, IComplianceService } from '@/core/contracts';
 import type { EthicalWall } from '@/types';
 
 // Query Keys
@@ -19,33 +23,53 @@ export const complianceKeys = {
 
 // Queries
 export function useComplianceDashboard() {
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
+  
   return useQuery({
     queryKey: complianceKeys.dashboard(),
-    queryFn: () => ApiService.compliance.getAll(),
+    queryFn: async () => {
+      const response = await complianceService.getAll();
+      return response.data;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useConflictChecks() {
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
+  
   return useQuery({
     queryKey: complianceKeys.conflicts(),
-    queryFn: () => ApiService.compliance.getConflicts(),
+    queryFn: async () => {
+      const response = await complianceService.getConflictChecks();
+      return response.data;
+    },
     staleTime: 2 * 60 * 1000,
   });
 }
 
 export function useEthicalWalls() {
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
+  
   return useQuery({
     queryKey: complianceKeys.ethicalWalls(),
-    queryFn: () => ApiService.compliance.getWalls(),
+    queryFn: async () => {
+      const response = await complianceService.getEthicalWalls();
+      return response.data;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useEthicalWall(id: string) {
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
+  
   return useQuery({
     queryKey: complianceKeys.ethicalWall(id),
-    queryFn: () => ApiService.compliance.getById(id),
+    queryFn: async () => {
+      const response = await complianceService.getById(id);
+      return response.data;
+    },
     enabled: !!id,
   });
 }
@@ -53,10 +77,16 @@ export function useEthicalWall(id: string) {
 // Mutations
 export function useRunConflictCheck() {
   const queryClient = useQueryClient();
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
 
   return useMutation({
-    mutationFn: (entityName: string) => 
-      ApiService.compliance.createConflictCheck({ entityName, date: new Date().toISOString(), status: 'Review', foundIn: [], checkedBy: '' }),
+    mutationFn: async (entityName: string) => {
+      const response = await complianceService.runConflictCheck(entityName);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to run conflict check');
+      }
+      return response.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.conflicts() });
     },
@@ -65,9 +95,16 @@ export function useRunConflictCheck() {
 
 export function useCreateEthicalWall() {
   const queryClient = useQueryClient();
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
 
   return useMutation({
-    mutationFn: (data: Partial<EthicalWall>) => ApiService.compliance.createEthicalWall(data),
+    mutationFn: async (data: Partial<EthicalWall>) => {
+      const response = await complianceService.createEthicalWall(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create ethical wall');
+      }
+      return response.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.ethicalWalls() });
     },
@@ -76,10 +113,16 @@ export function useCreateEthicalWall() {
 
 export function useUpdateEthicalWall() {
   const queryClient = useQueryClient();
+  const complianceService = useService<IComplianceService>(SERVICE_KEYS.COMPLIANCE_SERVICE);
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<EthicalWall> }) =>
-      ApiService.compliance.update(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: Partial<EthicalWall> }) => {
+      const response = await complianceService.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update ethical wall');
+      }
+      return response.data;
+    },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: complianceKeys.ethicalWall(id) });
       queryClient.invalidateQueries({ queryKey: complianceKeys.ethicalWalls() });

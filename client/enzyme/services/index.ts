@@ -41,5 +41,148 @@ export {
   useApiConnectivity,
 } from './hooks';
 
-// Example service using Enzyme (for reference/migration)
+// ============================================================================
+// Enzyme Services - Type-safe API services with retry, rate limiting, etc.
+// ============================================================================
+
+// Cases Service
 export { enzymeCasesService } from './cases.service';
+
+// Documents Service
+export { enzymeDocumentsService } from './documents.service';
+
+// Users Service
+export { enzymeUsersService } from './users.service';
+
+// Workflow Service
+export { enzymeWorkflowService } from './workflow.service';
+
+// Evidence Service
+export { enzymeEvidenceService } from './evidence.service';
+
+// Billing Service
+export { enzymeBillingService } from './billing.service';
+
+// Discovery Service
+export { enzymeDiscoveryService } from './discovery.service';
+
+// Messages Service
+export { enzymeMessagesService } from './messages.service';
+
+// Search Service
+export { enzymeSearchService } from './search.service';
+
+// Calendar Service
+export { enzymeCalendarService } from './calendar.service';
+
+// Motions Service
+export { enzymeMotionsService } from './motions.service';
+
+// Tasks Service
+export { enzymeTasksService } from './tasks.service';
+
+// Auth Service
+export { enzymeAuthService } from './auth.service';
+
+// Misc Services (Organizations, Clients, Analytics, etc.)
+export {
+  enzymeOrganizationsService,
+  enzymeClientsService,
+  enzymeAnalyticsService,
+  enzymeComplianceService,
+  enzymeKnowledgeService,
+  enzymeJurisdictionsService,
+  enzymeClausesService,
+  enzymeGroupsService,
+  enzymeAuditService,
+  enzymePartiesService,
+  enzymeUserProfilesService,
+} from './misc.service';
+
+// ============================================================================
+// Consolidated Enzyme API Service
+// ============================================================================
+
+import { enzymeCasesService } from './cases.service';
+import { enzymeDocumentsService } from './documents.service';
+import { enzymeUsersService } from './users.service';
+import { enzymeWorkflowService } from './workflow.service';
+import { enzymeEvidenceService } from './evidence.service';
+import { enzymeBillingService } from './billing.service';
+import { enzymeDiscoveryService } from './discovery.service';
+import { enzymeMessagesService } from './messages.service';
+import { enzymeSearchService } from './search.service';
+import { enzymeCalendarService } from './calendar.service';
+import { enzymeMotionsService } from './motions.service';
+import { enzymeTasksService } from './tasks.service';
+import { enzymeAuthService } from './auth.service';
+import {
+  enzymeOrganizationsService,
+  enzymeClientsService,
+  enzymeAnalyticsService,
+  enzymeComplianceService,
+  enzymeKnowledgeService,
+  enzymeJurisdictionsService,
+  enzymeClausesService,
+  enzymeGroupsService,
+  enzymeAuditService,
+  enzymePartiesService,
+  enzymeUserProfilesService,
+} from './misc.service';
+
+/**
+ * Unified Enzyme API Service
+ * Drop-in replacement for ApiService with enhanced features:
+ * - Automatic retry with exponential backoff
+ * - Rate limiting
+ * - Request deduplication
+ * - Type-safe responses
+ * - Token management
+ *
+ * @example
+ * ```typescript
+ * // Using the consolidated service
+ * import { EnzymeApiService } from './enzyme/services';
+ *
+ * // Cases
+ * const cases = await EnzymeApiService.cases.getAll();
+ * const newCase = await EnzymeApiService.cases.create({ title: 'New Case' });
+ *
+ * // Documents
+ * const docs = await EnzymeApiService.documents.getAll({ caseId: 'case-123' });
+ *
+ * // Auth
+ * await EnzymeApiService.auth.login('user@example.com', 'password');
+ * ```
+ */
+export const EnzymeApiService = {
+  // Core Services
+  auth: enzymeAuthService,
+  cases: enzymeCasesService,
+  documents: enzymeDocumentsService,
+  users: enzymeUsersService,
+  workflow: enzymeWorkflowService,
+  evidence: enzymeEvidenceService,
+  messages: enzymeMessagesService,
+  search: enzymeSearchService,
+  motions: enzymeMotionsService,
+  discovery: enzymeDiscoveryService,
+  billing: enzymeBillingService,
+  calendar: enzymeCalendarService,
+  tasks: enzymeTasksService,
+
+  // Additional Services
+  organizations: enzymeOrganizationsService,
+  clients: enzymeClientsService,
+  analytics: enzymeAnalyticsService,
+  compliance: enzymeComplianceService,
+  knowledge: enzymeKnowledgeService,
+  jurisdictions: enzymeJurisdictionsService,
+  clauses: enzymeClausesService,
+  groups: enzymeGroupsService,
+  audit: enzymeAuditService,
+  parties: enzymePartiesService,
+  userProfiles: enzymeUserProfilesService,
+};
+
+export default EnzymeApiService;

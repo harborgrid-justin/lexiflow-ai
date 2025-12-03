@@ -40,6 +40,42 @@ interface SettingsPageProps {
   currentUser: any; // User from context
 }
 
+const NotificationToggle: React.FC<{
+  label: string;
+  description: string;
+  emailChecked: boolean;
+  inAppChecked: boolean;
+  onEmailChange: (checked: boolean) => void;
+  onInAppChange: (checked: boolean) => void;
+}> = ({ label, description, emailChecked, inAppChecked, onEmailChange, onInAppChange }) => (
+  <div className="flex items-start justify-between py-3">
+    <div className="flex-1">
+      <p className="text-sm font-medium text-slate-900">{label}</p>
+      <p className="text-xs text-slate-600">{description}</p>
+    </div>
+    <div className="flex items-center gap-6 ml-4">
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={emailChecked}
+          onChange={(e) => onEmailChange(e.target.checked)}
+          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+        />
+        <span className="text-sm text-slate-700">Email</span>
+      </label>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={inAppChecked}
+          onChange={(e) => onInAppChange(e.target.checked)}
+          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+        />
+        <span className="text-sm text-slate-700">In-App</span>
+      </label>
+    </div>
+  </div>
+);
+
 export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
@@ -461,42 +497,6 @@ const NotificationsTab: React.FC = () => {
       digestFrequency,
     });
   };
-
-  const NotificationToggle: React.FC<{
-    label: string;
-    description: string;
-    emailChecked: boolean;
-    inAppChecked: boolean;
-    onEmailChange: (checked: boolean) => void;
-    onInAppChange: (checked: boolean) => void;
-  }> = ({ label, description, emailChecked, inAppChecked, onEmailChange, onInAppChange }) => (
-    <div className="flex items-start justify-between py-3">
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-900">{label}</p>
-        <p className="text-xs text-slate-600">{description}</p>
-      </div>
-      <div className="flex items-center gap-6 ml-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={emailChecked}
-            onChange={(e) => onEmailChange(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
-          />
-          <span className="text-sm text-slate-700">Email</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={inAppChecked}
-            onChange={(e) => onInAppChange(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
-          />
-          <span className="text-sm text-slate-700">In-App</span>
-        </label>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-6">

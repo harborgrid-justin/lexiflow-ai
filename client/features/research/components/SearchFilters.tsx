@@ -4,12 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, X, Calendar, Scale, MapPin, FileText, Filter } from 'lucide-react';
-import type { SearchFilters, CourtLevel, DocumentType, SortOption } from '../api/research.types';
+import { ChevronDown, ChevronUp, Calendar, Scale, MapPin, FileText, Filter } from 'lucide-react';
+import type { SearchFilters as SearchFiltersType, CourtLevel, DocumentType, SortOption } from '../api/research.types';
 
 interface SearchFiltersProps {
-  filters: SearchFilters;
-  onChange: (filters: SearchFilters) => void;
+  filters: SearchFiltersType;
+  onChange: (filters: SearchFiltersType) => void;
   facets?: {
     jurisdictions?: { value: string; count: number }[];
     courtLevels?: { value: string; count: number }[];
@@ -19,6 +19,39 @@ interface SearchFiltersProps {
   };
   onReset?: () => void;
 }
+
+const FilterSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  sectionKey: string;
+  children: React.ReactNode;
+  isExpanded: boolean;
+  onToggle: () => void;
+}> = ({ title, icon, sectionKey: _sectionKey, children, isExpanded, onToggle }) => {
+  return (
+    <div className="border-b border-gray-200 last:border-b-0">
+      <button
+        onClick={onToggle}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="font-medium text-gray-900">{title}</span>
+        </div>
+        {isExpanded ? (
+          <ChevronUp className="w-5 h-5 text-gray-400" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-gray-400" />
+        )}
+      </button>
+      {isExpanded && (
+        <div className="px-4 pb-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const SearchFilters: React.FC<SearchFiltersProps> = ({
   filters,
@@ -42,11 +75,11 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
     });
   };
 
-  const updateFilters = (key: keyof SearchFilters, value: any) => {
+  const updateFilters = (key: keyof SearchFiltersType, value: any) => {
     onChange({ ...filters, [key]: value });
   };
 
-  const toggleArrayValue = (key: keyof SearchFilters, value: string) => {
+  const toggleArrayValue = (key: keyof SearchFiltersType, value: string) => {
     const current = (filters[key] as string[]) || [];
     const next = current.includes(value)
       ? current.filter(v => v !== value)
@@ -91,39 +124,6 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
     { value: 'citations-desc', label: 'Most Cited' },
   ];
 
-  const FilterSection: React.FC<{
-    title: string;
-    icon: React.ReactNode;
-    sectionKey: string;
-    children: React.ReactNode;
-  }> = ({ title, icon, sectionKey, children }) => {
-    const isExpanded = expandedSections.has(sectionKey);
-
-    return (
-      <div className="border-b border-gray-200 last:border-b-0">
-        <button
-          onClick={() => toggleSection(sectionKey)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            {icon}
-            <span className="font-medium text-gray-900">{title}</span>
-          </div>
-          {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
-          )}
-        </button>
-        {isExpanded && (
-          <div className="px-4 pb-4">
-            {children}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
       {/* Header */}
@@ -148,7 +148,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       </div>
 
       {/* Sort */}
-      <FilterSection title="Sort By" icon={<FileText className="w-4 h-4 text-gray-500" />} sectionKey="sort">
+      <FilterSection 
+        title="Sort By" 
+        icon={<FileText className="w-4 h-4 text-gray-500" />} 
+        sectionKey="sort"
+        isExpanded={expandedSections.has('sort')}
+        onToggle={() => toggleSection('sort')}
+      >
         <div className="space-y-2">
           {sortOptions.map(option => (
             <label
@@ -169,7 +175,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       </FilterSection>
 
       {/* Jurisdiction */}
-      <FilterSection title="Jurisdiction" icon={<MapPin className="w-4 h-4 text-gray-500" />} sectionKey="jurisdiction">
+      <FilterSection 
+        title="Jurisdiction" 
+        icon={<MapPin className="w-4 h-4 text-gray-500" />} 
+        sectionKey="jurisdiction"
+        isExpanded={expandedSections.has('jurisdiction')}
+        onToggle={() => toggleSection('jurisdiction')}
+      >
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {facets?.jurisdictions && facets.jurisdictions.length > 0 ? (
             facets.jurisdictions.map(({ value, count }) => (
@@ -196,7 +208,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       </FilterSection>
 
       {/* Court Level */}
-      <FilterSection title="Court Level" icon={<Scale className="w-4 h-4 text-gray-500" />} sectionKey="courtLevel">
+      <FilterSection 
+        title="Court Level" 
+        icon={<Scale className="w-4 h-4 text-gray-500" />} 
+        sectionKey="courtLevel"
+        isExpanded={expandedSections.has('courtLevel')}
+        onToggle={() => toggleSection('courtLevel')}
+      >
         <div className="space-y-2">
           {courtLevels.map(level => {
             const facet = facets?.courtLevels?.find(f => f.value === level);
@@ -222,7 +240,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       </FilterSection>
 
       {/* Document Type */}
-      <FilterSection title="Document Type" icon={<FileText className="w-4 h-4 text-gray-500" />} sectionKey="documentType">
+      <FilterSection 
+        title="Document Type" 
+        icon={<FileText className="w-4 h-4 text-gray-500" />} 
+        sectionKey="documentType"
+        isExpanded={expandedSections.has('documentType')}
+        onToggle={() => toggleSection('documentType')}
+      >
         <div className="space-y-2">
           {documentTypes.map(type => {
             const facet = facets?.documentTypes?.find(f => f.value === type);
@@ -249,7 +273,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
 
       {/* Practice Area */}
       {facets?.practiceAreas && facets.practiceAreas.length > 0 && (
-        <FilterSection title="Practice Area" icon={<Scale className="w-4 h-4 text-gray-500" />} sectionKey="practiceArea">
+        <FilterSection 
+          title="Practice Area" 
+          icon={<Scale className="w-4 h-4 text-gray-500" />} 
+          sectionKey="practiceArea"
+          isExpanded={expandedSections.has('practiceArea')}
+          onToggle={() => toggleSection('practiceArea')}
+        >
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {facets.practiceAreas.map(({ value, count }) => (
               <label
@@ -273,7 +303,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       )}
 
       {/* Date Range */}
-      <FilterSection title="Date Range" icon={<Calendar className="w-4 h-4 text-gray-500" />} sectionKey="dateRange">
+      <FilterSection 
+        title="Date Range" 
+        icon={<Calendar className="w-4 h-4 text-gray-500" />} 
+        sectionKey="dateRange"
+        isExpanded={expandedSections.has('dateRange')}
+        onToggle={() => toggleSection('dateRange')}
+      >
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">From</label>
@@ -311,7 +347,13 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
       </FilterSection>
 
       {/* Minimum Citations */}
-      <FilterSection title="Minimum Citations" icon={<Scale className="w-4 h-4 text-gray-500" />} sectionKey="citations">
+      <FilterSection 
+        title="Minimum Citations" 
+        icon={<Scale className="w-4 h-4 text-gray-500" />} 
+        sectionKey="citations"
+        isExpanded={expandedSections.has('citations')}
+        onToggle={() => toggleSection('citations')}
+      >
         <div className="space-y-2">
           <input
             type="number"

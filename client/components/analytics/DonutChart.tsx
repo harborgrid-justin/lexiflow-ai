@@ -35,6 +35,51 @@ const DEFAULT_COLORS = [
   '#6366f1',
 ];
 
+const CustomTooltip = ({ active, payload, formatValue }: any) => {
+  if (!active || !payload || !payload[0]) return null;
+
+  const data = payload[0];
+  return (
+    <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+      <div className="flex items-center gap-2">
+        <div
+          className="w-3 h-3 rounded-full"
+          style={{ backgroundColor: data.payload.fill }}
+        />
+        <span className="text-slate-600">{data.name}:</span>
+        <span className="font-medium text-slate-900">
+          {formatValue ? formatValue(data.value) : data.value}
+        </span>
+      </div>
+      <div className="text-xs text-slate-500 mt-1">
+        {((data.value / data.payload.total) * 100).toFixed(1)}%
+      </div>
+    </div>
+  );
+};
+
+const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  if (percent < 0.05) return null; // Don't show label for very small segments
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline="central"
+      className="text-xs font-medium"
+    >
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
 export const DonutChart: React.FC<DonutChartProps> = ({
   data,
   height = 300,
@@ -45,50 +90,6 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   formatValue,
   colors = DEFAULT_COLORS,
 }) => {
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload || !payload[0]) return null;
-
-    const data = payload[0];
-    return (
-      <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: data.payload.fill }}
-          />
-          <span className="text-slate-600">{data.name}:</span>
-          <span className="font-medium text-slate-900">
-            {formatValue ? formatValue(data.value) : data.value}
-          </span>
-        </div>
-        <div className="text-xs text-slate-500 mt-1">
-          {((data.value / data.payload.total) * 100).toFixed(1)}%
-        </div>
-      </div>
-    );
-  };
-
-  const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    if (percent < 0.05) return null; // Don't show label for very small segments
-
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central"
-        className="text-xs font-medium"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
 
   // Calculate total for percentages
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -116,7 +117,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
             />
           ))}
         </Pie>
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<CustomTooltip formatValue={formatValue} />} />
         {showLegend && (
           <Legend
             verticalAlign="bottom"

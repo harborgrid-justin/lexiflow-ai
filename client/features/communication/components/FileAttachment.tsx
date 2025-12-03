@@ -41,7 +41,6 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
   onClick,
   className = '',
 }) => {
-  const Icon = getFileIcon(attachment.type);
   const isImage = attachment.type.startsWith('image/');
 
   const variantClasses = variant === 'dark'
@@ -77,7 +76,9 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
           flex items-center justify-center w-10 h-10 rounded flex-shrink-0
           ${variant === 'dark' ? 'bg-white/10' : 'bg-slate-100'}
         `}>
-          <Icon className={`w-5 h-5 ${variant === 'dark' ? 'text-white/80' : 'text-slate-600'}`} />
+          {React.createElement(getFileIcon(attachment.type), {
+            className: `w-5 h-5 ${variant === 'dark' ? 'text-white/80' : 'text-slate-600'}`
+          })}
         </div>
       )}
 

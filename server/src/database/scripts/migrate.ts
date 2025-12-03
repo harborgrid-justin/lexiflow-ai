@@ -29,7 +29,7 @@ async function runAllMigrations() {
     await sequelize.authenticate();
     console.log('✅ Database connection established');
 
-    const migrationsDir = path.join(__dirname, 'migrations');
+    const migrationsDir = path.join(__dirname, '..', 'migrations');
     const migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
       .sort(); // Sort to ensure proper order
@@ -79,7 +79,7 @@ async function runMigration(migrationFile: string) {
     await sequelize.authenticate();
     console.log('✅ Database connection established');
 
-    const migrationPath = path.join(__dirname, 'migrations', migrationFile);
+    const migrationPath = path.join(__dirname, '..', 'migrations', migrationFile);
     const sqlContent = fs.readFileSync(migrationPath, 'utf-8');
 
     console.log(`📄 Running migration: ${migrationFile}`);

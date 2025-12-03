@@ -3,7 +3,7 @@
  * TanStack Query hooks with Enzyme integration for LexiFlow AI
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { researchService } from './research.service';
 import type {
   SearchQuery,
@@ -21,7 +21,6 @@ import type {
   Statute,
   SecondarySource,
   CitationAlert,
-  CitationValidation,
 } from './research.types';
 
 // ==================== Query Keys ====================

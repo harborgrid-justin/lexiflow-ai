@@ -87,7 +87,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
 
       {/* Version List */}
       <div className="divide-y divide-slate-100">
-        {versions.map((version, index) => {
+        {versions.map((version, _index) => {
           const isSelected = selectedVersions.includes(version.id);
           const isCurrent = version.id === currentVersionId;
 

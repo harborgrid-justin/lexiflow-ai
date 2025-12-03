@@ -6,6 +6,10 @@
  * - Guards: Route protection, RBAC
  * - Router: Lazy-loaded routing
  * - Hooks: Core application hooks
+ * - Contracts: Service interfaces for SOA
+ * - Registry: Dependency injection and service discovery
+ * - Services: Infrastructure and domain service implementations
+ * - Bootstrap: Application initialization
  * - Utils: Shared utilities
  */
 
@@ -25,6 +29,31 @@ export { FeatureGuard, isFeatureEnabled } from './guards/FeatureGuard';
 // Hooks
 export { useAppNavigation } from './hooks/useAppNavigation';
 export { usePermissions } from './hooks/usePermissions';
+
+// Service Contracts (SOA Architecture)
+export type * from './contracts';
+
+// Service Registry (Dependency Injection)
+export {
+  ServiceContainer,
+  ServiceRegistry,
+  getService,
+  registerService,
+  isServiceRegistered,
+  serviceRegistry,
+  useService,
+  useServiceOptional,
+  useServiceAvailable,
+  useServices,
+  useDomainServices,
+  useInfrastructureServices
+} from './registry';
+
+// Service Implementations
+export * from './services';
+
+// Bootstrap
+export { bootstrapApplication, shutdownApplication } from './bootstrap';
 
 // Types
 export type { Permission, FeatureFlag, RouteConfig } from './types';

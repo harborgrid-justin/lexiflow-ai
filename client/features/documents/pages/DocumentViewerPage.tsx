@@ -3,7 +3,7 @@
  * Full-featured document viewer with PDF rendering and annotations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ZoomIn,
   ZoomOut,
@@ -14,20 +14,17 @@ import {
   Printer,
   ChevronLeft,
   ChevronRight,
-  Search,
   List,
   MessageSquare,
   Clock,
   Info,
   X,
-  Settings,
 } from 'lucide-react';
 import { useDocument, useDocumentVersions, useDocumentAnnotations } from '../api/documents.api';
 import { AnnotationTools, type AnnotationTool } from '../components/AnnotationTools';
 import { VersionHistory } from '../components/VersionHistory';
 import { DocumentMetadata } from '../components/DocumentMetadata';
 import { Button, LoadingSpinner, Badge } from '../../../components/common';
-import type { LegalDocument, DocumentVersion } from '../../../types';
 import type { Annotation } from '../api/documents.types';
 import { ApiService } from '../../../services/apiService';
 
@@ -62,7 +59,7 @@ export const DocumentViewerPage: React.FC<DocumentViewerPageProps> = ({
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<number[]>([]);
+  const [searchResults, _setSearchResults] = useState<number[]>([]);
 
   // Handlers
   const handleZoomIn = () => {
@@ -152,7 +149,7 @@ export const DocumentViewerPage: React.FC<DocumentViewerPageProps> = ({
                           ? 'success'
                           : document.status.toLowerCase() === 'draft'
                           ? 'warning'
-                          : 'default'
+                          : 'info'
                       }
                     >
                       {document.status}
