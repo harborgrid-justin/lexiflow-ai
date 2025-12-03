@@ -60,16 +60,16 @@ export const useResearch = (currentUser?: User) => {
 
   // Fetch research history with Enzyme
   const { data: history = [], isLoading: isLoadingHistory } = useApiRequest<ResearchSession[]>({
-    endpoint: '/api/v1/research/history',
+    endpoint: '/research/history',
     options: { staleTime: 2 * 60 * 1000 } // 2 min cache
   });
 
   // Mutation for saving research sessions
   const { mutateAsync: saveSession, isPending: isLoading } = useApiMutation<ResearchSession, ResearchSession>({
     method: 'POST',
-    endpoint: '/api/v1/research/sessions',
+    endpoint: '/research/sessions',
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v1/research/history'] });
+      queryClient.invalidateQueries({ queryKey: ['/research/history'] });
     }
   });
 
@@ -149,7 +149,7 @@ export const useResearch = (currentUser?: User) => {
     try {
       trackEvent('research_feedback', { id, type });
       await ApiService.submitResearchFeedback(id, type);
-      queryClient.invalidateQueries({ queryKey: ['/api/v1/research/history'] });
+      queryClient.invalidateQueries({ queryKey: ['/research/history'] });
     } catch (e) {
       console.error(e);
       showErrorToast('Failed to submit feedback. Please try again.');

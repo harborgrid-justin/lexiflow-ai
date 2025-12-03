@@ -47,7 +47,7 @@ export const useCases = (params?: CaseListParams) => {
     if (filters.priority?.length) queryParams.set('priority', filters.priority.join(','));
   }
 
-  const endpoint = `/api/v1/cases?${queryParams.toString()}`;
+  const endpoint = `/cases?${queryParams.toString()}`;
 
   const {
     data: response,
@@ -86,7 +86,7 @@ export const useCase = (id: string | undefined) => {
     error,
     refetch,
   } = useApiRequest<Case>({
-    endpoint: `/api/v1/cases/${id}`,
+    endpoint: `/cases/${id}`,
     options: {
       enabled: !!id,
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -218,7 +218,7 @@ export const useCaseTimeline = (caseId: string | undefined) => {
     error,
     refetch,
   } = useApiRequest<TimelineEvent[]>({
-    endpoint: `/api/v1/cases/${caseId}/timeline`,
+    endpoint: `/cases/${caseId}/timeline`,
     options: {
       enabled: !!caseId,
       staleTime: 1 * 60 * 1000, // 1 minute - timeline updates frequently
@@ -245,7 +245,7 @@ export const useCaseParties = (caseId: string | undefined) => {
     error,
     refetch,
   } = useApiRequest<any[]>({
-    endpoint: `/api/v1/cases/${caseId}/parties`,
+    endpoint: `/cases/${caseId}/parties`,
     options: {
       enabled: !!caseId,
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -272,7 +272,7 @@ export const useCaseDocuments = (caseId: string | undefined) => {
     error,
     refetch,
   } = useApiRequest<any[]>({
-    endpoint: `/api/v1/documents?caseId=${caseId}`,
+    endpoint: `/documents?caseId=${caseId}`,
     options: {
       enabled: !!caseId,
       staleTime: 3 * 60 * 1000, // 3 minutes

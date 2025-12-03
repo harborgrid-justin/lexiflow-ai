@@ -100,10 +100,10 @@ function getCacheKey(endpoint: string, params?: Record<string, string | number |
  * @example
  * ```typescript
  * // Basic usage
- * const { data, isLoading, error } = useApiRequest<Case[]>('/api/v1/cases');
+ * const { data, isLoading, error } = useApiRequest<Case[]>('/cases');
  *
  * // With options
- * const { data, isLoading, refetch } = useApiRequest<Case>('/api/v1/cases/123', {
+ * const { data, isLoading, refetch } = useApiRequest<Case>('/cases/123', {
  *   staleTime: 5 * 60 * 1000, // 5 minutes
  *   refetchOnWindowFocus: true,
  *   retry: 3,
@@ -112,7 +112,7 @@ function getCacheKey(endpoint: string, params?: Record<string, string | number |
  *
  * // Object-style syntax
  * const { data } = useApiRequest({
- *   endpoint: '/api/v1/cases',
+ *   endpoint: '/cases',
  *   options: { enabled: true }
  * });
  * ```
@@ -131,7 +131,7 @@ export function useApiRequest<T>(
  * @example
  * ```typescript
  * const { data, isLoading } = useApiRequest<Case[]>({
- *   endpoint: '/api/v1/cases',
+ *   endpoint: '/cases',
  *   options: { staleTime: 60000 }
  * });
  * ```
@@ -316,7 +316,7 @@ export interface UseApiMutationResult<TData, TVariables> {
  * ```typescript
  * // Basic POST mutation
  * const { mutate, isLoading, error } = useApiMutation<Case, Partial<Case>>(
- *   '/api/v1/cases',
+ *   '/cases',
  *   { method: 'POST' }
  * );
  *
@@ -325,7 +325,7 @@ export interface UseApiMutationResult<TData, TVariables> {
  *
  * // With callbacks
  * const { mutate } = useApiMutation<Case, Partial<Case>>(
- *   '/api/v1/cases',
+ *   '/cases',
  *   {
  *     method: 'POST',
  *     onSuccess: (data) => console.log('Created:', data),
@@ -431,7 +431,7 @@ export interface UseLazyApiRequestResult<T> {
  * @example
  * ```typescript
  * // Basic usage
- * const { fetch, data, isLoading } = useLazyApiRequest<Case[]>('/api/v1/cases');
+ * const { fetch, data, isLoading } = useLazyApiRequest<Case[]>('/cases');
  *
  * // Trigger manually with a button click
  * const handleSearch = async () => {
@@ -478,15 +478,15 @@ export function useLazyApiRequest<T>(endpoint: string): UseLazyApiRequestResult<
 /**
  * Invalidate cached data for a specific endpoint or pattern
  *
- * @param endpointOrPattern - The endpoint to invalidate, or a pattern (e.g., '/api/v1/cases*')
+ * @param endpointOrPattern - The endpoint to invalidate, or a pattern (e.g., '/cases*')
  *
  * @example
  * ```typescript
  * // Invalidate specific endpoint
- * invalidateCache('/api/v1/cases');
+ * invalidateCache('/cases');
  *
  * // Invalidate all endpoints matching pattern
- * invalidateCache('/api/v1/cases*');
+ * invalidateCache('/cases*');
  * ```
  */
 export function invalidateCache(endpointOrPattern: string): void {

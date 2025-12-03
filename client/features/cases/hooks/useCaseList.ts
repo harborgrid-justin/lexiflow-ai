@@ -30,7 +30,7 @@ export const useCaseList = () => {
     error: queryError,
     refetch: rawRefetch
   } = useApiRequest<{ cases: Case[]; total: number; page: number; limit: number; totalPages: number }>({
-    endpoint: '/api/v1/cases',
+    endpoint: '/cases',
     options: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: true,

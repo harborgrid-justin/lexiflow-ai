@@ -13,12 +13,12 @@ import { ConflictCheck, EthicalWall } from '@/types';
 export const useComplianceDashboard = () => {
   // Parallel API requests with Enzyme - automatic caching
   const { data: conflicts = [], isLoading: conflictsLoading, refetch: refetchConflicts } = useApiRequest<ConflictCheck[]>({
-    endpoint: '/api/v1/compliance/conflicts',
+    endpoint: '/compliance/conflicts',
     options: { staleTime: 5 * 60 * 1000 } // 5 min cache
   });
 
   const { data: walls = [], isLoading: wallsLoading, refetch: refetchWalls } = useApiRequest<EthicalWall[]>({
-    endpoint: '/api/v1/compliance/walls',
+    endpoint: '/compliance/walls',
     options: { staleTime: 5 * 60 * 1000 } // 5 min cache
   });
 

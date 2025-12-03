@@ -35,7 +35,7 @@ export const useAdminPanel = (activeTab: AdminTab = 'logs') => {
 
   // Fetch audit logs with Enzyme - only when logs tab is active
   const { data: logs = [], isLoading, refetch } = useApiRequest<AuditLogEntry[]>({
-    endpoint: '/api/v1/audit/logs',
+    endpoint: '/audit/logs',
     options: {
       staleTime: 2 * 60 * 1000, // 2 min cache
       enabled: activeTab === 'logs'

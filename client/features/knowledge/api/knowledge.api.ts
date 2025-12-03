@@ -4,6 +4,7 @@
  * Handles all API calls for knowledge base and clause library.
  */
 
+import { enzymeClient } from '@/enzyme';
 import { ApiService } from '@/services/apiService';
 import type {
   KnowledgeItem,
@@ -20,85 +21,51 @@ export const KnowledgeApi = {
   },
 
   getItem: async (id: string): Promise<KnowledgeItem> => {
-    const response = await fetch(`/api/v1/knowledge/${id}`, {
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to fetch knowledge item');
-    return response.json();
+    const { data } = await enzymeClient.get<KnowledgeItem>(`/knowledge/${id}`);
+    return data;
   },
 
   createItem: async (data: CreateKnowledgeItemRequest): Promise<KnowledgeItem> => {
-    const response = await fetch('/api/v1/knowledge', {
-      method: 'POST',
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to create knowledge item');
-    return response.json();
+    const { data: response } = await enzymeClient.post<KnowledgeItem>('/knowledge', data);
+    return response;
   },
 
   searchItems: async (query: string, category?: string): Promise<KnowledgeItem[]> => {
     const params = new URLSearchParams({ query });
     if (category) params.append('category', category);
     
-    const response = await fetch(`/api/v1/knowledge/search?${params}`, {
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to search knowledge items');
-    return response.json();
+    const { data } = await enzymeClient.get<KnowledgeItem[]>(`/knowledge/search?${params}`);
+    return data;
   },
 
   // Clause Library
   getClauses: async (): Promise<Clause[]> => {
-    const response = await fetch('/api/v1/clauses', {
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to fetch clauses');
-    return response.json();
+    const { data } = await enzymeClient.get<Clause[]>('/clauses');
+    return data;
   },
 
   getClause: async (id: string): Promise<Clause> => {
-    const response = await fetch(`/api/v1/clauses/${id}`, {
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to fetch clause');
-    return response.json();
+    const { data } = await enzymeClient.get<Clause>(`/clauses/${id}`);
+    return data;
   },
 
   createClause: async (data: CreateClauseRequest): Promise<Clause> => {
-    const response = await fetch('/api/v1/clauses', {
-      method: 'POST',
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to create clause');
-    return response.json();
+    const { data: response } = await enzymeClient.post<Clause>('/clauses', data);
+    return response;
   },
 
   updateClause: async ({ id, ...data }: UpdateClauseRequest): Promise<Clause> => {
-    const response = await fetch(`/api/v1/clauses/${id}`, {
-      method: 'PATCH',
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to update clause');
-    return response.json();
+    const { data: response } = await enzymeClient.patch<Clause>(`/clauses/${id}`, data);
+    return response;
   },
 
   deleteClause: async (id: string): Promise<void> => {
-    const response = await fetch(`/api/v1/clauses/${id}`, {
-      method: 'DELETE',
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to delete clause');
+    await enzymeClient.delete(`/clauses/${id}`);
   },
 
   getClauseVersions: async (id: string): Promise<Clause['versions']> => {
-    const response = await fetch(`/api/v1/clauses/${id}/versions`, {
-      headers: ApiService['getHeaders']?.() || { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('Failed to fetch clause versions');
-    return response.json();
+    const { data } = await enzymeClient.get<Clause['versions']>(`/clauses/${id}/versions`);
+    return data;
   }
 };
 

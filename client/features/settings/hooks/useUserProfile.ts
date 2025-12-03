@@ -29,13 +29,13 @@ export const useUserProfile = (userId: string) => {
 
   // Fetch all users to find the current user
   const { data: users, isLoading: usersLoading } = useApiRequest<User[]>({
-    endpoint: '/api/v1/users',
+    endpoint: '/users',
     options: { enabled: !!userId }
   });
 
   // Fetch user profile
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useApiRequest<IUserProfile>({
-    endpoint: `/api/v1/user-profiles/user/${userId}`,
+    endpoint: `/user-profiles/user/${userId}`,
     options: { enabled: !!userId }
   });
 
@@ -65,7 +65,7 @@ export const useUserProfile = (userId: string) => {
   // Profile update mutation
   const { mutateAsync: updateProfile, isPending: saving } = useApiMutation<IUserProfile>({
     method: 'PUT',
-    endpoint: `/api/v1/user-profiles/user/${userId}`
+    endpoint: `/user-profiles/user/${userId}`
   });
 
   // Save handler

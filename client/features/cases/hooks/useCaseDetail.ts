@@ -24,7 +24,7 @@ export const useCaseDetail = (caseData: Case) => {
 
   // Enzyme: useApiRequest - parallel fetching with automatic caching
   const { data: documents = [], isLoading: docsLoading, refetch: refetchDocs } = useApiRequest<LegalDocument[]>({
-    endpoint: `/api/v1/cases/${caseData.id}/documents`,
+    endpoint: `/cases/${caseData.id}/documents`,
     options: {
       enabled: !!caseData?.id,
       staleTime: 5 * 60 * 1000,
@@ -32,7 +32,7 @@ export const useCaseDetail = (caseData: Case) => {
   });
 
   const { data: stages = [], isLoading: stagesLoading, refetch: refetchStages } = useApiRequest<WorkflowStage[]>({
-    endpoint: `/api/v1/cases/${caseData.id}/workflow/stages`,
+    endpoint: `/cases/${caseData.id}/workflow/stages`,
     options: {
       enabled: !!caseData?.id,
       staleTime: 5 * 60 * 1000,
@@ -40,7 +40,7 @@ export const useCaseDetail = (caseData: Case) => {
   });
 
   const { data: billingEntries = [], isLoading: billingLoading, refetch: refetchBilling } = useApiRequest<TimeEntry[]>({
-    endpoint: `/api/v1/cases/${caseData.id}/billing/time-entries`,
+    endpoint: `/cases/${caseData.id}/billing/time-entries`,
     options: {
       enabled: !!caseData?.id,
       staleTime: 2 * 60 * 1000,
@@ -48,7 +48,7 @@ export const useCaseDetail = (caseData: Case) => {
   });
 
   const { data: motions = [], isLoading: motionsLoading, refetch: refetchMotions } = useApiRequest<Motion[]>({
-    endpoint: `/api/v1/cases/${caseData.id}/motions`,
+    endpoint: `/cases/${caseData.id}/motions`,
     options: {
       enabled: !!caseData?.id,
       staleTime: 5 * 60 * 1000,
@@ -56,7 +56,7 @@ export const useCaseDetail = (caseData: Case) => {
   });
 
   const { data: docketEntries = [], isLoading: docketsLoading, refetch: refetchDockets } = useApiRequest<DocketEntry[]>({
-    endpoint: `/api/v1/cases/${caseData.id}/docket`,
+    endpoint: `/cases/${caseData.id}/docket`,
     options: {
       enabled: !!caseData?.id,
       staleTime: 10 * 60 * 1000,

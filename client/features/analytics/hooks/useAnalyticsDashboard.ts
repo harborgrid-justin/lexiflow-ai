@@ -7,7 +7,7 @@
  * @module features/analytics/hooks
  */
 
-import { useApi } from '@/shared/hooks';
+import { useApiRequest } from '@/enzyme';
 import { JudgeProfile, OpposingCounselProfile } from '@/types';
 
 export interface JudgeAnalyticsData {
@@ -30,16 +30,26 @@ export interface CounselAnalyticsData {
 }
 
 export const useAnalyticsDashboard = () => {
-  // Use shared API hooks for consistent data fetching
-  const { data: judgeData = null, loading: judgeLoading, error: judgeError, refetch: refetchJudge } = useApi<JudgeAnalyticsData | null>(
-    () => fetch('/api/v1/analytics/judges').then(r => r.json()),
-    []
-  );
+  // Use Enzyme API hooks for consistent data fetching
+  const { 
+    data: judgeData = null, 
+    isLoading: judgeLoading, 
+    error: judgeError, 
+    refetch: refetchJudge 
+  } = useApiRequest<JudgeAnalyticsData | null>({
+    endpoint: '/analytics/judges',
+    options: { staleTime: 5 * 60 * 1000 }
+  });
 
-  const { data: counselData = null, loading: counselLoading, error: counselError, refetch: refetchCounsel } = useApi<CounselAnalyticsData | null>(
-    () => fetch('/api/v1/analytics/counsel').then(r => r.json()),
-    []
-  );
+  const { 
+    data: counselData = null, 
+    isLoading: counselLoading, 
+    error: counselError, 
+    refetch: refetchCounsel 
+  } = useApiRequest<CounselAnalyticsData | null>({
+    endpoint: '/analytics/counsel',
+    options: { staleTime: 5 * 60 * 1000 }
+  });
 
   return {
     judgeData,
