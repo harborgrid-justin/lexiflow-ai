@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
+import { UsersPrismaService } from './users.prisma.service';
 import { User } from '../../models/user.model';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,7 +18,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersPrismaService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })

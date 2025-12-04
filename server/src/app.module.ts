@@ -105,6 +105,7 @@ import { HealthModule } from './modules/health/health.module';
 import { DocketEntriesModule } from './modules/docket-entries/docket-entries.module';
 import { ConsolidatedCasesModule } from './modules/consolidated-cases/consolidated-cases.module';
 import { AttorneysModule } from './modules/attorneys/attorneys.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -113,6 +114,9 @@ import { AttorneysModule } from './modules/attorneys/attorneys.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+
+    // Prisma (Global module for database access)
+    PrismaModule,
 
     // Redis (must be before other modules that depend on it)
     RedisModule,

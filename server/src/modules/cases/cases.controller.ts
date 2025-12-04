@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { CasesService } from './cases.service';
+import { CasesPrismaService } from './cases.prisma.service';
 import { CreateCaseDto } from './dto/create-case.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
 import { Case } from '../../models/case.model';
@@ -50,11 +51,11 @@ import { PacerParserService } from '../../services/pacer-parser.service';
 export class CasesController {
   /**
    * Creates an instance of CasesController
-   * @param {CasesService} casesService - The cases service for business logic
+   * @param {CasesPrismaService} casesService - The cases Prisma service for business logic
    * @param {PacerParserService} pacerParserService - Service for parsing PACER dockets
    */
   constructor(
-    private readonly casesService: CasesService,
+    private readonly casesService: CasesPrismaService,
     private readonly pacerParserService: PacerParserService,
   ) {}
 

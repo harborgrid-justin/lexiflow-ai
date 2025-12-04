@@ -25,6 +25,8 @@ import { Case, User } from './types';
 import { ApiService } from './services/apiService';
 import { useHashRouter } from './enzyme';
 import { Bell, User as UserIcon, Menu, ShieldAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // ============================================================================
 // Login Form Component
@@ -50,24 +52,22 @@ const LoginForm: React.FC = () => {
 
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-      <div className="rounded-md shadow-sm -space-y-px">
+      <div className="space-y-4">
         <div>
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="relative block w-full px-3 py-2 border border-slate-300 rounded-t-md placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="Email address"
           />
         </div>
         <div>
-          <input
+          <Input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="relative block w-full px-3 py-2 border border-slate-300 rounded-b-md placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="Password"
           />
         </div>
@@ -78,13 +78,13 @@ const LoginForm: React.FC = () => {
       )}
 
       <div>
-        <button
+        <Button
           type="submit"
           disabled={isLoading}
-          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full"
         >
           {isLoading ? 'Signing in...' : 'Sign in'}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -127,31 +127,34 @@ const UserProfileDropdown: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="relative">
-      <button 
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-2"
+        className="flex items-center gap-2"
       >
         <UserIcon className="w-5 h-5" />
         {user.avatar && (
           <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
         )}
-      </button>
-      
+      </Button>
+
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
           <div className="px-4 py-2 border-b">
             <p className="text-sm font-medium text-slate-900">{user.name}</p>
             <p className="text-sm text-slate-500">{user.email}</p>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => {
               logout();
               setIsOpen(false);
             }}
-            className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+            className="w-full justify-start"
           >
             Sign out
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -170,12 +173,14 @@ const ImpersonationBanner: React.FC<{ user: User; onStop: () => void }> = ({ use
           🎭 Developer Mode: Viewing as {user.name} ({user.role})
         </span>
       </div>
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onStop}
-        className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-xs font-medium transition-colors"
+        className="bg-white/20 hover:bg-white/30 text-xs font-medium"
       >
         Exit Impersonation
-      </button>
+      </Button>
     </div>
   </div>
 );
@@ -192,12 +197,14 @@ interface AppHeaderProps {
 const AppHeader: React.FC<AppHeaderProps> = ({ title, user, onToggleSidebar }) => (
   <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shadow-sm z-30 shrink-0">
     <div className="flex items-center flex-1 gap-4">
-      <button 
-        onClick={onToggleSidebar} 
-        className="p-2 rounded-lg hover:bg-slate-100 transition-colors md:hidden"
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleSidebar}
+        className="md:hidden"
       >
         <Menu className="w-5 h-5" />
-      </button>
+      </Button>
       <h1 className="text-xl font-semibold text-slate-800 capitalize">{title}</h1>
     </div>
     <div className="flex items-center gap-3">
@@ -207,10 +214,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({ title, user, onToggleSidebar }) =
         <span className="text-slate-400">•</span>
         <span className="text-slate-500">{user.role}</span>
       </div>
-      <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
+      <Button variant="ghost" size="icon" className="relative">
         <Bell className="w-5 h-5" />
         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-      </button>
+      </Button>
       <UserProfileDropdown user={user} />
     </div>
   </header>

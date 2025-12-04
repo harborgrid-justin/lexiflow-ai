@@ -1,0 +1,493 @@
+// LexiFlow AI - Prisma Schema
+// Legal Management System Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum CaseStatus {
+  active
+  open
+  closed
+  pending
+  archived
+  resolved
+}
+
+enum UserRole {
+  admin
+  attorney
+  paralegal
+  user
+  partner
+  associate
+}
+
+enum Priority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+  pending
+}
+
+enum DocumentStatus {
+  draft
+  final
+  review
+  archived
+}
+
+enum TimeEntryStatus {
+  draft
+  submitted
+  approved
+  billed
+}
+
+enum EventStatus {
+  scheduled
+  cancelled
+  completed
+  rescheduled
+}
+
+// ============================================================================
+// CORE MODELS
+// ============================================================================
+
+model Organization {
+  id                 String    @id @default(uuid()) @db.Uuid
+  name               String
+  domain             String?
+  logo               String?
+  type               String?
+  address            String?   @db.Text
+  phone              String?
+  email              String?
+  website            String?
+  subscriptionTier   String?   @map("subscription_tier")
+  status             String    @default("active")
+  practiceAreas      String?   @map("practice_areas") @db.Text
+  taxId              String?   @map("tax_id")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  users              User[]
+  cases              Case[]
+  documents          Document[]
+  timeEntries        TimeEntry[]
+  calendarEvents     CalendarEvent[]
+  tasks              Task[]
+  evidence           Evidence[]
+  discoveryRequests  DiscoveryRequest[]
+  workflowTasks      WorkflowTask[]
+
+  @@index([name])
+  @@index([status])
+  @@index([type])
+  @@map("organizations")
+}
+
+model User {
+  id                String     @id @default(uuid()) @db.Uuid
+  firstName         String     @map("first_name")
+  lastName          String     @map("last_name")
+  name              String
+  email             String     @unique
+  passwordHash      String     @map("password_hash")
+  role              String
+  position          String?
+  barAdmission      String?    @map("bar_admission")
+  barNumber         String?    @map("bar_number")
+  phone             String?
+  expertise         String?    @db.Text
+  office            String?
+  userType          String?    @map("user_type")
+  avatar            String?
+  lastActive        DateTime?  @map("last_active") @db.Timestamptz
+  status            String     @default("active")
+  organizationId    String     @map("organization_id") @db.Uuid
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  caseMembers       CaseMember[]
+  timeEntries       TimeEntry[]
+  calendarEvents    CalendarEvent[]
+  tasks             Task[]
+  workflowTasks     WorkflowTask[]
+  documentsCreated  Document[] @relation("DocumentCreator")
+  documentsModified Document[] @relation("DocumentModifier")
+  casesCreated      Case[]
+
+  @@index([email])
+  @@index([organizationId])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Client {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String
+  type            String
+  email           String?
+  phone           String?
+  address         String?   @db.Text
+  status          String    @default("active")
+  primaryContact  String?   @map("primary_contact")
+  industry        String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  cases           Case[]
+
+  @@index([name])
+  @@index([status])
+  @@index([type])
+  @@map("clients")
+}
+
+model Case {
+  id                     String     @id @default(uuid()) @db.Uuid
+  title                  String
+  clientName             String     @map("client_name")
+  opposingCounsel        String?    @map("opposing_counsel")
+  status                 String     @default("active")
+  filingDate             DateTime?  @map("filing_date") @db.Timestamptz
+  description            String?    @db.Text
+  value                  Decimal?   @db.Decimal(15, 2)
+  matterType             String?    @map("matter_type")
+  jurisdiction           String?
+  court                  String?
+  docketNumber           String?    @map("docket_number")
+  originatingCaseNumber  String?    @map("originating_case_number")
+  natureOfSuit           String?    @map("nature_of_suit")
+  caseType               String?    @map("case_type")
+  dateOrderJudgment      DateTime?  @map("date_order_judgment") @db.Timestamptz
+  dateNoaFiled           DateTime?  @map("date_noa_filed") @db.Timestamptz
+  dateRecvCoa            DateTime?  @map("date_recv_coa") @db.Timestamptz
+  feeStatus              String?    @map("fee_status")
+  billingModel           String?    @map("billing_model")
+  judge                  String?
+  presidingJudge         String?    @map("presiding_judge")
+  orderingJudge          String?    @map("ordering_judge")
+  ownerOrgId             String?    @map("owner_org_id") @db.Uuid
+  clientId               String?    @map("client_id") @db.Uuid
+  createdBy              String?    @map("created_by") @db.Uuid
+  createdAt              DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization           Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+  client                 Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  creator                User?         @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  caseMembers            CaseMember[]
+  timeEntries            TimeEntry[]
+  calendarEvents         CalendarEvent[]
+  discoveryRequests      DiscoveryRequest[]
+  evidence               Evidence[]
+  workflowTasks          WorkflowTask[]
+  documents              Document[]
+  tasks                  Task[]
+
+  @@index([ownerOrgId])
+  @@index([clientId])
+  @@index([clientName])
+  @@index([status])
+  @@index([createdAt])
+  @@index([matterType])
+  @@index([filingDate])
+  @@index([jurisdiction])
+  @@map("cases")
+}
+
+model CaseMember {
+  id          String    @id @default(uuid()) @db.Uuid
+  caseId      String    @map("case_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  role        String
+  addedAt     DateTime  @default(now()) @map("added_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([caseId, userId])
+  @@index([caseId])
+  @@index([userId])
+  @@map("case_members")
+}
+
+// ============================================================================
+// TIME TRACKING & BILLING
+// ============================================================================
+
+model TimeEntry {
+  id             String    @id @default(uuid()) @db.Uuid
+  caseId         String    @map("case_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  workDate       DateTime  @map("work_date") @db.Date
+  date           String
+  duration       Int
+  hours          Float
+  description    String    @db.Text
+  entryType      String    @default("billable") @map("entry_type")
+  rate           Decimal   @db.Decimal(10, 2)
+  total          Decimal   @db.Decimal(10, 2)
+  status         String    @default("draft")
+  startTime      DateTime? @map("start_time") @db.Timestamptz
+  endTime        DateTime? @map("end_time") @db.Timestamptz
+  invoiceId      String?   @map("invoice_id")
+  ownerOrgId     String?   @map("owner_org_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case           Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([userId])
+  @@index([workDate])
+  @@index([date])
+  @@index([status])
+  @@index([invoiceId])
+  @@map("time_entries")
+}
+
+// ============================================================================
+// CALENDAR & EVENTS
+// ============================================================================
+
+model CalendarEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  title         String
+  type          String
+  description   String?   @db.Text
+  startTime     DateTime  @map("start_time") @db.Timestamptz
+  endTime       DateTime  @map("end_time") @db.Timestamptz
+  location      String?
+  status        String    @default("scheduled")
+  priority      String    @default("medium")
+  allDay        Boolean   @default(false) @map("all_day")
+  reminder      String?
+  notes         String?   @db.Text
+  caseId        String?   @map("case_id") @db.Uuid
+  organizerId   String?   @map("organizer_id") @db.Uuid
+  ownerOrgId    String?   @map("owner_org_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case          Case?         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  organizer     User?         @relation(fields: [organizerId], references: [id], onDelete: SetNull)
+  organization  Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([startTime])
+  @@index([endTime])
+  @@index([caseId])
+  @@index([organizerId])
+  @@index([type])
+  @@index([status])
+  @@index([startTime, endTime])
+  @@map("calendar_events")
+}
+
+// ============================================================================
+// DISCOVERY & EVIDENCE
+// ============================================================================
+
+model DiscoveryRequest {
+  id             String    @id @default(uuid()) @db.Uuid
+  caseId         String    @map("case_id") @db.Uuid
+  requestNumber  String    @map("request_number")
+  type           String
+  status         String    @default("pending")
+  requestedBy    String    @map("requested_by")
+  requestedFrom  String    @map("requested_from")
+  description    String    @db.Text
+  dueDate        DateTime? @map("due_date") @db.Timestamptz
+  responseDate   DateTime? @map("response_date") @db.Timestamptz
+  notes          String?   @db.Text
+  ownerOrgId     String?   @map("owner_org_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case           Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("discovery_requests")
+}
+
+model Evidence {
+  id                 String    @id @default(uuid()) @db.Uuid
+  caseId             String    @map("case_id") @db.Uuid
+  evidenceNumber     String    @map("evidence_number")
+  title              String
+  type               String
+  description        String?   @db.Text
+  collectionDate     DateTime? @map("collection_date") @db.Timestamptz
+  location           String?
+  custodian          String?
+  filePath           String?   @map("file_path")
+  fileSize           Int?      @map("file_size")
+  mimeType           String?   @map("mime_type")
+  status             String    @default("pending")
+  authenticity       String?
+  relevance          Int?
+  admissibility      String?
+  notes              String?   @db.Text
+  tags               String?
+  ownerOrgId         String?   @map("owner_org_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case               Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  organization       Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([type])
+  @@index([status])
+  @@index([collectionDate])
+  @@map("evidence")
+}
+
+// ============================================================================
+// WORKFLOW & TASKS
+// ============================================================================
+
+model WorkflowTask {
+  id             String    @id @default(uuid()) @db.Uuid
+  caseId         String?   @map("case_id") @db.Uuid
+  assignedToId   String?   @map("assigned_to_id") @db.Uuid
+  title          String
+  description    String?   @db.Text
+  status         String    @default("pending")
+  priority       String    @default("medium")
+  dueDate        DateTime? @map("due_date") @db.Timestamptz
+  completedDate  DateTime? @map("completed_date") @db.Timestamptz
+  taskType       String?   @map("task_type")
+  workflowStage  String?   @map("workflow_stage")
+  order          Int?
+  ownerOrgId     String?   @map("owner_org_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case           Case?         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignedTo     User?         @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  organization   Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@map("workflow_tasks")
+}
+
+model Task {
+  id             String    @id @default(uuid()) @db.Uuid
+  caseId         String?   @map("case_id") @db.Uuid
+  assignedToId   String?   @map("assigned_to_id") @db.Uuid
+  title          String
+  description    String?   @db.Text
+  status         String    @default("pending")
+  priority       String    @default("medium")
+  dueDate        DateTime? @map("due_date") @db.Timestamptz
+  completedDate  DateTime? @map("completed_date") @db.Timestamptz
+  ownerOrgId     String?   @map("owner_org_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case           Case?         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignedTo     User?         @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  organization   Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+// ============================================================================
+// DOCUMENTS
+// ============================================================================
+
+model Document {
+  id                  String    @id @default(uuid()) @db.Uuid
+  filename            String
+  title               String
+  type                String
+  status              String    @default("draft")
+  filePath            String    @map("file_path")
+  mimeType            String?   @map("mime_type")
+  fileSize            Int?      @map("file_size")
+  version             Int       @default(1)
+  versionNotes        String?   @map("version_notes") @db.Text
+  description         String?   @db.Text
+  content             String?   @db.Text
+  summary             String?   @db.Text
+  riskScore           Int?      @map("risk_score")
+  sourceModule        String?   @map("source_module")
+  isEncrypted         Boolean   @default(false) @map("is_encrypted")
+  sharedWithClient    Boolean   @default(false) @map("shared_with_client")
+  uploadedBy          String?   @map("uploaded_by")
+  tags                String?
+  uploadDate          DateTime? @map("upload_date") @db.Timestamptz
+  lastModified        DateTime? @map("last_modified") @db.Timestamptz
+  classification      String?
+  caseId              String?   @map("case_id") @db.Uuid
+  createdBy           String?   @map("created_by") @db.Uuid
+  modifiedBy          String?   @map("modified_by") @db.Uuid
+  ownerOrgId          String?   @map("owner_org_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  case                Case?         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  creator             User?         @relation("DocumentCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  modifier            User?         @relation("DocumentModifier", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  organization        Organization? @relation(fields: [ownerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([ownerOrgId])
+  @@index([type])
+  @@index([status])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("documents")
+}
